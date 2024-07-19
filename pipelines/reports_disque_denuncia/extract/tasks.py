@@ -536,3 +536,32 @@ def transform_report_data(source_file_path: str, final_path: str) -> List[str]:
         changed_file_path_list.append(str(file_path))
 
     return list(set(changed_file_path_list))
+
+
+@task
+def loop_transform_report_data(source_file_path_list: List[str], final_path: str) -> List[str]:
+    """
+    Processes multiple XML report files into structured CSVs and extracts report IDs.
+
+    This function iterates over a list of XML file paths, transforms each file into a structured
+    CSV using the `transform_report_data` function, and collects the file paths of the saved CSVs.
+    It ensures that each file path is unique in the final list of changed file paths.
+
+    Args:
+        source_file_path_list (List[str]): A list of file paths for the source XML files.
+        final_path (str): The directory path where the CSV files will be saved.
+
+    Returns:
+        List[str]: A list of unique file paths for the CSV files that were saved.
+
+    Example:
+        source_file_path_list = ['/path/to/source_report1.xml', '/path/to/source_report2.xml']
+        final_path = '/path/to/save_directory'
+        changed_file_paths = loop_transform_report_data(source_file_path_list, final_path)
+        print(changed_file_paths)  # Outputs a list of unique file paths for the saved CSVs
+    """
+    changed_file_path_list = []
+    for file_path in source_file_path_list:
+        changed_file_path_list.extend(transform_report_data(file_path, final_path))
+
+    return list(set(changed_file_path_list))
