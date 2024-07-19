@@ -56,7 +56,7 @@ with Flow(
     # Extract the list of XML file paths from the reports response
     # Task to transform the XML files into CSV files
     csv_path_list = loop_transform_report_data(
-        source_path_list=reports_response["xml_file_path_list"],
+        source_file_path_list=reports_response["xml_file_path_list"],
         final_path=Path("/tmp") / "pipelines/reports_disque_denuncia/data/partition_directory",
     )
     csv_path_list.set_upstream(reports_response)
