@@ -9,10 +9,12 @@ python = ">=3.10,<3.11"
 dbt-bigquery = "^1.6.1"
 google-cloud-storage = "^2.10.0"
 prefect = "1.4.1"
-prefeitura-rio = "1.0.0rc1"
+prefeitura-rio = { git = "https://github.com/prefeitura-rio/prefeitura-rio", rev = "7b27fce318215f7a5b2510b549a6ddd57fae7219", extras = [
+    "pipelines",
+    "pipelines-templates",
+    "actions",
+] }
 xmltodict = "^0.13.0"
-requests = "^2.32.3"
-
 
 [tool.poetry.group.dev]
 optional = true
