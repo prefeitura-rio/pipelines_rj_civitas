@@ -64,8 +64,14 @@ def get_reports(start_date: str, tipo_difusao: str = "interesse") -> Dict[int, b
             f"invalid tipo_difusao: {tipo_difusao}.\n" 'Must be "geral" or "interesse"'
         )
 
-    url = f"https://proxy.dados.rio:3380/civitas/difusao_{tipo_difusao.lower()}/"
-    params = {"fromdata": start_date}
+    # url = f"https://proxy.dados.rio:3380/civitas/difusao_{tipo_difusao.lower()}/"
+    # params = {"fromdata": start_date}
+
+    url = f'http://22531177.disquedenuncia.org.br:3380/civitas/difusao_{tipo_difusao.lower()}/'
+    params = {'orgao': '1177001',
+            'pass': 'c1v1t4sprefrio',
+            'fromdata': start_date,
+            'crypt': 'false'}
 
     response = requests.get(url, params=params, timeout=600)
     response.raise_for_status()
@@ -130,8 +136,15 @@ def capture_reports(
 
     # Construct the URL with the provided IDs
 
-    url = f"https://proxy.dados.rio:3380/civitas/capturadas_{tipo_difusao}/"
-    params = {"id": str_ids, "fromdata": start_date}
+    # url = f"https://proxy.dados.rio:3380/civitas/capturadas_{tipo_difusao}/"
+    # params = {"id": str_ids, "fromdata": start_date}
+
+    url_report = f'http://22531177.disquedenuncia.org.br:3380/civitas/capturadas_{tipo_difusao.lower()}/'
+    params = {'id': str_ids,
+            'orgao': '1177001',
+            'pass': 'c1v1t4sprefrio',
+            'fromdata': start_date,
+            'crypt': 'false'}
 
     try:
         # Make the GET request to capture the reports
@@ -164,7 +177,8 @@ def get_reports_from_start_date(
         Dict[str, List[str]]: A dictionary containing a list of XML file paths and capture 
             status lists.
     """
-
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    
     temp_limiter = 0  # TEMPORARY LIMITER
     last_page = False
     xml_file_path_list = []
