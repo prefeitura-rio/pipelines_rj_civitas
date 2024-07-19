@@ -9,8 +9,10 @@ Tasks include:
 - Transforming XML data into structured CSV files
 """
 
+import xml.etree.ElementTree as ET
 from datetime import datetime
-from typing import Dict
+from pathlib import Path
+from typing import Dict, List
 import logging
 import requests
 import xmltodict
@@ -72,3 +74,33 @@ def get_reports(start_date: str, tipo_difusao: str = "interesse") -> Dict[int, b
     report_qty = xmltodict.parse(response.text)["denuncias"]["@numTotal"]
 
     return {"report_qty": int(report_qty), "xml_bytes": xml_bytes}
+
+
+def save_report_as_xml(file_path: str, xml_bytes: bytes) -> Dict[str, List[str]]:
+    """
+    Saves the XML bytes as a file and extracts report IDs.
+
+    Args:
+        file_path (str): Path for saving the file.
+        xml_bytes (bytes): XML content to be saved.
+
+    Returns:
+        Dict[str, List[str]]: A dictionary containing the file path and a list of report IDs.
+    """
+    # Save the xml file if there is some data
+
+    root = ET.fromstring(xml_bytes)
+
+    # Generating the file name
+    xml_file_name = f"{datetime.now(tz=tz).strftime('%Y%m%d_%H%M%S_%f')}_report_disque_denuncia.xml"
+    xml_file_path = Path(file_path / xml_file_name)
+    tree = ET.ElementTree(root)
+
+    # Getting the reports ids and saving in a list with unique values
+    report_id_list = list({element.get("id") for element in tree.findall("denuncia")})
+
+
+    # Saving the xml file
+    tree.write(xml_file_path, encoding="ISO-8859-1", xml_declaration=True)
+
+    return {"xml_file_path": str(xml_file_path), "report_id_list": report_id_list}
