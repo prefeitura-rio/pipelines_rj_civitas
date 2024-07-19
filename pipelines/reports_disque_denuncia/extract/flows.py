@@ -67,7 +67,6 @@ with Flow(
         table_id=table_id,
         dump_mode=dump_mode,
         biglake_table=biglake_table,
-        source_format="csv",
     )
     create_table.set_upstream(csv_path_list)
 
