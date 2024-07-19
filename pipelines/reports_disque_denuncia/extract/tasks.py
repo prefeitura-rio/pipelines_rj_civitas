@@ -18,7 +18,7 @@ import requests
 import xmltodict
 from prefect import task
 from pytz import timezone
-
+import pandas as pd
 
 
 tz = timezone("America/Sao_Paulo")
@@ -426,3 +426,113 @@ def parse_relato(relato: Optional[ET.Element]) -> List[Dict[str, str]]:
         return ""
 
     return relato.text
+
+
+def explode_and_normalize(df: pd.DataFrame, column: str) -> pd.DataFrame:
+    """
+    Explodes a column in a DataFrame and normalizes its nested structure.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the column to explode.
+        column (str): The name of the column to explode.
+
+    Returns:
+        pd.DataFrame: The DataFrame with the exploded and normalized column.
+
+    """
+    df_exploded = df.explode(column, ignore_index=True)
+    df_normalized = pd.json_normalize(df_exploded[column])
+    return pd.concat([df_exploded.drop(columns=[column]), df_normalized], axis=1)
+
+
+def process_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Processes date columns in the given DataFrame
+
+    - Converts 'data_hora_difusao' to datetime
+    - Creates a new column 'data_hora_difusao' with the format 'YYYYMMDD_HH'
+    - Converts 'data_denuncia' to datetime with the format '%Y-%m-%d %H:%M:%S.
+
+    Parameters:
+        df (pd.DataFrame): The DataFrame to process.
+
+    Returns:
+        pd.DataFrame: The processed DataFrame.
+    """
+    df["datetime_difusao"] = pd.to_datetime(df["data_difusao"], format="%d/%m/%Y %H:%M")
+    df["data_difusao"] = df["datetime_difusao"].dt.date
+    df["hora_difusao"] = df["datetime_difusao"].dt.time
+
+    df["datetime_denuncia"] = pd.to_datetime(df["data_denuncia"], format="%d/%m/%Y %H:%M")
+    df["data_denuncia"] = df["datetime_denuncia"].dt.date
+    df["hora_denuncia"] = df["datetime_denuncia"].dt.time
+
+    return df
+
+
+def transform_report_data(source_file_path: str, final_path: str) -> List[str]:
+    """
+    Transforms XML report data into a structured CSV and extracts report IDs.
+
+    This function reads an XML file containing report data, processes it into a pandas DataFrame, 
+    normalizes nested structures, and saves the final DataFrame as a CSV file. The function also 
+    extracts unique report IDs from the data.
+
+    Args:
+        source_file_path (str): The file path of the source XML file.
+        final_path (str): The directory path where the CSV file will be saved.
+
+    Returns:
+        list: A list of unique report IDs extracted from the data.
+
+    Example:
+        source_file_path = '/path/to/source_report.xml'
+        final_path = '/path/to/save_directory'
+        report_ids = transform_report_data(source_file_path, final_path)
+        print(report_ids)  # Outputs a list of unique report IDs
+    """
+
+    def get_formatted_file_path(date: datetime, hour: datetime) -> Path:
+        """Helper function to format the file path based on the date and hour."""
+        return (Path(final_path) / f"ano_particao={date.strftime('%Y')}" /
+                f"mes_particao={date.strftime('%m')}" / f"data_particao={date}" / 
+                f"{date.strftime('%Y%m%d')}_{hour.strftime('%H')}.csv")
+
+    logging.info("Reading XML file")
+    with open(source_file_path, "r", encoding="ISO-8859-1") as file:
+        # xml_bytes = file.read()
+        try:
+            root = ET.fromstring(file.read())
+        except ET.ParseError as e:
+            logging.error("Failed to parse XML %s", e)
+            raise
+
+    denuncias_list = [parse_denuncia(denuncia) for denuncia in root.findall("denuncia")]
+
+    logging.info("Creating DataFrame from parsed data")
+    df = pd.DataFrame(denuncias_list)
+
+    logging.info("Exploding, normalizing columns and removing duplicated rows")
+    for col in ["xptos", "orgaos", "assuntos", "envolvidos", "denuncia_status"]:
+        df = explode_and_normalize(df, col)
+
+    df = process_datetime_columns(df)
+    df = df.drop_duplicates()
+
+    # Partition by
+    changed_file_path_list = []
+    for (data_difusao, hora_difusao), group in df.groupby(["data_difusao", "hora_difusao"]):
+        file_path = get_formatted_file_path(data_difusao, hora_difusao)
+
+        # Ensure the final directory exists
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Set header to False if file already exists
+        header_option = not file_path.exists()
+
+        logging.info("Saving reports to %s", file_path)
+        group.to_csv(file_path, header=header_option, mode="a", index=False)
+
+        changed_file_path_list.append(str(file_path))
+
+    return list(set(changed_file_path_list))
