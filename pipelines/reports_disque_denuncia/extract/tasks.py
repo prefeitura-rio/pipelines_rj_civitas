@@ -104,3 +104,43 @@ def save_report_as_xml(file_path: str, xml_bytes: bytes) -> Dict[str, List[str]]
     tree.write(xml_file_path, encoding="ISO-8859-1", xml_declaration=True)
 
     return {"xml_file_path": str(xml_file_path), "report_id_list": report_id_list}
+
+
+def capture_reports(
+    ids_list: List[str], start_date: str, tipo_difusao: str = "interesse"
+    ) -> List[Dict[str, str]]:
+    """
+    Capture reports using the provided IDs from the API endpoint.
+
+    Args:
+        ids_list (List[str]): List of report IDs to capture.
+        start_date (str): Start date for retrieving reports.
+        tipo_difusao (str): Type of diffusion expected. Default is 'interesse'.
+
+    Returns:
+        List[Dict[str, str]]: List of dictionaries with IDs and their response status.
+
+    Raises:
+        requests.HTTPError: If the API request fails with an HTTP error code.
+
+    """
+    # Transforms the list into a string concatenated by |
+    str_ids = "|".join(ids_list)
+
+    # Construct the URL with the provided IDs
+
+    url = f"https://proxy.dados.rio:3380/civitas/capturadas_{tipo_difusao}/"
+    params = {"id": str_ids, "fromdata": start_date}
+
+    try:
+        # Make the GET request to capture the reports
+        response_report = requests.get(url, params=params, timeout=600)
+        response_report.raise_for_status()  # Raises an error if the response is unsuccessful
+
+        # Returns a List of Dict with the ids and their response status
+        ids_response = [element.attrib for element in ET.fromstring(response_report.content)]
+        return ids_response
+
+    except requests.exceptions.HTTPError as err:
+        # Capture and re-raise the HTTP error for the caller
+        raise requests.HTTPError(f"Request failed: {err}")
