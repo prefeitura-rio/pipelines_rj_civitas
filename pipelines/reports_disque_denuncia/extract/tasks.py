@@ -12,7 +12,7 @@ Tasks include:
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Union, Optional
 import logging
 import requests
 import xmltodict
@@ -191,3 +191,238 @@ def get_reports_from_start_date(
             break  # TEMPORARY LIMITER
 
     return {"xml_file_path_list": xml_file_path_list, "capture_status_list": capture_status_list}
+
+
+def parse_denuncia(denuncia: ET.Element) -> Dict[str, Union[str, List[Dict[str, str]]]]:
+    """
+    Parses a single 'denuncia' element into a dictionary.
+
+    Args:
+        denuncia (ET.Element): The 'denuncia' XML element.
+
+    Returns:
+        Dict[str, Union[str, List[Dict[str, str]]]]: A dictionary with parsed 'denuncia' data.
+    """
+    denuncia_dict = {
+        "denuncia_numero": denuncia.get("numero", ""),
+        "denuncia_id": denuncia.get("id", ""),
+        "denuncia_parent_numero": denuncia.get("parentNumero", ""),
+        "denuncia_parent_id": denuncia.get("parentId", ""),
+        "data_denuncia": denuncia.get("dataDenuncia", ""),
+        "data_difusao": denuncia.get("dataDifusao", ""),
+        "denuncia_imediata": denuncia.get("imediata", ""),
+        "orgaos": parse_orgaos(denuncia.find("orgaos")),
+        "xptos": parse_xptos(denuncia.find("xptos")),
+        "assuntos": parse_assuntos(denuncia.find("assuntos")),
+        "endereco": parse_endereco(denuncia.find("endereco")).get("endereco"),
+        "bairro": parse_endereco(denuncia.find("endereco")).get("bairro"),
+        "municipio": parse_endereco(denuncia.find("endereco")).get("municipio"),
+        "estado": parse_endereco(denuncia.find("endereco")).get("estado"),
+        "latitude": parse_gps(denuncia.find("gps")).get("latitude"),
+        "longitude": parse_gps(denuncia.find("gps")).get("longitude"),
+        "envolvidos": parse_envolvidos_dados(denuncia.find("envolvidos")),
+        "relato": parse_relato(denuncia.find("relato")),
+        "denuncia_status": parse_resultados(denuncia.find("resultados")),
+    }
+    return denuncia_dict
+
+
+def parse_orgaos(orgaos: Optional[ET.Element]) -> List[Dict[str, str]]:
+    """
+    Parses 'orgaos' element into a list of dictionaries.
+
+    Args:
+        orgaos (Optional[ET.Element]): The 'orgaos' XML element.
+
+    Returns:
+        List[Dict[str, str]]: A list of dictionaries with parsed 'orgaos' data.
+    """
+    # Ensures that the columns will be created, even if the elements are missing in the XML
+    if orgaos is None or not list(orgaos):
+        return [{"orgao_id": "", "orgao_nome": "", "orgao_tipo": ""}]
+
+    return [
+        {
+            "orgao_id": orgao.get("id", ""),
+            "orgao_nome": orgao.get("nome", ""),
+            "orgao_tipo": orgao.get("tipo", ""),
+        }
+        for orgao in orgaos.findall("orgao")
+    ]
+
+
+def parse_xptos(xptos: Optional[ET.Element]) -> List[Dict[str, str]]:
+    """
+    Parses 'xptos' element into a list of dictionaries.
+
+    Args:
+        xptos (Optional[ET.Element]): The 'xptos' XML element.
+
+    Returns:
+        List[Dict[str, str]]: A list of dictionaries with parsed 'xptos' data.
+    """
+    # Ensures that the columns will be created, even if the elements are missing in the XML
+    if xptos is None or not list(xptos):
+        return [{"xpto_id": "", "xpto_nome": ""}]
+
+    return [
+        {"xpto_id": xpto.get("id", ""), "xpto_nome": xpto.get("nome", "")}
+        for xpto in xptos.findall("xpto")
+    ]
+
+
+def parse_assuntos(assuntos: Optional[ET.Element]) -> List[Dict[str, str]]:
+    """
+    Parses 'assuntos' element into a list of dictionaries.
+
+    Args:
+        assuntos (Optional[ET.Element]): The 'assuntos' XML element.
+
+    Returns:
+        List[Dict[str, str]]: A list of dictionaries with parsed 'assuntos' data.
+    """
+    # Ensures that the columns will be created, even if the elements are missing in the XML
+    if assuntos is None or not list(assuntos):
+        return [{"classe": "", "tipo": ""}]
+
+    return [
+        {
+            "assunto_classe": (classe.text.strip() if classe is not None else ""),
+            "assunto_tipo": (tipo.text.strip() if tipo is not None else ""),
+        }
+        for assunto in assuntos.findall("assunto")
+        for classe in [assunto.find("classe")]
+        for tipo in [assunto.find("tipo")]
+    ]
+
+
+def parse_endereco(endereco: Optional[ET.Element]) -> Dict[str, str]:
+    """
+    Parses 'endereco' element into a dictionary.
+
+    Args:
+        endereco (Optional[ET.Element]): The 'endereco' XML element.
+
+    Returns:
+        Dict[str, str]: A dictionary with parsed 'endereco' data.
+    """
+    # Ensures that the columns will be created, even if the elements are missing in the XML
+    if endereco is None:
+        return {"endereco": "", "bairro": "", "municipio": "", "estado": ""}
+
+    return {
+        "endereco": (
+            endereco.find("endereco").text.strip() if endereco.find("endereco") is not None else ""
+        ),
+        "bairro": (
+            endereco.find("bairro").text.strip() if endereco.find("bairro") is not None else ""
+        ),
+        "municipio": (
+            endereco.find("municipio").text.strip()
+            if endereco.find("municipio") is not None
+            else ""
+        ),
+        "estado": (
+            endereco.find("estado").text.strip() if endereco.find("estado") is not None else ""
+        ),
+    }
+
+
+def parse_gps(gps: Optional[ET.Element]) -> Dict[str, str]:
+    """
+    Parses 'gps' element into a dictionary.
+
+    Args:
+        gps (Optional[ET.Element]): The 'gps' XML element.
+
+    Returns:
+        Dict[str, str]: A dictionary with parsed 'gps' data.
+    """
+    # Ensures that the columns will be created, even if the elements are missing in the XML
+    if gps is None:
+        return {"latitude": "", "longitude": ""}
+
+    return {
+        "latitude": gps.find("lat").text.strip() if gps.find("lat").text is not None else "",
+        "longitude": gps.find("long").text.strip() if gps.find("long").text is not None else "",
+    }
+
+
+def parse_resultados(resultados: Optional[ET.Element]) -> List[Dict[str, str]]:
+    """
+    Parses 'resultados' element into a string.
+
+    Args:
+        resultados (Optional[ET.Element]): The 'resultados' XML element.
+
+    Returns:
+        str: The parsed 'resultados' text.
+    """
+    # Ensures that the columns will be created, even if the elements are missing in the XML
+    if resultados is None or not list(resultados):
+        return [{"denuncia_status": ""}]
+
+    return [{"denuncia_status": resultado.text} for resultado in resultados.findall("status")]
+
+
+def parse_envolvidos_dados(envolvidos: Optional[ET.Element]) -> List[Dict[str, str]]:
+    """
+    Parses 'envolvidos' element into a list of dictionaries.
+
+    Args:
+        envolvidos (Optional[ET.Element]): The 'envolvidos' XML element.
+
+    Returns:
+        List[Dict[str, str]]: A list of dictionaries with parsed 'envolvidos' data.
+    """
+    # Ensures that the columns will be created, even if the elements are missing in the XML
+    if envolvidos is None or not list(envolvidos):
+        return [
+            {
+                "envolvido_nome": "",
+                "envolvido_vulgo": "",
+                "envolvido_sexo": "",
+                "envolvido_idade": "",
+                "envolvido_pele": "",
+                "envolvido_estatura": "",
+                "envolvido_porte": "",
+                "envolvido_cabelos": "",
+                "envolvido_olhos": "",
+                "envolvido_outras_caracteristicas": "",
+            }
+        ]
+
+    return [
+        {
+            "envolvido_nome": dado.find("nome").text.strip(),
+            "envolvido_vulgo": dado.find("vulgo").text.strip(),
+            "envolvido_sexo": dado.find("sexo").text.strip(),
+            "envolvido_idade": dado.find("idade").text.strip(),
+            "envolvido_pele": caracteristica.find("pele").text.strip(),
+            "envolvido_estatura": caracteristica.find("estatura").text.strip(),
+            "envolvido_porte": caracteristica.find("porte").text.strip(),
+            "envolvido_cabelos": caracteristica.find("cabelos").text.strip(),
+            "envolvido_olhos": caracteristica.find("olhos").text.strip(),
+            "envolvido_outras_caracteristicas": caracteristica.find("outras").text.strip(),
+        }
+        for envolvido in envolvidos.findall("envolvido")
+        for dado in envolvido.findall("dados")
+        for caracteristica in envolvido.findall("caracteristicas")
+    ]
+
+
+def parse_relato(relato: Optional[ET.Element]) -> List[Dict[str, str]]:
+    """
+    Parses 'relato' element into a string.
+
+    Args:
+        relato (Optional[ET.Element]): The 'relato' XML element.
+
+    Returns:
+        str: The parsed 'relato' text.
+    """
+    # Ensures that the columns will be created, even if the elements are missing in the XML
+    if relato is None:
+        return ""
+
+    return relato.text
