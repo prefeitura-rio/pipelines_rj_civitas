@@ -11,7 +11,8 @@ test/*.csv
 setup.py
 .vscode/*
 *.hdf
-
+pipelines/reports_disque_denuncia/data/*.csv
+pipelines/reports_disque_denuncia/data/*.xml
 
 
 # Byte-compiled / optimized / DLL files
@@ -147,3 +148,6 @@ dmypy.json
 
 # VSCode project settings
 .vscode/
+
+# Pycharm project settings
+.idea/
