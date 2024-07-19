@@ -10,6 +10,8 @@ dbt-bigquery = "^1.6.1"
 google-cloud-storage = "^2.10.0"
 prefect = "1.4.1"
 prefeitura-rio = "1.0.0rc1"
+xmltodict = "^0.13.0"
+requests = "^2.32.3"
 
 
 [tool.poetry.group.dev]
