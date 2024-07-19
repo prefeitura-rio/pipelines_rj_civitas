@@ -9,20 +9,21 @@ Tasks include:
 - Transforming XML data into structured CSV files
 """
 
+import logging
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Union, Optional
-import logging
+from typing import Dict, List, Optional, Union
+
+import basedosdados as bd
+import pandas as pd
 import requests
 import xmltodict
 from prefect import task
+from prefeitura_rio.pipelines_utils.logging import log
 from pytz import timezone
-import pandas as pd
-
 
 tz = timezone("America/Sao_Paulo")
-logging.basicConfig(level=logging.INFO)
 
 
 def get_reports(start_date: str, tipo_difusao: str = "interesse") -> Dict[int, bytes]:
@@ -30,14 +31,14 @@ def get_reports(start_date: str, tipo_difusao: str = "interesse") -> Dict[int, b
     Retrieves reports from a specified start date and saves them as an XML file.
 
     Args:
-        start_date (str): Start date for retrieving reports in ISO format 
+        start_date (str): Start date for retrieving reports in ISO format
             (e.g., '2024-01-01').
-            
-        tipo_difusao (str): Type of diffusion expected. 'interesse' for specific 
+
+        tipo_difusao (str): Type of diffusion expected. 'interesse' for specific
             or 'geral' for all subjects. Default is 'interesse'.
 
     Returns:
-        Dict[int, bytes]: A dictionary with the quantity of reports and the XML 
+        Dict[int, bytes]: A dictionary with the quantity of reports and the XML
             bytes.
 
     Raises:
@@ -48,8 +49,8 @@ def get_reports(start_date: str, tipo_difusao: str = "interesse") -> Dict[int, b
         get_reports(start_date='2024-01-01')
 
     Note:
-        Ensure the start date format adheres to ISO standards. This function 
-        saves the retrieved XML content as a file but does not return it 
+        Ensure the start date format adheres to ISO standards. This function
+        saves the retrieved XML content as a file but does not return it
         directly.
     """
     try:
@@ -64,14 +65,8 @@ def get_reports(start_date: str, tipo_difusao: str = "interesse") -> Dict[int, b
             f"invalid tipo_difusao: {tipo_difusao}.\n" 'Must be "geral" or "interesse"'
         )
 
-    # url = f"https://proxy.dados.rio:3380/civitas/difusao_{tipo_difusao.lower()}/"
-    # params = {"fromdata": start_date}
-
-    url = f'http://22531177.disquedenuncia.org.br:3380/civitas/difusao_{tipo_difusao.lower()}/'
-    params = {'orgao': '1177001',
-            'pass': 'c1v1t4sprefrio',
-            'fromdata': start_date,
-            'crypt': 'false'}
+    url = f"https://proxy.dados.rio:3380/civitas/difusao_{tipo_difusao.lower()}/"
+    params = {"fromdata": start_date}
 
     response = requests.get(url, params=params, timeout=600)
     response.raise_for_status()
@@ -106,7 +101,6 @@ def save_report_as_xml(file_path: str, xml_bytes: bytes) -> Dict[str, List[str]]
     # Getting the reports ids and saving in a list with unique values
     report_id_list = list({element.get("id") for element in tree.findall("denuncia")})
 
-
     # Saving the xml file
     tree.write(xml_file_path, encoding="ISO-8859-1", xml_declaration=True)
 
@@ -115,7 +109,7 @@ def save_report_as_xml(file_path: str, xml_bytes: bytes) -> Dict[str, List[str]]
 
 def capture_reports(
     ids_list: List[str], start_date: str, tipo_difusao: str = "interesse"
-    ) -> List[Dict[str, str]]:
+) -> List[Dict[str, str]]:
     """
     Capture reports using the provided IDs from the API endpoint.
 
@@ -136,15 +130,8 @@ def capture_reports(
 
     # Construct the URL with the provided IDs
 
-    # url = f"https://proxy.dados.rio:3380/civitas/capturadas_{tipo_difusao}/"
-    # params = {"id": str_ids, "fromdata": start_date}
-
-    url_report = f'http://22531177.disquedenuncia.org.br:3380/civitas/capturadas_{tipo_difusao.lower()}/'
-    params = {'id': str_ids,
-            'orgao': '1177001',
-            'pass': 'c1v1t4sprefrio',
-            'fromdata': start_date,
-            'crypt': 'false'}
+    url = f"https://proxy.dados.rio:3380/civitas/capturadas_{tipo_difusao}/"
+    params = {"id": str_ids, "fromdata": start_date}
 
     try:
         # Make the GET request to capture the reports
@@ -162,10 +149,14 @@ def capture_reports(
 
 @task(max_retries=3, retry_delay=timedelta(seconds=30))
 def get_reports_from_start_date(
-    start_date: str, file_path: Path, tipo_difusao: str = "interesse"
-    ) -> Dict[str, List[str]]:
+    start_date: str,
+    file_path: Path,
+    tipo_difusao: str = "interesse",
+    dataset_id: str = None,
+    table_id: str = None,
+) -> Dict[str, List[str]]:
     """
-    Retrieves and processes reports from a start date until there are no more reports, 
+    Retrieves and processes reports from a start date until there are no more reports,
     saving them as XML files.
 
     Args:
@@ -174,11 +165,11 @@ def get_reports_from_start_date(
         tipo_difusao (str): Type of diffusion expected. Default is 'interesse'.
 
     Returns:
-        Dict[str, List[str]]: A dictionary containing a list of XML file paths and capture 
+        Dict[str, List[str]]: A dictionary containing a list of XML file paths and capture
             status lists.
     """
     file_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     temp_limiter = 0  # TEMPORARY LIMITER
     last_page = False
     xml_file_path_list = []
@@ -201,8 +192,13 @@ def get_reports_from_start_date(
         last_page = report_response["report_qty"] < 15
 
         temp_limiter += 1  # TEMPORARY LIMITER
-        if temp_limiter >= 2:  # TEMPORARY LIMITER
+        if temp_limiter >= 1:  # TEMPORARY LIMITER
             break  # TEMPORARY LIMITER
+
+    log("Start saving data to RAW", level="info")
+    storage_obj = bd.Storage(dataset_id=dataset_id, table_id=table_id)
+    storage_obj.upload(path=file_path, mode="raw")
+    log("XML files saved to RAW", level="info")
 
     return {"xml_file_path_list": xml_file_path_list, "capture_status_list": capture_status_list}
 
@@ -488,8 +484,8 @@ def transform_report_data(source_file_path: str, final_path: str) -> List[str]:
     """
     Transforms XML report data into a structured CSV and extracts report IDs.
 
-    This function reads an XML file containing report data, processes it into a pandas DataFrame, 
-    normalizes nested structures, and saves the final DataFrame as a CSV file. The function also 
+    This function reads an XML file containing report data, processes it into a pandas DataFrame,
+    normalizes nested structures, and saves the final DataFrame as a CSV file. The function also
     extracts unique report IDs from the data.
 
     Args:
@@ -508,9 +504,13 @@ def transform_report_data(source_file_path: str, final_path: str) -> List[str]:
 
     def get_formatted_file_path(date: datetime, hour: datetime) -> Path:
         """Helper function to format the file path based on the date and hour."""
-        return (Path(final_path) / f"ano_particao={date.strftime('%Y')}" /
-                f"mes_particao={date.strftime('%m')}" / f"data_particao={date}" / 
-                f"{date.strftime('%Y%m%d')}_{hour.strftime('%H')}.csv")
+        return (
+            Path(final_path)
+            / f"ano_particao={date.strftime('%Y')}"
+            / f"mes_particao={date.strftime('%m')}"
+            / f"data_particao={date}"
+            / f"{date.strftime('%Y%m%d')}_{hour.strftime('%H')}.csv"
+        )
 
     logging.info("Reading XML file")
     with open(source_file_path, "r", encoding="ISO-8859-1") as file:

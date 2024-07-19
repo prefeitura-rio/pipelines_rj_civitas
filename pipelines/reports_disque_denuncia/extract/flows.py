@@ -7,14 +7,17 @@ related to 'Disque Denúncia' reports..
 
 from pathlib import Path
 
-from prefect import Parameter
+from prefect import Parameter, case
 from prefect.run_configs import KubernetesRun
 from prefect.storage import GCS
-from prefeitura_rio.pipelines_utils.bd import create_table_and_upload_to_gcs
 from prefeitura_rio.pipelines_utils.custom import Flow
 from prefeitura_rio.pipelines_utils.state_handlers import (
     handler_initialize_sentry,
     handler_inject_bd_credentials,
+)
+from prefeitura_rio.pipelines_utils.tasks import (
+    create_table_and_upload_to_gcs,
+    task_run_dbt_model_task,
 )
 
 from pipelines.constants import constants
@@ -37,12 +40,16 @@ with Flow(
     table_id = Parameter("table_id", default="denuncias")
     dump_mode = Parameter("dump_mode", default="append")
     biglake_table = Parameter("biglake_table", default=True)
+    materialize_after_dump = Parameter("materialize_after_dump", default=False)
+    dbt_alias = Parameter("dbt_alias", default=False)
 
     # Task to get reports from the specified start date
     reports_response = get_reports_from_start_date(
         start_date=start_date,
         file_path=Path("/tmp") / "pipelines" / "reports_disque_denuncia" / "data" / "raw",
         tipo_difusao="interesse",
+        dataset_id=dataset_id,
+        table_id=table_id,
     )
     reports_response.set_upstream(table_id)
 
@@ -54,7 +61,7 @@ with Flow(
     )
     csv_path_list.set_upstream(reports_response)
 
-    create_table_and_upload_to_gcs(
+    create_table = create_table_and_upload_to_gcs(
         data_path=Path("/tmp") / "pipelines/reports_disque_denuncia/data/partition_directory",
         dataset_id=dataset_id,
         table_id=table_id,
@@ -62,6 +69,11 @@ with Flow(
         biglake_table=biglake_table,
         source_format="csv",
     )
+    create_table.set_upstream(csv_path_list)
+
+    with case(task=materialize_after_dump, value=True):
+        task_run_dbt_model_task(dataset_id=dataset_id, table_id=table_id, dbt_alias=dbt_alias)
+        task_run_dbt_model_task.set_upstream(create_table)
 
 extracao_disque_denuncia.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
 extracao_disque_denuncia.run_config = KubernetesRun(
