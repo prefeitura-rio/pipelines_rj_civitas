@@ -15,7 +15,6 @@ prefeitura-rio = { git = "https://github.com/prefeitura-rio/prefeitura-rio", rev
     "actions",
 ] }
 xmltodict = "^0.13.0"
-requests = "^2.32.3"
 
 
 [tool.poetry.group.dev]
