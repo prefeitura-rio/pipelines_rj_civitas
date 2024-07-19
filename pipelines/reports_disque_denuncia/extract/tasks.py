@@ -10,12 +10,13 @@ Tasks include:
 """
 
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List
 import logging
 import requests
 import xmltodict
+from prefect import task
 from pytz import timezone
 
 
@@ -144,3 +145,49 @@ def capture_reports(
     except requests.exceptions.HTTPError as err:
         # Capture and re-raise the HTTP error for the caller
         raise requests.HTTPError(f"Request failed: {err}")
+
+
+@task(max_retries=3, retry_delay=timedelta(seconds=30))
+def get_reports_from_start_date(
+    start_date: str, file_path: Path, tipo_difusao: str = "interesse"
+    ) -> Dict[str, List[str]]:
+    """
+    Retrieves and processes reports from a start date until there are no more reports, 
+    saving them as XML files.
+
+    Args:
+        start_date (str): Start date for retrieving reports.
+        file_path (Path): Directory path for saving XML files.
+        tipo_difusao (str): Type of diffusion expected. Default is 'interesse'.
+
+    Returns:
+        Dict[str, List[str]]: A dictionary containing a list of XML file paths and capture 
+            status lists.
+    """
+
+    temp_limiter = 0  # TEMPORARY LIMITER
+    last_page = False
+    xml_file_path_list = []
+    capture_status_list = []
+
+    while not last_page:
+        report_response = get_reports(start_date=start_date, tipo_difusao=tipo_difusao)
+
+        if report_response["report_qty"] > 0:
+            saved_xml = save_report_as_xml(
+                file_path=file_path, xml_bytes=report_response["xml_bytes"]
+            )
+
+            xml_file_path_list.append(saved_xml["xml_file_path"])
+
+            # Confirm that the data has been saved. The next iteration will display new 15 reports
+            report_id_list = saved_xml["report_id_list"]
+            capture_status_list.extend(capture_reports(report_id_list, start_date, tipo_difusao))
+
+        last_page = report_response["report_qty"] < 15
+
+        temp_limiter += 1  # TEMPORARY LIMITER
+        if temp_limiter >= 2:  # TEMPORARY LIMITER
+            break  # TEMPORARY LIMITER
+
+    return {"xml_file_path_list": xml_file_path_list, "capture_status_list": capture_status_list}
