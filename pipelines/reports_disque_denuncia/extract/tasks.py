@@ -52,14 +52,18 @@ def get_reports(start_date: str, tipo_difusao: str = "interesse") -> Dict[int, b
         saves the retrieved XML content as a file but does not return it
         directly.
     """
+    log(msg="Validating start_date format", level="info")
     try:
         # Ensure start_date is in 'yyyy-mm-dd' format
         datetime.strptime(start_date, "%Y-%m-%d")
     except ValueError as exc:
+        log(msg=f"Invalid start_date format: {exc}", level="error")
         raise ValueError("Incorrect date format, should be 'yyyy-mm-dd'") from exc
 
+    log(msg="Validating tipo_difusao", level="info")
     # Ensure that tipo_difusao is one of the allowed values
     if tipo_difusao.lower() not in (["geral", "interesse"]):
+        log(msg=f"Invalid tipo_difusao: {tipo_difusao}", level="error")
         raise AttributeError(
             f"invalid tipo_difusao: {tipo_difusao}.\n" 'Must be "geral" or "interesse"'
         )
@@ -67,9 +71,11 @@ def get_reports(start_date: str, tipo_difusao: str = "interesse") -> Dict[int, b
     url = f"https://proxy.dados.rio:3380/civitas/difusao_{tipo_difusao.lower()}/"
     params = {"fromdata": start_date}
 
+    log(msg="Sending request to API", level="info")
     response = requests.get(url, params=params, timeout=600)
     response.raise_for_status()
 
+    log(msg="Processing API response", level="info")
     # Get the response content and verify how many reports were returned
     xml_bytes = response.content
     report_qty = xmltodict.parse(response.text)["denuncias"]["@numTotal"]
@@ -88,8 +94,7 @@ def save_report_as_xml(file_path: str, xml_bytes: bytes) -> Dict[str, List[str]]
     Returns:
         Dict[str, List[str]]: A dictionary containing the file path and a list of report IDs.
     """
-    # Save the xml file if there is some data
-
+    log(msg="Saving XML file", level="info")
     root = ET.fromstring(xml_bytes)
 
     # Generating the file name
@@ -103,6 +108,7 @@ def save_report_as_xml(file_path: str, xml_bytes: bytes) -> Dict[str, List[str]]
     # Saving the xml file
     tree.write(xml_file_path, encoding="ISO-8859-1", xml_declaration=True)
 
+    log(msg="XML file saved", level="info")
     return {"xml_file_path": str(xml_file_path), "report_id_list": report_id_list}
 
 
@@ -124,6 +130,7 @@ def capture_reports(
         requests.HTTPError: If the API request fails with an HTTP error code.
 
     """
+    log(msg="Capturing reports from API", level="info")
     # Transforms the list into a string concatenated by |
     str_ids = "|".join(ids_list)
 
@@ -137,12 +144,14 @@ def capture_reports(
         response_report = requests.get(url, params=params, timeout=600)
         response_report.raise_for_status()  # Raises an error if the response is unsuccessful
 
+        log(msg="Processing captured reports", level="info")
         # Returns a List of Dict with the ids and their response status
         ids_response = [element.attrib for element in ET.fromstring(response_report.content)]
         return ids_response
 
     except requests.exceptions.HTTPError as err:
         # Capture and re-raise the HTTP error for the caller
+        log(msg=f"HTTP error occurred: {err}", level="error")
         raise requests.HTTPError(f"Request failed: {err}")
 
 
@@ -153,6 +162,7 @@ def get_reports_from_start_date(
     tipo_difusao: str = "interesse",
     dataset_id: str = None,
     table_id: str = None,
+    loop_limiter: int = None,
 ) -> Dict[str, List[str]]:
     """
     Retrieves and processes reports from a start date until there are no more reports,
@@ -162,11 +172,16 @@ def get_reports_from_start_date(
         start_date (str): Start date for retrieving reports.
         file_path (Path): Directory path for saving XML files.
         tipo_difusao (str): Type of diffusion expected. Default is 'interesse'.
+        dataset_id (str): BigQuery data set id.
+        table_id (str): BigQuery table_id.
+        loop_limiter (int): Limits the loop iterations.
+            default is None, indicating that the loop will continue until the last date with data.
 
     Returns:
         Dict[str, List[str]]: A dictionary containing a list of XML file paths and capture
             status lists.
     """
+    log(msg="Creating directories if not exist", level="info")
     file_path.parent.mkdir(parents=True, exist_ok=True)
 
     temp_limiter = 0  # TEMPORARY LIMITER
@@ -174,6 +189,7 @@ def get_reports_from_start_date(
     xml_file_path_list = []
     capture_status_list = []
 
+    log(msg="Starting report retrieval loop", level="info")
     while not last_page:
         report_response = get_reports(start_date=start_date, tipo_difusao=tipo_difusao)
 
@@ -190,9 +206,10 @@ def get_reports_from_start_date(
 
         last_page = report_response["report_qty"] < 15
 
-        temp_limiter += 1  # TEMPORARY LIMITER
-        if temp_limiter >= 1:  # TEMPORARY LIMITER
-            break  # TEMPORARY LIMITER
+        if loop_limiter:
+            temp_limiter += 1  # TEMPORARY LIMITER
+            if temp_limiter >= 5:  # TEMPORARY LIMITER
+                break  # TEMPORARY LIMITER
 
     log("Start saving data to RAW", level="info")
     storage_obj = bd.Storage(dataset_id=dataset_id, table_id=table_id)
@@ -495,6 +512,7 @@ def transform_report_data(source_file_path: str, final_path: str) -> List[str]:
         report_ids = transform_report_data(source_file_path, final_path)
         print(report_ids)  # Outputs a list of unique report IDs
     """
+    log(msg="Transforming XML files into CSV", level="info")
 
     def get_formatted_file_path(date: datetime, hour: datetime) -> Path:
         """Helper function to format the file path based on the date and hour."""
@@ -506,7 +524,7 @@ def transform_report_data(source_file_path: str, final_path: str) -> List[str]:
             / f"{date.strftime('%Y%m%d')}_{hour.strftime('%H')}.csv"
         )
 
-    log(msg="Reading XML file", level="info")
+    log(msg="Reading XML files", level="info")
     with open(source_file_path, "r", encoding="ISO-8859-1") as file:
         # xml_bytes = file.read()
         try:
@@ -515,6 +533,7 @@ def transform_report_data(source_file_path: str, final_path: str) -> List[str]:
             log(msg=f"Failed to parse XML {e}", level="error")
             raise
 
+    log(msg="Reading XML elements", level="info")
     denuncias_list = [parse_denuncia(denuncia) for denuncia in root.findall("denuncia")]
 
     log(msg="Creating DataFrame from parsed data", level="info")
