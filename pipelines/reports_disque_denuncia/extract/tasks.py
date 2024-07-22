@@ -9,7 +9,6 @@ Tasks include:
 - Transforming XML data into structured CSV files
 """
 
-import logging
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -512,21 +511,21 @@ def transform_report_data(source_file_path: str, final_path: str) -> List[str]:
             / f"{date.strftime('%Y%m%d')}_{hour.strftime('%H')}.csv"
         )
 
-    logging.info("Reading XML file")
+    log(msg="Reading XML file", level="info")
     with open(source_file_path, "r", encoding="ISO-8859-1") as file:
         # xml_bytes = file.read()
         try:
             root = ET.fromstring(file.read())
         except ET.ParseError as e:
-            logging.error("Failed to parse XML %s", e)
+            log(msg=f"Failed to parse XML {e}", level="error")
             raise
 
     denuncias_list = [parse_denuncia(denuncia) for denuncia in root.findall("denuncia")]
 
-    logging.info("Creating DataFrame from parsed data")
+    log(msg="Creating DataFrame from parsed data", level="info")
     df = pd.DataFrame(denuncias_list)
 
-    logging.info("Exploding, normalizing columns and removing duplicated rows")
+    log(msg="Exploding, normalizing columns and removing duplicated rows", level="info")
     for col in ["xptos", "orgaos", "assuntos", "envolvidos", "denuncia_status"]:
         df = explode_and_normalize(df, col)
 
@@ -544,7 +543,7 @@ def transform_report_data(source_file_path: str, final_path: str) -> List[str]:
         # Set header to False if file already exists
         header_option = not file_path.exists()
 
-        logging.info("Saving reports to %s", file_path)
+        log(msg=f"Saving reports to {file_path}", level="info")
         group.to_csv(file_path, header=header_option, mode="a", index=False)
 
         changed_file_path_list.append(str(file_path))
