@@ -162,7 +162,7 @@ def get_reports_from_start_date(
     tipo_difusao: str = "interesse",
     dataset_id: str = None,
     table_id: str = None,
-    loop_limiter: int = None,
+    loop_limiter: bool = False,
 ) -> Dict[str, List[str]]:
     """
     Retrieves and processes reports from a start date until there are no more reports,
@@ -174,7 +174,7 @@ def get_reports_from_start_date(
         tipo_difusao (str): Type of diffusion expected. Default is 'interesse'.
         dataset_id (str): BigQuery data set id.
         table_id (str): BigQuery table_id.
-        loop_limiter (int): Limits the loop iterations.
+        loop_limiter (int): Limits the loop iterations to 5 iterations.
             default is None, indicating that the loop will continue until the last date with data.
 
     Returns:
