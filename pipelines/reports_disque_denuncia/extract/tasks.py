@@ -319,21 +319,16 @@ def parse_endereco(endereco: Optional[ET.Element]) -> Dict[str, str]:
     if endereco is None:
         return {"endereco": "", "bairro": "", "municipio": "", "estado": ""}
 
+    def get_text(element: ET.Element, tag: str) -> str:
+        """Helper function to extract text from XML element."""
+        sub_element = endereco.find(tag)
+        return sub_element.text.strip() if sub_element is not None else ""
+
     return {
-        "endereco": (
-            endereco.find("endereco").text.strip() if endereco.find("endereco") is not None else ""
-        ),
-        "bairro": (
-            endereco.find("bairro").text.strip() if endereco.find("bairro") is not None else ""
-        ),
-        "municipio": (
-            endereco.find("municipio").text.strip()
-            if endereco.find("municipio") is not None
-            else ""
-        ),
-        "estado": (
-            endereco.find("estado").text.strip() if endereco.find("estado") is not None else ""
-        ),
+        "endereco": get_text(endereco, "endereco"),
+        "bairro": get_text(endereco, "bairro"),
+        "municipio": get_text(endereco, "municipio"),
+        "estado": get_text(endereco, "estado"),
     }
 
 
