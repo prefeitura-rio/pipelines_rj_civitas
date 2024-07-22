@@ -42,6 +42,7 @@ with Flow(
     biglake_table = Parameter("biglake_table", default=True)
     materialize_after_dump = Parameter("materialize_after_dump", default=False)
     dbt_alias = Parameter("dbt_alias", default=False)
+    loop_limiter = Parameter("loop_limiter", default=False)
 
     # Task to get reports from the specified start date
     reports_response = get_reports_from_start_date(
@@ -50,6 +51,7 @@ with Flow(
         tipo_difusao="interesse",
         dataset_id=dataset_id,
         table_id=table_id,
+        loop_limiter=loop_limiter,
     )
     reports_response.set_upstream(table_id)
 
