@@ -36,7 +36,7 @@ with Flow(
 ) as extracao_disque_denuncia:
 
     start_date = Parameter("start_date", default="2021-01-01")
-    dataset_id = Parameter("dataset_id", default="disque_denuncias")
+    dataset_id = Parameter("dataset_id", default="disque_denuncia")
     table_id = Parameter("table_id", default="denuncias")
     dump_mode = Parameter("dump_mode", default="append")
     biglake_table = Parameter("biglake_table", default=True)
