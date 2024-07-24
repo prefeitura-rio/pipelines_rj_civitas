@@ -43,12 +43,13 @@ with Flow(
     materialize_after_dump = Parameter("materialize_after_dump", default=False)
     dbt_alias = Parameter("dbt_alias", default=False)
     loop_limiter = Parameter("loop_limiter", default=False)
+    tipo_difusao = Parameter("tipo_difusao", default="interesse")
 
     # Task to get reports from the specified start date
     reports_response = get_reports_from_start_date(
         start_date=start_date,
         file_path=Path("/tmp") / "pipelines" / "reports_disque_denuncia" / "data" / "raw",
-        tipo_difusao="interesse",
+        tipo_difusao=tipo_difusao,
         dataset_id=dataset_id,
         table_id=table_id,
         loop_limiter=loop_limiter,
