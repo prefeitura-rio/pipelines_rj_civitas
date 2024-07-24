@@ -68,7 +68,7 @@ def get_reports(start_date: str, tipo_difusao: str = "interesse") -> Dict[int, b
             f"invalid tipo_difusao: {tipo_difusao}.\n" 'Must be "geral" or "interesse"'
         )
 
-    url = f"https://proxy.dados.rio:3380/civitas/difusao_{tipo_difusao.lower()}/"
+    url = f"https://proxy.civitas.rio/civitas/difusao_{tipo_difusao.lower()}/"
     params = {"fromdata": start_date}
 
     log(msg="Sending request to API", level="info")
@@ -136,7 +136,7 @@ def capture_reports(
 
     # Construct the URL with the provided IDs
 
-    url = f"https://proxy.dados.rio:3380/civitas/capturadas_{tipo_difusao}/"
+    url = f"https://proxy.civitas.rio/civitas/capturadas_{tipo_difusao}/"
     params = {"id": str_ids, "fromdata": start_date}
 
     try:
