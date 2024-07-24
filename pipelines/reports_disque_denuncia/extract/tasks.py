@@ -83,23 +83,24 @@ def get_reports(start_date: str, tipo_difusao: str = "interesse") -> Dict[int, b
     return {"report_qty": int(report_qty), "xml_bytes": xml_bytes}
 
 
-def save_report_as_xml(file_path: str, xml_bytes: bytes) -> Dict[str, List[str]]:
+def save_report_as_xml(file_path: str | Path, xml_bytes: bytes) -> Dict[str, List[str]]:
     """
     Saves the XML bytes as a file and extracts report IDs.
 
     Args:
-        file_path (str): Path for saving the file.
+        file_path (Path, str): Path for saving the file.
         xml_bytes (bytes): XML content to be saved.
 
     Returns:
         Dict[str, List[str]]: A dictionary containing the file path and a list of report IDs.
     """
+
     log(msg="Saving XML file", level="info")
     root = ET.fromstring(xml_bytes)
 
     # Generating the file name
     xml_file_name = f"{datetime.now(tz=tz).strftime('%Y%m%d_%H%M%S_%f')}_report_disque_denuncia.xml"
-    xml_file_path = Path(file_path / xml_file_name)
+    xml_file_path = file_path / xml_file_name
     tree = ET.ElementTree(root)
 
     # Getting the reports ids and saving in a list with unique values
@@ -182,7 +183,8 @@ def get_reports_from_start_date(
             status lists.
     """
     log(msg="Creating directories if not exist", level="info")
-    file_path.parent.mkdir(parents=True, exist_ok=True)
+    file_path = Path(file_path)
+    file_path.mkdir(parents=True, exist_ok=True)
 
     temp_limiter = 0  # TEMPORARY LIMITER
     last_page = False
@@ -566,7 +568,9 @@ def transform_report_data(source_file_path: str, final_path: str) -> List[str]:
 
 
 @task
-def loop_transform_report_data(source_file_path_list: List[str], final_path: str) -> List[str]:
+def loop_transform_report_data(
+    source_file_path_list: List[str], final_path: str | Path
+) -> List[str]:
     """
     Processes multiple XML report files into structured CSVs and extracts report IDs.
 
@@ -588,6 +592,10 @@ def loop_transform_report_data(source_file_path_list: List[str], final_path: str
         print(changed_file_paths)  # Outputs a list of unique file paths for the saved CSVs
     """
     changed_file_path_list = []
+
+    final_path = Path(final_path)
+    final_path.mkdir(parents=True, exist_ok=True)
+
     for file_path in source_file_path_list:
         changed_file_path_list.extend(transform_report_data(file_path, final_path))
 

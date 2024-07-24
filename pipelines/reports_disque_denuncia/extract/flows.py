@@ -48,7 +48,7 @@ with Flow(
     # Task to get reports from the specified start date
     reports_response = get_reports_from_start_date(
         start_date=start_date,
-        file_path=Path("/tmp") / "pipelines" / "reports_disque_denuncia" / "data" / "raw",
+        file_path=Path("/tmp/pipelines/reports_disque_denuncia/data/raw"),
         tipo_difusao=tipo_difusao,
         dataset_id=dataset_id,
         table_id=table_id,
@@ -60,12 +60,12 @@ with Flow(
     # Task to transform the XML files into CSV files
     csv_path_list = loop_transform_report_data(
         source_file_path_list=reports_response["xml_file_path_list"],
-        final_path=Path("/tmp") / "pipelines/reports_disque_denuncia/data/partition_directory",
+        final_path=Path("/tmp/pipelines/reports_disque_denuncia/data/partition_directory"),
     )
     csv_path_list.set_upstream(reports_response)
 
     create_table = create_table_and_upload_to_gcs(
-        data_path=Path("/tmp") / "pipelines/reports_disque_denuncia/data/partition_directory",
+        data_path=Path("/tmp/pipelines/reports_disque_denuncia/data/partition_directory"),
         dataset_id=dataset_id,
         table_id=table_id,
         dump_mode=dump_mode,
