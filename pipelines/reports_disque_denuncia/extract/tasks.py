@@ -19,7 +19,9 @@ import pandas as pd
 import requests
 import xmltodict
 from prefect import task
+from prefeitura_rio.pipelines_utils.bd import get_project_id
 from prefeitura_rio.pipelines_utils.logging import log
+from prefeitura_rio.pipelines_utils.prefect import get_flow_run_mode
 from pytz import timezone
 
 tz = timezone("America/Sao_Paulo")
@@ -190,6 +192,9 @@ def get_reports_from_start_date(
     last_page = False
     xml_file_path_list = []
     capture_status_list = []
+    flow_run_mode = get_flow_run_mode()
+    project_id = get_project_id(mode=flow_run_mode)
+    storage_obj = bd.Storage(dataset_id=dataset_id, table_id=table_id)
 
     log(msg="Starting report retrieval loop", level="info")
     while not last_page:
@@ -199,7 +204,13 @@ def get_reports_from_start_date(
             saved_xml = save_report_as_xml(
                 file_path=file_path, xml_bytes=report_response["xml_bytes"]
             )
+            log(
+                f"Saving data to RAW: https://console.cloud.google.com/storage/browser/{project_id}/raw/{dataset_id}/{table_id}",
+                level="info",
+            )
+            storage_obj.upload(path=saved_xml["xml_file_path"], mode="raw", if_exists="replace")
 
+            log("XML files saved to RAW", level="info")
             xml_file_path_list.append(saved_xml["xml_file_path"])
 
             # Confirm that the data has been saved. The next iteration will display new 15 reports
@@ -212,11 +223,6 @@ def get_reports_from_start_date(
             temp_limiter += 1  # TEMPORARY LIMITER
             if temp_limiter >= 5:  # TEMPORARY LIMITER
                 break  # TEMPORARY LIMITER
-
-    log("Start saving data to RAW", level="info")
-    storage_obj = bd.Storage(dataset_id=dataset_id, table_id=table_id)
-    storage_obj.upload(path=file_path, mode="raw")
-    log("XML files saved to RAW", level="info")
 
     return {"xml_file_path_list": xml_file_path_list, "capture_status_list": capture_status_list}
 
