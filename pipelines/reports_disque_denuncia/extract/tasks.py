@@ -106,7 +106,7 @@ def save_report_as_xml(file_path: str, xml_bytes: bytes) -> Dict[str, List[str]]
     report_id_list = list({element.get("id") for element in tree.findall("denuncia")})
 
     # Saving the xml file
-    tree.write(xml_file_path, encoding="ISO-8859-1", xml_declaration=True)
+    tree.write(str(xml_file_path), encoding="ISO-8859-1", xml_declaration=True)
 
     log(msg="XML file saved", level="info")
     return {"xml_file_path": str(xml_file_path), "report_id_list": report_id_list}
