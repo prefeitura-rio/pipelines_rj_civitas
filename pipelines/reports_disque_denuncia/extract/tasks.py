@@ -200,7 +200,8 @@ def get_reports_from_start_date(
             status lists.
     """
     log(msg="Creating directories if not exist", level="info")
-    file_dir = Path(file_dir) / str(datetime.now(tz=tz).date())
+    partition = f"data_particao={str(datetime.now(tz=tz).date())}"
+    file_dir = Path(file_dir) / partition
     file_dir.mkdir(parents=True, exist_ok=True)
 
     temp_limiter = 0  # TEMPORARY LIMITER
@@ -235,7 +236,12 @@ def get_reports_from_start_date(
                 index=iter_counter,
                 mod=mod,
             )
-            storage_obj.upload(path=saved_xml["xml_file_path"], mode="raw", if_exists="replace")
+            storage_obj.upload(
+                path=saved_xml["xml_file_path"],
+                mode="raw",
+                partitions=partition,
+                if_exists="replace",
+            )
 
             log_mod("XML files saved to RAW", level="info", index=iter_counter, mod=mod)
             xml_file_path_list.append(saved_xml["xml_file_path"])
