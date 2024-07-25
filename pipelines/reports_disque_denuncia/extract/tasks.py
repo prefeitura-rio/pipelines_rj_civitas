@@ -223,7 +223,10 @@ def get_reports_from_start_date(
 
         if report_response["report_qty"] > 0:
             saved_xml = save_report_as_xml(
-                file_dir=file_dir, xml_bytes=report_response["xml_bytes"]
+                file_dir=file_dir,
+                xml_bytes=report_response["xml_bytes"],
+                mod=mod,
+                iter_counter=iter_counter,
             )
             log_mod(
                 msg=f"Saving data to RAW: https://console.cloud.google.com/storage/browser/"
@@ -239,7 +242,15 @@ def get_reports_from_start_date(
 
             # Confirm that the data has been saved. The next iteration will display new 15 reports
             report_id_list = saved_xml["report_id_list"]
-            capture_status_list.extend(capture_reports(report_id_list, start_date, tipo_difusao))
+            capture_status_list.extend(
+                capture_reports(
+                    ids_list=report_id_list,
+                    start_date=start_date,
+                    tipo_difusao=tipo_difusao,
+                    mod=mod,
+                    iter_counter=iter_counter,
+                )
+            )
 
         last_page = report_response["report_qty"] < 15
 
@@ -642,8 +653,13 @@ def loop_transform_report_data(
     iter_counter = 0
 
     for file_path in source_file_path_list:
-        log_mod(msg="Transforming XML files into CSV", level="info", index=iter_counter, mod=mod)
-        changed_file_path_list.extend(transform_report_data(file_path, final_file_dir))
-        log_mod(msg=f"Saving reports to {file_path}", level="info", index=iter_counter, mod=mod)
+        changed_file_path_list.extend(
+            transform_report_data(
+                source_file_path=file_path,
+                final_file_dir=final_file_dir,
+                mod=mod,
+                iter_counter=iter_counter,
+            )
+        )
 
     return list(set(changed_file_path_list))
