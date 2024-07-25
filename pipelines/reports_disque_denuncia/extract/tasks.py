@@ -200,7 +200,13 @@ def get_reports_from_start_date(
             status lists.
     """
     log(msg="Creating directories if not exist", level="info")
-    partition = f"data_particao={str(datetime.now(tz=tz).date())}"
+    current_date = datetime.now(tz=tz).date()
+    partition = (
+        f"ano_particao={current_date.strftime('%Y')}/"
+        f"mes_particao={current_date.strftime('%m')}/"
+        f"data_particao={current_date}"
+    )
+
     file_dir = Path(file_dir) / partition
     file_dir.mkdir(parents=True, exist_ok=True)
 
