@@ -200,7 +200,7 @@ def get_reports_from_start_date(
             status lists.
     """
     log(msg="Creating directories if not exist", level="info")
-    file_dir = Path(file_dir)
+    file_dir = Path(file_dir) / str(datetime.now(tz=tz).date())
     file_dir.mkdir(parents=True, exist_ok=True)
 
     temp_limiter = 0  # TEMPORARY LIMITER
