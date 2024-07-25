@@ -85,12 +85,12 @@ def get_reports(start_date: str, tipo_difusao: str = "interesse") -> Dict[int, b
     return {"report_qty": int(report_qty), "xml_bytes": xml_bytes}
 
 
-def save_report_as_xml(file_path: str | Path, xml_bytes: bytes) -> Dict[str, List[str]]:
+def save_report_as_xml(file_dir: str | Path, xml_bytes: bytes) -> Dict[str, List[str]]:
     """
     Saves the XML bytes as a file and extracts report IDs.
 
     Args:
-        file_path (Path, str): Path for saving the file.
+        file_dir (Path, str): Path for saving the file.
         xml_bytes (bytes): XML content to be saved.
 
     Returns:
@@ -102,7 +102,7 @@ def save_report_as_xml(file_path: str | Path, xml_bytes: bytes) -> Dict[str, Lis
 
     # Generating the file name
     xml_file_name = f"{datetime.now(tz=tz).strftime('%Y%m%d_%H%M%S_%f')}_report_disque_denuncia.xml"
-    xml_file_path = file_path / xml_file_name
+    xml_file_path = file_dir / xml_file_name
     tree = ET.ElementTree(root)
 
     # Getting the reports ids and saving in a list with unique values
@@ -161,7 +161,7 @@ def capture_reports(
 @task(max_retries=3, retry_delay=timedelta(seconds=30))
 def get_reports_from_start_date(
     start_date: str,
-    file_path: Path,
+    file_dir: Path,
     tipo_difusao: str = "interesse",
     dataset_id: str = None,
     table_id: str = None,
@@ -173,7 +173,7 @@ def get_reports_from_start_date(
 
     Args:
         start_date (str): Start date for retrieving reports.
-        file_path (Path): Directory path for saving XML files.
+        file_dir (Path): Directory path for saving XML files.
         tipo_difusao (str): Type of diffusion expected. Default is 'interesse'.
         dataset_id (str): BigQuery data set id.
         table_id (str): BigQuery table_id.
@@ -185,8 +185,8 @@ def get_reports_from_start_date(
             status lists.
     """
     log(msg="Creating directories if not exist", level="info")
-    file_path = Path(file_path)
-    file_path.mkdir(parents=True, exist_ok=True)
+    file_dir = Path(file_dir)
+    file_dir.mkdir(parents=True, exist_ok=True)
 
     temp_limiter = 0  # TEMPORARY LIMITER
     last_page = False
@@ -202,10 +202,11 @@ def get_reports_from_start_date(
 
         if report_response["report_qty"] > 0:
             saved_xml = save_report_as_xml(
-                file_path=file_path, xml_bytes=report_response["xml_bytes"]
+                file_dir=file_dir, xml_bytes=report_response["xml_bytes"]
             )
             log(
-                f"Saving data to RAW: https://console.cloud.google.com/storage/browser/{project_id}/raw/{dataset_id}/{table_id}",
+                f"Saving data to RAW: https://console.cloud.google.com/storage/browser/"
+                f"{project_id}/raw/{dataset_id}/{table_id}",
                 level="info",
             )
             storage_obj.upload(path=saved_xml["xml_file_path"], mode="raw", if_exists="replace")
@@ -499,7 +500,7 @@ def process_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def transform_report_data(source_file_path: str, final_path: str) -> List[str]:
+def transform_report_data(source_file_path: str, final_file_dir: str) -> List[str]:
     """
     Transforms XML report data into a structured CSV and extracts report IDs.
 
@@ -509,27 +510,26 @@ def transform_report_data(source_file_path: str, final_path: str) -> List[str]:
 
     Args:
         source_file_path (str): The file path of the source XML file.
-        final_path (str): The directory path where the CSV file will be saved.
+        final_file_dir (str): The directory path where the CSV file will be saved.
 
     Returns:
         list: A list of unique report IDs extracted from the data.
 
     Example:
         source_file_path = '/path/to/source_report.xml'
-        final_path = '/path/to/save_directory'
-        report_ids = transform_report_data(source_file_path, final_path)
+        final_file_dir = '/path/to/save_directory'
+        report_ids = transform_report_data(source_file_path, final_file_dir)
         print(report_ids)  # Outputs a list of unique report IDs
     """
     log(msg="Transforming XML files into CSV", level="info")
 
-    def get_formatted_file_path(date: datetime, hour: datetime) -> Path:
+    def get_formatted_file_dir(date: datetime, hour: datetime) -> Path:
         """Helper function to format the file path based on the date and hour."""
         return (
-            Path(final_path)
+            Path(final_file_dir)
             / f"ano_particao={date.strftime('%Y')}"
             / f"mes_particao={date.strftime('%m')}"
             / f"data_particao={date}"
-            / f"{date.strftime('%Y%m%d')}_{hour.strftime('%H')}.csv"
         )
 
     log(msg="Reading XML files", level="info")
@@ -556,11 +556,14 @@ def transform_report_data(source_file_path: str, final_path: str) -> List[str]:
 
     # Partition by
     changed_file_path_list = []
-    for (data_difusao, hora_difusao), group in df.groupby(["data_difusao", "hora_difusao"]):
-        file_path = get_formatted_file_path(data_difusao, hora_difusao)
+    for (data_denuncia, hora_denuncia), group in df.groupby(["data_denuncia", "hora_denuncia"]):
+        file_dir = get_formatted_file_dir(data_denuncia, hora_denuncia)
 
         # Ensure the final directory exists
-        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_dir.mkdir(parents=True, exist_ok=True)
+
+        # Compose the file_path with the current datetime in unix format
+        file_path = file_dir / f"{str(datetime.now().timestamp()).replace('.', '_')}.csv"
 
         # Set header to False if file already exists
         header_option = not file_path.exists()
@@ -575,7 +578,7 @@ def transform_report_data(source_file_path: str, final_path: str) -> List[str]:
 
 @task
 def loop_transform_report_data(
-    source_file_path_list: List[str], final_path: str | Path
+    source_file_path_list: List[str], final_file_dir: str | Path
 ) -> List[str]:
     """
     Processes multiple XML report files into structured CSVs and extracts report IDs.
@@ -586,23 +589,23 @@ def loop_transform_report_data(
 
     Args:
         source_file_path_list (List[str]): A list of file paths for the source XML files.
-        final_path (str): The directory path where the CSV files will be saved.
+        final_file_dir (str): The directory path where the CSV files will be saved.
 
     Returns:
         List[str]: A list of unique file paths for the CSV files that were saved.
 
     Example:
         source_file_path_list = ['/path/to/source_report1.xml', '/path/to/source_report2.xml']
-        final_path = '/path/to/save_directory'
-        changed_file_paths = loop_transform_report_data(source_file_path_list, final_path)
+        final_file_dir = '/path/to/save_directory'
+        changed_file_paths = loop_transform_report_data(source_file_path_list, final_file_dir)
         print(changed_file_paths)  # Outputs a list of unique file paths for the saved CSVs
     """
     changed_file_path_list = []
 
-    final_path = Path(final_path)
-    final_path.mkdir(parents=True, exist_ok=True)
+    final_file_dir = Path(final_file_dir)
+    final_file_dir.mkdir(parents=True, exist_ok=True)
 
     for file_path in source_file_path_list:
-        changed_file_path_list.extend(transform_report_data(file_path, final_path))
+        changed_file_path_list.extend(transform_report_data(file_path, final_file_dir))
 
     return list(set(changed_file_path_list))
