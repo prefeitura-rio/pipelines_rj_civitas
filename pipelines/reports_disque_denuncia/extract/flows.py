@@ -44,6 +44,7 @@ with Flow(
     dbt_alias = Parameter("dbt_alias", default=False)
     loop_limiter = Parameter("loop_limiter", default=False)
     tipo_difusao = Parameter("tipo_difusao", default="interesse")
+    mod = Parameter("mod", default=100)
 
     # Task to get reports from the specified start date
     reports_response = get_reports_from_start_date(
@@ -53,6 +54,7 @@ with Flow(
         dataset_id=dataset_id,
         table_id=table_id,
         loop_limiter=loop_limiter,
+        mod=mod,
     )
     reports_response.set_upstream(table_id)
 
@@ -61,6 +63,7 @@ with Flow(
     csv_path_list = loop_transform_report_data(
         source_file_path_list=reports_response["xml_file_path_list"],
         final_file_dir=Path("/tmp/pipelines/reports_disque_denuncia/data/partition_directory"),
+        mod=mod,
     )
     csv_path_list.set_upstream(reports_response)
 

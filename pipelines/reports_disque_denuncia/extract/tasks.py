@@ -20,23 +20,26 @@ import requests
 import xmltodict
 from prefect import task
 from prefeitura_rio.pipelines_utils.bd import get_project_id
-from prefeitura_rio.pipelines_utils.logging import log
+from prefeitura_rio.pipelines_utils.logging import log, log_mod
 from prefeitura_rio.pipelines_utils.prefect import get_flow_run_mode
 from pytz import timezone
 
 tz = timezone("America/Sao_Paulo")
 
 
-def get_reports(start_date: str, tipo_difusao: str = "interesse") -> Dict[int, bytes]:
+def get_reports(
+    start_date: str, tipo_difusao: str = "interesse", mod: int = 100, iter_counter: int = 0
+) -> Dict[int, bytes]:
     """
     Retrieves reports from a specified start date and saves them as an XML file.
 
     Args:
         start_date (str): Start date for retrieving reports in ISO format
             (e.g., '2024-01-01').
-
         tipo_difusao (str): Type of diffusion expected. 'interesse' for specific
             or 'geral' for all subjects. Default is 'interesse'.
+        mod (int): Only logs a message if the index is a multiple of mod. Default is 100.
+        iter_counter (int): Actual index for log usage.
 
     Returns:
         Dict[int, bytes]: A dictionary with the quantity of reports and the XML
@@ -54,7 +57,7 @@ def get_reports(start_date: str, tipo_difusao: str = "interesse") -> Dict[int, b
         saves the retrieved XML content as a file but does not return it
         directly.
     """
-    log(msg="Validating start_date format", level="info")
+    log_mod(msg="Validating start_date format", level="info", index=iter_counter, mod=mod)
     try:
         # Ensure start_date is in 'yyyy-mm-dd' format
         datetime.strptime(start_date, "%Y-%m-%d")
@@ -62,7 +65,7 @@ def get_reports(start_date: str, tipo_difusao: str = "interesse") -> Dict[int, b
         log(msg=f"Invalid start_date format: {exc}", level="error")
         raise ValueError("Incorrect date format, should be 'yyyy-mm-dd'") from exc
 
-    log(msg="Validating tipo_difusao", level="info")
+    log_mod(msg="Validating tipo_difusao", level="info", index=iter_counter, mod=mod)
     # Ensure that tipo_difusao is one of the allowed values
     if tipo_difusao.lower() not in (["geral", "interesse"]):
         log(msg=f"Invalid tipo_difusao: {tipo_difusao}", level="error")
@@ -73,11 +76,11 @@ def get_reports(start_date: str, tipo_difusao: str = "interesse") -> Dict[int, b
     url = f"https://proxy.civitas.rio/civitas/difusao_{tipo_difusao.lower()}/"
     params = {"fromdata": start_date}
 
-    log(msg="Sending request to API", level="info")
+    log_mod(msg="Sending request to API", level="info", index=iter_counter, mod=mod)
     response = requests.get(url, params=params, timeout=600)
     response.raise_for_status()
 
-    log(msg="Processing API response", level="info")
+    log_mod(msg="Processing API response", level="info", index=iter_counter, mod=mod)
     # Get the response content and verify how many reports were returned
     xml_bytes = response.content
     report_qty = xmltodict.parse(response.text)["denuncias"]["@numTotal"]
@@ -85,19 +88,23 @@ def get_reports(start_date: str, tipo_difusao: str = "interesse") -> Dict[int, b
     return {"report_qty": int(report_qty), "xml_bytes": xml_bytes}
 
 
-def save_report_as_xml(file_dir: str | Path, xml_bytes: bytes) -> Dict[str, List[str]]:
+def save_report_as_xml(
+    file_dir: str | Path, xml_bytes: bytes, mod: int = 100, iter_counter: int = 0
+) -> Dict[str, List[str]]:
     """
     Saves the XML bytes as a file and extracts report IDs.
 
     Args:
         file_dir (Path, str): Path for saving the file.
         xml_bytes (bytes): XML content to be saved.
+        mod (int): Only logs a message if the index is a multiple of mod. Default is 100.
+        iter_counter (int): Actual index for log usage.
 
     Returns:
         Dict[str, List[str]]: A dictionary containing the file path and a list of report IDs.
     """
 
-    log(msg="Saving XML file", level="info")
+    log_mod(msg="Saving XML file", level="info", index=iter_counter, mod=mod)
     root = ET.fromstring(xml_bytes)
 
     # Generating the file name
@@ -111,12 +118,16 @@ def save_report_as_xml(file_dir: str | Path, xml_bytes: bytes) -> Dict[str, List
     # Saving the xml file
     tree.write(str(xml_file_path), encoding="ISO-8859-1", xml_declaration=True)
 
-    log(msg="XML file saved", level="info")
+    log_mod(msg="XML file saved", level="info", index=iter_counter, mod=mod)
     return {"xml_file_path": str(xml_file_path), "report_id_list": report_id_list}
 
 
 def capture_reports(
-    ids_list: List[str], start_date: str, tipo_difusao: str = "interesse"
+    ids_list: List[str],
+    start_date: str,
+    tipo_difusao: str = "interesse",
+    mod: int = 100,
+    iter_counter: int = 0,
 ) -> List[Dict[str, str]]:
     """
     Capture reports using the provided IDs from the API endpoint.
@@ -125,6 +136,8 @@ def capture_reports(
         ids_list (List[str]): List of report IDs to capture.
         start_date (str): Start date for retrieving reports.
         tipo_difusao (str): Type of diffusion expected. Default is 'interesse'.
+        mod (int): Only logs a message if the index is a multiple of mod. Default is 100.
+        iter_counter (int): Actual index for log usage.
 
     Returns:
         List[Dict[str, str]]: List of dictionaries with IDs and their response status.
@@ -133,7 +146,7 @@ def capture_reports(
         requests.HTTPError: If the API request fails with an HTTP error code.
 
     """
-    log(msg="Capturing reports from API", level="info")
+    log_mod(msg="Capturing reports from API", level="info", index=iter_counter, mod=mod)
     # Transforms the list into a string concatenated by |
     str_ids = "|".join(ids_list)
 
@@ -147,7 +160,7 @@ def capture_reports(
         response_report = requests.get(url, params=params, timeout=600)
         response_report.raise_for_status()  # Raises an error if the response is unsuccessful
 
-        log(msg="Processing captured reports", level="info")
+        log_mod(msg="Processing captured reports", level="info", index=iter_counter, mod=mod)
         # Returns a List of Dict with the ids and their response status
         ids_response = [element.attrib for element in ET.fromstring(response_report.content)]
         return ids_response
@@ -166,6 +179,7 @@ def get_reports_from_start_date(
     dataset_id: str = None,
     table_id: str = None,
     loop_limiter: bool = False,
+    mod: int = 100,
 ) -> Dict[str, List[str]]:
     """
     Retrieves and processes reports from a start date until there are no more reports,
@@ -179,6 +193,7 @@ def get_reports_from_start_date(
         table_id (str): BigQuery table_id.
         loop_limiter (int): Limits the loop iterations to 5 iterations.
             default is None, indicating that the loop will continue until the last date with data.
+        mod (int): Only logs a message if the index is a multiple of mod. Default is 100.
 
     Returns:
         Dict[str, List[str]]: A dictionary containing a list of XML file paths and capture
@@ -195,23 +210,31 @@ def get_reports_from_start_date(
     flow_run_mode = get_flow_run_mode()
     project_id = get_project_id(mode=flow_run_mode)
     storage_obj = bd.Storage(dataset_id=dataset_id, table_id=table_id)
+    iter_counter = 0
 
     log(msg="Starting report retrieval loop", level="info")
     while not last_page:
-        report_response = get_reports(start_date=start_date, tipo_difusao=tipo_difusao)
+
+        log_mod(msg="Capturing reports from API", level="info", index=iter_counter, mod=mod)
+        report_response = get_reports(
+            start_date=start_date, tipo_difusao=tipo_difusao, mod=mod, iter_counter=iter_counter
+        )
+        log_mod(msg="Reports captured from API", level="info", index=iter_counter, mod=mod)
 
         if report_response["report_qty"] > 0:
             saved_xml = save_report_as_xml(
                 file_dir=file_dir, xml_bytes=report_response["xml_bytes"]
             )
-            log(
-                f"Saving data to RAW: https://console.cloud.google.com/storage/browser/"
+            log_mod(
+                msg=f"Saving data to RAW: https://console.cloud.google.com/storage/browser/"
                 f"{project_id}/raw/{dataset_id}/{table_id}",
                 level="info",
+                index=iter_counter,
+                mod=mod,
             )
             storage_obj.upload(path=saved_xml["xml_file_path"], mode="raw", if_exists="replace")
 
-            log("XML files saved to RAW", level="info")
+            log_mod("XML files saved to RAW", level="info", index=iter_counter, mod=mod)
             xml_file_path_list.append(saved_xml["xml_file_path"])
 
             # Confirm that the data has been saved. The next iteration will display new 15 reports
@@ -224,6 +247,8 @@ def get_reports_from_start_date(
             temp_limiter += 1  # TEMPORARY LIMITER
             if temp_limiter >= 5:  # TEMPORARY LIMITER
                 break  # TEMPORARY LIMITER
+
+        iter_counter += 1
 
     return {"xml_file_path_list": xml_file_path_list, "capture_status_list": capture_status_list}
 
@@ -500,7 +525,9 @@ def process_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def transform_report_data(source_file_path: str, final_file_dir: str) -> List[str]:
+def transform_report_data(
+    source_file_path: str, final_file_dir: str, mod: int = 100, iter_counter: int = 0
+) -> List[str]:
     """
     Transforms XML report data into a structured CSV and extracts report IDs.
 
@@ -511,6 +538,8 @@ def transform_report_data(source_file_path: str, final_file_dir: str) -> List[st
     Args:
         source_file_path (str): The file path of the source XML file.
         final_file_dir (str): The directory path where the CSV file will be saved.
+        mod (int): Only logs a message if the index is a multiple of mod. Default is 100.
+        iter_counter (int): Actual index for log usage.
 
     Returns:
         list: A list of unique report IDs extracted from the data.
@@ -521,7 +550,7 @@ def transform_report_data(source_file_path: str, final_file_dir: str) -> List[st
         report_ids = transform_report_data(source_file_path, final_file_dir)
         print(report_ids)  # Outputs a list of unique report IDs
     """
-    log(msg="Transforming XML files into CSV", level="info")
+    log_mod(msg="Transforming XML files into CSV", level="info", index=iter_counter, mod=mod)
 
     def get_formatted_file_dir(date: datetime, hour: datetime) -> Path:
         """Helper function to format the file path based on the date and hour."""
@@ -532,7 +561,7 @@ def transform_report_data(source_file_path: str, final_file_dir: str) -> List[st
             / f"data_particao={date}"
         )
 
-    log(msg="Reading XML files", level="info")
+    log_mod(msg="Reading XML files", level="info", index=iter_counter, mod=mod)
     with open(source_file_path, "r", encoding="ISO-8859-1") as file:
         # xml_bytes = file.read()
         try:
@@ -541,13 +570,18 @@ def transform_report_data(source_file_path: str, final_file_dir: str) -> List[st
             log(msg=f"Failed to parse XML {e}", level="error")
             raise
 
-    log(msg="Reading XML elements", level="info")
+    log_mod(msg="Reading XML elements", level="info", index=iter_counter, mod=mod)
     denuncias_list = [parse_denuncia(denuncia) for denuncia in root.findall("denuncia")]
 
-    log(msg="Creating DataFrame from parsed data", level="info")
+    log_mod(msg="Creating DataFrame from parsed data", level="info", index=iter_counter, mod=mod)
     df = pd.DataFrame(denuncias_list)
 
-    log(msg="Exploding, normalizing columns and removing duplicated rows", level="info")
+    log_mod(
+        msg="Exploding, normalizing columns and removing duplicated rows",
+        level="info",
+        index=iter_counter,
+        mod=mod,
+    )
     for col in ["xptos", "orgaos", "assuntos", "envolvidos", "denuncia_status"]:
         df = explode_and_normalize(df, col)
 
@@ -568,7 +602,7 @@ def transform_report_data(source_file_path: str, final_file_dir: str) -> List[st
         # Set header to False if file already exists
         header_option = not file_path.exists()
 
-        log(msg=f"Saving reports to {file_path}", level="info")
+        log_mod(msg=f"Saving reports to {file_path}", level="info", index=iter_counter, mod=mod)
         group.to_csv(file_path, header=header_option, mode="a", index=False)
 
         changed_file_path_list.append(str(file_path))
@@ -578,7 +612,7 @@ def transform_report_data(source_file_path: str, final_file_dir: str) -> List[st
 
 @task
 def loop_transform_report_data(
-    source_file_path_list: List[str], final_file_dir: str | Path
+    source_file_path_list: List[str], final_file_dir: str | Path, mod: int = 100
 ) -> List[str]:
     """
     Processes multiple XML report files into structured CSVs and extracts report IDs.
@@ -590,6 +624,7 @@ def loop_transform_report_data(
     Args:
         source_file_path_list (List[str]): A list of file paths for the source XML files.
         final_file_dir (str): The directory path where the CSV files will be saved.
+        mod (int): Only logs a message if the index is a multiple of mod. Default is 100.
 
     Returns:
         List[str]: A list of unique file paths for the CSV files that were saved.
@@ -604,8 +639,11 @@ def loop_transform_report_data(
 
     final_file_dir = Path(final_file_dir)
     final_file_dir.mkdir(parents=True, exist_ok=True)
+    iter_counter = 0
 
     for file_path in source_file_path_list:
+        log_mod(msg="Transforming XML files into CSV", level="info", index=iter_counter, mod=mod)
         changed_file_path_list.extend(transform_report_data(file_path, final_file_dir))
+        log_mod(msg=f"Saving reports to {file_path}", level="info", index=iter_counter, mod=mod)
 
     return list(set(changed_file_path_list))
