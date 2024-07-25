@@ -619,16 +619,19 @@ def transform_report_data(
         # Ensure the final directory exists
         file_dir.mkdir(parents=True, exist_ok=True)
 
-        # Compose the file_path with the current datetime in unix format
-        file_path = file_dir / f"{str(datetime.now().timestamp()).replace('.', '_')}.csv"
+        # Compose the file_path with the current datetime
+        file_path = (
+            file_dir
+            / f"{datetime.now(tz=tz).strftime('%Y%m%d_%H%M%S_%f')}_report_disque_denuncia.csv"
+        )
 
         # Set header to False if file already exists
         header_option = not file_path.exists()
 
-        log_mod(msg=f"Saving reports to {file_path}", level="info", index=iter_counter, mod=mod)
         group.to_csv(file_path, header=header_option, mode="a", index=False)
 
         changed_file_path_list.append(str(file_path))
+    log_mod(msg=f"Files saved in {file_dir}", level="info", index=iter_counter, mod=mod)
 
     return list(set(changed_file_path_list))
 
@@ -673,5 +676,6 @@ def loop_transform_report_data(
                 iter_counter=iter_counter,
             )
         )
+        iter_counter += 1
 
     return list(set(changed_file_path_list))
