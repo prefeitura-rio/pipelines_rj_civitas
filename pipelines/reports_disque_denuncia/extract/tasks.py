@@ -215,6 +215,7 @@ def get_reports_from_start_date(
     xml_file_path_list = []
     capture_status_list = []
     flow_run_mode = get_flow_run_mode()
+    log(msg=f"Testing Run Mode: {flow_run_mode}", level="info")
     project_id = get_project_id(mode=flow_run_mode)
     storage_obj = bd.Storage(dataset_id=dataset_id, table_id=table_id)
     iter_counter = 0
