@@ -23,7 +23,7 @@ disque_denuncia_etl_clocks = [
             "dataset_id": "disque_denuncias",
             "table_id": "denuncias",
             "start_date": "2021-01-01",
-            "dump_mode": "dump_mode",
+            "dump_mode": "append",
             "biglake_table": "biglake_table",
         },
     )
