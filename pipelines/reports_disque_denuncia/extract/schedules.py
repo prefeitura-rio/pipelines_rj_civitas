@@ -20,7 +20,7 @@ disque_denuncia_etl_clocks = [
             constants.RJ_CIVITAS_AGENT_LABEL.value,
         ],
         parameter_defaults={
-            "dataset_id": "disque_denuncias",
+            "dataset_id": "disque_denuncia",
             "table_id": "denuncias",
             "start_date": "2021-01-01",
             "dump_mode": "append",
