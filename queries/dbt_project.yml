@@ -20,7 +20,7 @@ models:
   +persist_docs:
     relation: true
     columns: true
+
   queries:
-    example:
+    reports_disque_denuncia:
       +materialized: view
-      +schema: example
