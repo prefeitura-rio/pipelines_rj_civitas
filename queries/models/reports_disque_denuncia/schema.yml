@@ -1,0 +1,65 @@
+version: 2
+
+models:
+  - name: denuncias
+    description: "Modelo que contém dados de denúncias, incluindo informações de localização e detalhes do relato."
+    columns:
+      - name: id_xpto
+        description: "ID do XPTO, identificador único associado ao registro."
+
+      - name: id_classe
+        description: "ID da classe associada à denúncia, pode ser usado para categorização."
+        data_tests:
+          - not_null
+
+      - name: id_denuncia
+        description: "ID único da denúncia no banco de dados."
+        data_tests:
+          - not_null
+          - unique
+
+      - name: numero_denuncia
+        description: "Número interno da denúncia gerado pelo sistema."
+        data_tests:
+          - not_null
+
+      - name: data_denuncia
+        description: "Data e hora da denúncia registrada no formato DATETIME."
+        data_tests:
+          - not_null
+
+      - name: data_difusao
+        description: "Data e hora da difusão da denúncia registrada no formato DATETIME."
+        data_tests:
+          - not_null
+
+      - name: endereco
+        description: "Endereço associado à denúncia."
+        data_tests:
+          - not_null
+
+      - name: bairro
+        description: "Bairro associado à denúncia."
+        data_tests:
+          - not_null
+
+      - name: municipio
+        description: "Município associado à denúncia."
+        data_tests:
+          - not_null
+
+      - name: estado
+        description: "Estado associado à denúncia."
+        data_tests:
+          - not_null
+
+      - name: latitude
+        description: "Latitude do endereço da denúncia."
+
+      - name: longitude
+        description: "Longitude do endereço da denúncia."
+
+      - name: relato
+        description: "Relato detalhado da denúncia."
+        data_tests:
+          - not_null
