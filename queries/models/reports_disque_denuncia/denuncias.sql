@@ -12,8 +12,6 @@
 
 WITH denuncias_cte AS (
     SELECT
-        CAST(xpto_id AS INT) AS id_xpto,
-        CAST(NULL AS INT) AS id_classe,
         CAST(denuncia_id AS INT) AS id_denuncia,
         denuncia_numero AS numero_denuncia,
         DATETIME(datetime_denuncia) AS data_denuncia,
@@ -24,12 +22,24 @@ WITH denuncias_cte AS (
         TRIM(estado) AS estado,
         CAST(latitude AS FLOAT64) AS latitude,
         CAST(longitude AS FLOAT64) AS longitude,
-        relato
+        relato,
+        ROW_NUMBER() OVER (PARTITION BY denuncia_id ORDER BY data_difusao DESC) AS ranking
     FROM
-        `dd-teste.disque_denuncia.denuncias`
+        `rj-civitas.disque_denuncia_staging.denuncias`
 )
-
-SELECT DISTINCT
-    *
+SELECT
+    id_denuncia,
+    numero_denuncia,
+    data_denuncia,
+    data_difusao,
+    endereco,
+    bairro,
+    municipio,
+    estado,
+    latitude,
+    longitude,
+    relato
 FROM
     denuncias_cte
+WHERE
+    ranking = 1
