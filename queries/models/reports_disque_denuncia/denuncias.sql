@@ -23,9 +23,15 @@ WITH denuncias_cte AS (
         CAST(latitude AS FLOAT64) AS latitude,
         CAST(longitude AS FLOAT64) AS longitude,
         relato,
-        ROW_NUMBER() OVER (PARTITION BY denuncia_id ORDER BY data_difusao DESC) AS ranking
+        REGEXP_EXTRACT(_FILE_NAME, r'(\d{8}_\d{6}_\d{6})_report_disque_denuncia\.csv$') AS nome_arquivo
     FROM
-        `rj-civitas.disque_denuncia_staging.denuncias`
+        `dd-teste.disque_denuncia.denuncias`
+), denuncias_ranked AS (
+    SELECT
+        *,
+        ROW_NUMBER() OVER (PARTITION BY id_denuncia ORDER BY nome_arquivo DESC, data_difusao DESC) AS ranking
+    FROM
+        denuncias_cte
 )
 SELECT
     id_denuncia,
@@ -40,6 +46,6 @@ SELECT
     longitude,
     relato
 FROM
-    denuncias_cte
+    denuncias_ranked
 WHERE
     ranking = 1
