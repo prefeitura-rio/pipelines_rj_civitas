@@ -2,18 +2,15 @@ version: 2
 
 models:
   - name: denuncias
-    description: "Modelo que contém dados de denúncias, incluindo informações de localização e detalhes do relato."
+    description: |
+      **Descrição**: Tabela que contém dados de denúncias, incluindo informações de localização e detalhes do relato.
+      **Frequência de atualização**: A cada 1 hora
+      **Cobertura temporal**: Janeiro de  2019
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@dados.rio
     columns:
-      - name: id_xpto
-        description: "ID do XPTO, identificador único associado ao registro."
-
-      - name: id_classe
-        description: "ID da classe associada à denúncia, pode ser usado para categorização."
-        data_tests:
-          - not_null
-
       - name: id_denuncia
-        description: "ID único da denúncia no banco de dados."
+        description: "PK | ID único da denúncia no banco de dados."
         data_tests:
           - not_null
           - unique
@@ -24,12 +21,12 @@ models:
           - not_null
 
       - name: data_denuncia
-        description: "Data e hora da denúncia registrada no formato DATETIME."
+        description: "Data e hora da denúncia registrada no formato DATETIME GTM-3."
         data_tests:
           - not_null
 
       - name: data_difusao
-        description: "Data e hora da difusão da denúncia registrada no formato DATETIME."
+        description: "Data e hora da difusão da denúncia registrada no formato DATETIME GTM-3."
         data_tests:
           - not_null
 
@@ -63,3 +60,6 @@ models:
         description: "Relato detalhado da denúncia."
         data_tests:
           - not_null
+
+    meta:
+      primary_key: id_denuncia
