@@ -21,7 +21,7 @@ WITH stg_denuncias AS (
         CAST(longitude AS FLOAT64) as longitude,
         relato,  -- STRING
         CAST(xpto_id AS INT) AS id_xpto,
-        xpto_nome AS nome_xpto, -- STRING
+        xpto_nome AS descricao_xpto, -- STRING
         CAST(orgao_id AS INT) AS id_orgao,
         orgao_nome AS nome_orgao, -- STRING
         orgao_tipo AS tipo_orgao, -- STRING
