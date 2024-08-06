@@ -679,4 +679,27 @@ def loop_transform_report_data(
         )
         iter_counter += 1
 
+    import glob
+    from os import walk
+    from os.path import join
+
+    log(glob.glob(str(final_file_dir) + "/*"))
+    data_type = "csv"
+
+    for subdir, _, filenames in walk(str(final_file_dir)):
+        log(subdir)
+        log(filenames)
+        for fname in filenames:
+            log(fname)
+            if fname.endswith(f".{'data_type'}"):
+                file = join(subdir, fname)
+                log(f"Found {data_type.upper()} file: {file}")
+                found = True
+                break
+        if found:
+            break
+
+    log_fnames = next(walk(str(final_file_dir)), (None, None, []))[2]  # [] if no file
+    log(log_fnames)
+
     return list(set(changed_file_path_list))

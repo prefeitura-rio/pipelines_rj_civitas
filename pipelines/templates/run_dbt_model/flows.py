@@ -22,7 +22,7 @@ templates__run_dbt_model_smas__flow.storage = GCS(constants.GCS_FLOWS_BUCKET.val
 templates__run_dbt_model_smas__flow.run_config = KubernetesRun(
     image=constants.DOCKER_IMAGE.value,
     labels=[
-        constants.RJ_CETRIO_AGENT_LABEL.value,
+        constants.RJ_CIVITAS_AGENT_LABEL.value,
     ],
 )
 
