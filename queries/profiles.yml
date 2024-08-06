@@ -8,7 +8,7 @@ queries:
       location: US
       method: service-account
       priority: interactive
-      project: datario
+      project: rj-civitas
       threads: 1
       type: bigquery
   target: dev
