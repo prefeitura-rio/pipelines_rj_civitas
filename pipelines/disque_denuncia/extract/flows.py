@@ -21,10 +21,10 @@ from prefeitura_rio.pipelines_utils.tasks import (
 )
 
 from pipelines.constants import constants
-from pipelines.reports_disque_denuncia.extract.schedules import (
+from pipelines.disque_denuncia.extract.schedules import (
     disque_denuncia_etl_hour_update_schedule,
 )
-from pipelines.reports_disque_denuncia.extract.tasks import (
+from pipelines.disque_denuncia.extract.tasks import (
     get_reports_from_start_date,
     loop_transform_report_data,
 )

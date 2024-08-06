@@ -20,7 +20,10 @@ models:
   +persist_docs:
     relation: true
     columns: true
-
   queries:
-    reports_disque_denuncia:
+    example:
       +materialized: view
+      +schema: example
+    disque_denuncia:
+      +materialized: table
+      +schema: disque_denuncia
