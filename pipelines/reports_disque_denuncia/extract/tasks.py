@@ -299,7 +299,20 @@ def parse_denuncia(denuncia: ET.Element) -> Dict[str, Union[str, List[Dict[str, 
         "xptos": parse_xptos(denuncia.find("xptos")),
         "assuntos": parse_assuntos(denuncia.find("assuntos")),
         "endereco": parse_endereco(denuncia.find("endereco")).get("endereco"),
+        "tipo_logradouro": parse_endereco(denuncia.find("endereco")).get("tipo_logradouro"),
+        "descricao_logradouro": parse_endereco(denuncia.find("endereco")).get(
+            "descricao_logradouro"
+        ),
+        "numero_logradouro": parse_endereco(denuncia.find("endereco")).get("numero_logradouro"),
+        "complemento_logradouro": parse_endereco(denuncia.find("endereco")).get(
+            "complemento_logradouro"
+        ),
         "bairro": parse_endereco(denuncia.find("endereco")).get("bairro"),
+        "subbairro": parse_endereco(denuncia.find("endereco")).get("subbairro"),
+        "cep_logradouro": parse_endereco(denuncia.find("endereco")).get("cep_logradouro"),
+        "referencia_logradouro": parse_endereco(denuncia.find("endereco")).get(
+            "referencia_logradouro"
+        ),
         "municipio": parse_endereco(denuncia.find("endereco")).get("municipio"),
         "estado": parse_endereco(denuncia.find("endereco")).get("estado"),
         "latitude": parse_gps(denuncia.find("gps")).get("latitude"),
@@ -367,12 +380,23 @@ def parse_assuntos(assuntos: Optional[ET.Element]) -> List[Dict[str, str]]:
     """
     # Ensures that the columns will be created, even if the elements are missing in the XML
     if assuntos is None or not list(assuntos):
-        return [{"classe": "", "tipo": ""}]
+        return [
+            {
+                "assunto_classe_id": "",
+                "assunto_classe": "",
+                "assunto_tipo_id": "",
+                "assunto_tipo": "",
+                "assunto_principal": "",
+            }
+        ]
 
     return [
         {
+            "assunto_classe_id": assunto.get("cla_cd"),
             "assunto_classe": (classe.text.strip() if classe is not None else ""),
+            "assunto_tipo_id": assunto.get("tpa_cd"),
             "assunto_tipo": (tipo.text.strip() if tipo is not None else ""),
+            "assunto_principal": assunto.get("ass_principal"),
         }
         for assunto in assuntos.findall("assunto")
         for classe in [assunto.find("classe")]
@@ -392,16 +416,35 @@ def parse_endereco(endereco: Optional[ET.Element]) -> Dict[str, str]:
     """
     # Ensures that the columns will be created, even if the elements are missing in the XML
     if endereco is None:
-        return {"endereco": "", "bairro": "", "municipio": "", "estado": ""}
+        return {
+            "endereco": "",
+            "tipo_logradouro": "",
+            "descricao_logradouro": "",
+            "numero_logradouro": "",
+            "complemento_logradouro": "",
+            "bairro": "",
+            "subbairro": "",
+            "cep_logradouro": "",
+            "referencia_logradouro": "",
+            "municipio": "",
+            "estado": "",
+        }
 
     def get_text(element: ET.Element, tag: str) -> str:
         """Helper function to extract text from XML element."""
-        sub_element = endereco.find(tag)
+        sub_element = element.find(tag)
         return sub_element.text.strip() if sub_element is not None else ""
 
     return {
         "endereco": get_text(endereco, "endereco"),
+        "tipo_logradouro": get_text(endereco, "den_logr_tp"),
+        "descricao_logradouro": get_text(endereco, "den_logr_ds"),
+        "numero_logradouro": get_text(endereco, "den_logr_num"),
+        "complemento_logradouro": get_text(endereco, "den_logr_cmpl"),
         "bairro": get_text(endereco, "bairro"),
+        "subbairro": get_text(endereco, "den_logr_subbairro"),
+        "cep_logradouro": get_text(endereco, "den_logr_cep"),
+        "referencia_logradouro": get_text(endereco, "den_loc_ref"),
         "municipio": get_text(endereco, "municipio"),
         "estado": get_text(endereco, "estado"),
     }
@@ -458,6 +501,7 @@ def parse_envolvidos_dados(envolvidos: Optional[ET.Element]) -> List[Dict[str, s
     if envolvidos is None or not list(envolvidos):
         return [
             {
+                "envolvido_id": "",
                 "envolvido_nome": "",
                 "envolvido_vulgo": "",
                 "envolvido_sexo": "",
@@ -473,6 +517,7 @@ def parse_envolvidos_dados(envolvidos: Optional[ET.Element]) -> List[Dict[str, s
 
     return [
         {
+            "envolvido_id": envolvido.get("env_cd"),
             "envolvido_nome": dado.find("nome").text.strip(),
             "envolvido_vulgo": dado.find("vulgo").text.strip(),
             "envolvido_sexo": dado.find("sexo").text.strip(),
