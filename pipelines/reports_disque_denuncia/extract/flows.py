@@ -68,7 +68,7 @@ with Flow(
     csv_path_list.set_upstream(reports_response)
 
     create_table = create_table_and_upload_to_gcs(
-        data_path=Path("/tmp/pipelines/reports_disque_denuncia/data/partition_directory"),
+        data_path=Path("tmp/pipelines/reports_disque_denuncia/data/partition_directory"),
         dataset_id=dataset_id,
         table_id=table_id,
         dump_mode=dump_mode,
