@@ -433,7 +433,7 @@ def parse_endereco(endereco: Optional[ET.Element]) -> Dict[str, str]:
     def get_text(element: ET.Element, tag: str) -> str:
         """Helper function to extract text from XML element."""
         sub_element = element.find(tag)
-        return sub_element.text.strip() if sub_element is not None else ""
+        return sub_element.text.strip() if sub_element.text is not None else ""
 
     return {
         "endereco": get_text(endereco, "endereco"),
