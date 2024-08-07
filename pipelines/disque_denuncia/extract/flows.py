@@ -104,13 +104,14 @@ with Flow(
             {"dataset_id": "disque_denuncia", "table_id": "xptos", "dbt_alias": False},
             {"dataset_id": "disque_denuncia", "table_id": "denuncias", "dbt_alias": False},
         ]
-        dump_prod_tables_to_materialize_parameters.set_upstream(create_table)
 
         dum_prod_materialization_flow_runs = create_flow_run.map(
             flow_id=unmapped(materialization_flow_id),
             parameters=dump_prod_tables_to_materialize_parameters,
             labels=unmapped(materialization_labels),
         )
+
+        dum_prod_materialization_flow_runs.set_upstream(create_table)
 
         dump_prod_wait_for_flow_run = wait_for_flow_run.map(
             flow_run_id=dum_prod_materialization_flow_runs,
