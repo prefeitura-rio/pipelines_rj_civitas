@@ -58,7 +58,7 @@ WITH stg_denuncias AS (
             r'(\d{8}_\d{6}_\d{6})_report_disque_denuncia\.csv$'
         ) AS nome_arquivo
     FROM
-         `dd-teste.disque_denuncia.denuncias`
+         `rj-civitas.disque_denuncia_staging.denuncias`
 ), denuncias_ranking AS (
     SELECT
         *,
