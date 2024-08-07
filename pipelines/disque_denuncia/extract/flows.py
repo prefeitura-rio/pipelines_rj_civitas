@@ -10,14 +10,20 @@ from pathlib import Path
 from prefect import Parameter, case
 from prefect.run_configs import KubernetesRun
 from prefect.storage import GCS
+from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
+from prefect.utilities.edges import unmapped
+from prefeitura_rio.core import settings
 from prefeitura_rio.pipelines_utils.custom import Flow
+from prefeitura_rio.pipelines_utils.prefect import (
+    task_get_current_flow_run_labels,
+    task_get_flow_group_id,
+)
 from prefeitura_rio.pipelines_utils.state_handlers import (
     handler_initialize_sentry,
     handler_inject_bd_credentials,
 )
-from prefeitura_rio.pipelines_utils.tasks import (
+from prefeitura_rio.pipelines_utils.tasks import (  # task_run_dbt_model_task,
     create_table_and_upload_to_gcs,
-    task_run_dbt_model_task,
 )
 
 from pipelines.constants import constants
@@ -40,7 +46,7 @@ with Flow(
     table_id = Parameter("table_id", default="denuncias")
     dump_mode = Parameter("dump_mode", default="append")
     biglake_table = Parameter("biglake_table", default=True)
-    materialize_after_dump = Parameter("materialize_after_dump", default=False)
+    materialize_after_dump = Parameter("materialize_after_dump", default=True)
     dbt_alias = Parameter("dbt_alias", default=False)
     loop_limiter = Parameter("loop_limiter", default=False)
     tipo_difusao = Parameter("tipo_difusao", default="interesse")
@@ -76,9 +82,42 @@ with Flow(
     )
     create_table.set_upstream(csv_path_list)
 
+    materialization_flow_id = task_get_flow_group_id(
+        flow_name=settings.FLOW_NAME_EXECUTE_DBT_MODEL
+    )  # verificar .FLOW_NAME
+    materialization_labels = task_get_current_flow_run_labels()
+
     with case(task=materialize_after_dump, value=True):
-        task_run_dbt_model_task(dataset_id=dataset_id, table_id=table_id, dbt_alias=dbt_alias)
-        task_run_dbt_model_task.set_upstream(create_table)
+        # task_run_dbt_model_task(dataset_id=dataset_id, table_id=table_id, dbt_alias=dbt_alias)
+        # task_run_dbt_model_task.set_upstream(create_table)
+        # PROD TABLES
+
+        dump_prod_tables_to_materialize_parameters = [
+            {"dataset_id": "disque_denuncia", "table_id": "stg_denuncias", "dbt_alias": False},
+            {"dataset_id": "disque_denuncia", "table_id": "assuntos_classes", "dbt_alias": False},
+            {"dataset_id": "disque_denuncia", "table_id": "assuntos_tipos", "dbt_alias": False},
+            {"dataset_id": "disque_denuncia", "table_id": "denuncias_assuntos", "dbt_alias": False},
+            {"dataset_id": "disque_denuncia", "table_id": "denuncias_orgaos", "dbt_alias": False},
+            {"dataset_id": "disque_denuncia", "table_id": "denuncias_xptos", "dbt_alias": False},
+            {"dataset_id": "disque_denuncia", "table_id": "envolvidos", "dbt_alias": False},
+            {"dataset_id": "disque_denuncia", "table_id": "orgaos", "dbt_alias": False},
+            {"dataset_id": "disque_denuncia", "table_id": "xptos", "dbt_alias": False},
+            {"dataset_id": "disque_denuncia", "table_id": "denuncias", "dbt_alias": False},
+        ]
+        dump_prod_tables_to_materialize_parameters.set_upstream(create_table)
+
+        dum_prod_materialization_flow_runs = create_flow_run.map(
+            flow_id=unmapped(materialization_flow_id),
+            parameters=dump_prod_tables_to_materialize_parameters,
+            labels=unmapped(materialization_labels),
+        )
+
+        dump_prod_wait_for_flow_run = wait_for_flow_run.map(
+            flow_run_id=dum_prod_materialization_flow_runs,
+            stream_states=unmapped(True),
+            stream_logs=unmapped(True),
+            raise_final_state=unmapped(True),
+        )
 
 extracao_disque_denuncia.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
 extracao_disque_denuncia.run_config = KubernetesRun(
