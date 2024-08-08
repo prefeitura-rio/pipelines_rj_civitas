@@ -24,3 +24,6 @@ models:
     example:
       +materialized: view
       +schema: example
+    disque_denuncia:
+      +materialized: table
+      +schema: disque_denuncia

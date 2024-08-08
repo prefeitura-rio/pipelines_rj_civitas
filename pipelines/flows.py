@@ -2,4 +2,5 @@
 """
 Imports all flows for every project so we can register all of them.
 """
-from pipelines.reports_disque_denuncia import *  # noqa
+from pipelines.disque_denuncia import *  # noqa
+from pipelines.templates import *  # noqa
