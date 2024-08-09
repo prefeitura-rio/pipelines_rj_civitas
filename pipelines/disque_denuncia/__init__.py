@@ -5,4 +5,3 @@ module.
 """
 
 from pipelines.disque_denuncia.extract.flows import *  # noqa
-from pipelines.disque_denuncia.materialize.flows import *  # noqa
