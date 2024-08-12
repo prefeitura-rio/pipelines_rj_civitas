@@ -9,324 +9,126 @@ models:
       **Publicado por**: Nicolas Evilasio
       **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
     columns:
+      - name: numero_denuncia
+        description: "Número interno da denúncia gerado pelo sistema."
+        tests:
+          - not_null
+
       - name: id_denuncia
-        description: "PK | ID único da denúncia no banco de dados."
-        data_tests:
+        description: "ID único da denúncia no banco de dados."
+        tests:
           - not_null
           - unique
 
-      - name: numero_denuncia
-        description: "Número interno da denúncia gerado pelo sistema."
-        data_tests:
-          - not_null
-
       - name: data_denuncia
         description: "Data e hora da denúncia registrada no formato DATETIME GTM-3."
-        data_tests:
+        tests:
           - not_null
 
       - name: data_difusao
         description: "Data e hora da difusão da denúncia registrada no formato DATETIME GTM-3."
-        data_tests:
+        tests:
           - not_null
 
-      - name: endereco
-        description: "Endereço associado à denúncia."
-        data_tests:
-          - not_null
+      - name: tipo_logradouro
+        description: "Tipo do logradouro (rua, avenida, etc.)."
 
-      - name: bairro
-        description: "Bairro associado à denúncia."
-        data_tests:
-          - not_null
+      - name: logradouro
+        description: "Nome do logradouro."
+
+      - name: numero_logradouro
+        description: "Número do logradouro."
+
+      - name: complemento_logradouro
+        description: "Complemento do logradouro (apartamento, bloco, etc.)."
+
+      - name: bairro_logradouro
+        description: "Bairro onde está localizado o logradouro."
+
+      - name: subbairro_logradouro
+        description: "Subbairro ou região menor dentro do bairro."
+
+      - name: cep_logradouro
+        description: "CEP do logradouro."
+
+      - name: referencia_logradouro
+        description: "Referência adicional do logradouro."
 
       - name: municipio
-        description: "Município associado à denúncia."
-        data_tests:
-          - not_null
+        description: "Município onde está localizado o logradouro."
 
       - name: estado
-        description: "Estado associado à denúncia."
-        data_tests:
-          - not_null
+        description: "Estado onde está localizado o logradouro."
 
       - name: latitude
-        description: "Latitude do endereço da denúncia."
+        description: "Latitude da localização da denúncia."
 
       - name: longitude
-        description: "Longitude do endereço da denúncia."
+        description: "Longitude da localização da denúncia."
+
+      - name: xptos
+        description: "Array de informações sobre XPTOs (tags) associados à denúncia."
+        subcolumns:
+          - name: id
+            description: "ID do XPTO."
+          - name: nome
+            description: "Nome do XPTO."
+
+      - name: orgaos
+        description: "Array de órgãos associados à denúncia."
+        subcolumns:
+          - name: id
+            description: "ID do órgão."
+          - name: nome
+            description: "Nome do órgão."
+          - name: tipo
+            description: "Tipo do órgão."
+
+      - name: assuntos
+        description: "Array de assuntos associados à denúncia."
+        subcolumns:
+          - name: id_classe
+            description: "ID da classe do assunto."
+          - name: classe
+            description: "Descrição da classe do assunto."
+          - name: id_tipo
+            description: "ID do tipo de assunto."
+          - name: tipo
+            description: "Descrição do tipo de assunto."
+          - name: assunto_principal
+            description: "Indicador do assunto principal."
 
       - name: relato
-        description: "Relato detalhado da denúncia."
-        data_tests:
-          - not_null
+        description: "Descrição do relato da denúncia."
+
+      - name: envolvidos
+        description: "Array de pessoas envolvidas na denúncia."
+        subcolumns:
+          - name: id
+            description: "Identificador único do registro no banco de dados. NÃO É IDENTIFICADOR ÚNICO PARA O ENVOLVIDO."
+          - name: nome
+            description: "Nome do envolvido."
+          - name: vulgo
+            description: "Vulgo do envolvido."
+          - name: sexo
+            description: "Sexo do envolvido."
+          - name: idade
+            description: "Idade do envolvido."
+          - name: pele
+            description: "Descrição da pele do envolvido."
+          - name: estatura
+            description: "Estatura do envolvido."
+          - name: porte
+            description: "Porte do envolvido."
+          - name: cabelos
+            description: "Descrição dos cabelos do envolvido."
+          - name: olhos
+            description: "Descrição dos olhos do envolvido."
+          - name: outras_caracteristicas
+            description: "Outras características do envolvido."
+
+      - name: status_denuncia
+        description: "Status atual da denúncia."
 
     meta:
       primary_key: id_denuncia
-
-
-  - name: envolvidos
-    description: |
-      **Descrição**: Tabela que contém informações sobre os envolvidos nas denúncias, incluindo dados pessoais e características.
-      **Frequência de atualização**: A cada 1 hora
-      **Cobertura temporal**: Janeiro de  2019
-      **Publicado por**: Nicolas Evilasio
-      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
-
-    columns:
-      - name: id_envolvido
-        description: "PK | Identificador único do registro na tabela. Não é o ID da pessoa envolvida na denúncia."
-        tests:
-          - not_null
-          - unique
-
-      - name: id_denuncia
-        description: "FK | ID da denúncia associada ao envolvido. Referencia a coluna 'id_denuncia' na tabela 'denuncias'."
-        tests:
-          - not_null
-        meta:
-          foreign_key: "denuncias.id_denuncia"
-
-      - name: envolvido_nome
-        description: "Nome do envolvido na denúncia."
-
-      - name: envolvido_vulgo
-        description: "Nome pelo qual o envolvido é conhecido."
-
-      - name: envolvido_sexo
-        description: "Sexo do envolvido."
-
-      - name: envolvido_idade
-        description: "Idade do envolvido."
-
-      - name: envolvido_pele
-        description: "Descrição da cor da pele do envolvido."
-
-      - name: envolvido_estatura
-        description: "Descrição da estatura do envolvido."
-
-      - name: envolvido_olhos
-        description: "Descrição da cor dos olhos do envolvido."
-
-      - name: envolvido_cabelos
-        description: "Descrição do cabelo do envolvido."
-
-      - name: envolvido_porte
-        description: "Descrição do porte físico do envolvido."
-
-      - name: envolvido_outras_caracteristicas
-        description: "Outras características do envolvido."
-
-    meta:
-      primary_key: id_envolvido
-
-
-  - name: assuntos_classes
-    description: |
-      **Descrição**: Tabela que contém as classes das denúncias.
-      **Frequência de atualização**: A cada 1 hora
-      **Cobertura temporal**: Janeiro de  2019
-      **Publicado por**: Nicolas Evilasio
-      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
-
-    columns:
-      - name: id_classe
-        description: "PK | ID da classe da denúncia."
-        tests:
-          - not_null
-          - unique
-
-      - name: descricao_classe
-        description: "Descrição da classe da denúncia"
-        tests:
-          - not_null
-
-    meta:
-      primary_key: id_classe
-
-
-  - name: assuntos_tipos
-    description: |
-      **Descrição**: Tabela que contém os tipos das denúncias e a qual classe o tipo pertence.
-      **Frequência de atualização**: A cada 1 hora
-      **Cobertura temporal**: Janeiro de  2019
-      **Publicado por**: Nicolas Evilasio
-      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
-
-    columns:
-      - name: id_tipo
-        description: "PK | ID do tipo da denúncia."
-        tests:
-          - not_null
-          - unique
-
-      - name: id_classe
-        description: "FK | ID da classe da denúncia. Referencia a coluna 'id_classe' na tabela 'assuntos_classes'."
-        tests:
-          - not_null
-
-      - name: descricao_tipo
-        description: "Descrição do tipo da denúncia"
-        tests:
-          - not_null
-
-    meta:
-      primary_key: id_tipo
-
-
-  - name: orgaos
-    description: |
-      **Descrição**: Tabela que contém informações sobre os órgãos que recebem as denúncias.
-      **Frequência de atualização**: A cada 1 hora
-      **Cobertura temporal**: Janeiro de  2019
-      **Publicado por**: Nicolas Evilasio
-      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
-
-    columns:
-      - name: id_orgao
-        description: "PK | ID do órgão."
-        tests:
-          - not_null
-          - unique
-
-      - name: nome_orgao
-        description: "Nome do órgão que recebeu a denúncia."
-        tests:
-          - not_null
-
-    meta:
-      primary_key: id_orgao
-
-
-  - name: xptos
-    description: |
-      **Descrição**: Tabela que contém informações sobre os XPTOS (tags) da denúncias.
-      **Frequência de atualização**: A cada 1 hora
-      **Cobertura temporal**: Janeiro de  2019
-      **Publicado por**: Nicolas Evilasio
-      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
-
-    columns:
-      - name: id_xpto
-        description: "PK | ID do XPTO."
-        tests:
-          - not_null
-          - unique
-
-      - name: descricao_xpto
-        description: "Descrição do XPTO."
-        tests:
-          - not_null
-
-    meta:
-      primary_key: id_xpto
-
-
-  - name: denuncias_orgaos
-    description: |
-      **Descrição**: Tabela de junção entre as tabelas 'denuncias' e 'orgaos'.
-      **Frequência de atualização**: A cada 1 hora
-      **Cobertura temporal**: Janeiro de  2019
-      **Publicado por**: Nicolas Evilasio
-      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
-
-    columns:
-      - name: id_denuncia_orgao
-        description: |
-          PK | Identificador único do registro na tabela.
-          É a concatenação das colunas 'id_denuncia' e 'id_orgao'.
-        tests:
-          - not_null
-          - unique
-
-      - name: id_denuncia
-        description: "FK | ID da denúncia associada a denúncia. Referencia a coluna 'id_denuncia' na tabela 'denuncias'."
-        tests:
-          - not_null
-
-      - name: id_orgao
-        description: "FK | ID do órgão associado a denúncia. Referencia a coluna 'id_orgao' na tabela 'orgaos'."
-        tests:
-          - not_null
-
-      - name: tipo_orgao
-        description: "Sinaliza se o órgão recebeu a denúncia de maneira 'INFORMATIVA', 'OPERACIONAL' ou 'ARQUIVAR'"
-        tests:
-          - not_null
-
-    meta:
-      primary_key: id_denuncia_grupo
-
-
-  - name: denuncias_xptos
-    description: |
-      **Descrição**: Tabela de junção entre as tabelas 'denuncias' e 'xpts'.
-      **Frequência de atualização**: A cada 1 hora
-      **Cobertura temporal**: Janeiro de  2019
-      **Publicado por**: Nicolas Evilasio
-      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
-
-    columns:
-      - name: id_denuncia_xpto
-        description: |
-          PK | Identificador único do registro na tabela.
-          É a concatenação das colunas 'id_denuncia' e 'id_xpto'.
-        tests:
-          - not_null
-          - unique
-
-      - name: id_denuncia
-        description: "FK | ID da denúncia associada a denúncia. Referencia a coluna 'id_denuncia' na tabela 'denuncias'."
-        tests:
-          - not_null
-
-      - name: id_xpto
-        description: "FK | ID do XPTO associado a denúncia. Referencia a coluna 'id_xpto' na tabela 'xptos'."
-        tests:
-          - not_null
-
-    meta:
-      primary_key: id_denuncia_xpto
-
-
-  - name: denuncias_assuntos
-    description: |
-      **Descrição**: Tabela de junção entre as tabelas 'denuncias' e 'assuntos_classes' e 'assuntos_tipos'.
-      **Frequência de atualização**: A cada 1 hora
-      **Cobertura temporal**: Janeiro de  2019
-      **Publicado por**: Nicolas Evilasio
-      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
-
-    columns:
-      - name: id_denuncia_assunto
-        description: |
-          PK | Identificador único do registro na tabela.
-          É a concatenação das colunas 'id_denuncia' e 'id_orgao'.
-        tests:
-          - not_null
-          - unique
-
-      - name: id_denuncia
-        description: "FK | ID da denúncia associada a denúncia. Referencia a coluna 'id_denuncia' na tabela 'denuncias'."
-        tests:
-          - not_null
-
-      - name: id_classe
-        description: "FK | ID da classe associada a denúncia. Referencia a coluna 'id_classe' na tabela 'assuntos_classes'."
-        tests:
-          - not_null
-          - unique
-
-      - name: id_tipo
-        description: "FK | ID do tipo de assunto associado a denúncia. Referencia a coluna 'id_tipo' na tabela 'assuntos_tipos'."
-        tests:
-          - not_null
-          - unique
-
-      - name: assunto_principal
-        description: "Sinaliza se o assunto é o principal (1) ou secundário (0)."
-        tests:
-          - not_null
-
-    meta:
-      primary_key: id_denuncia_assunto
