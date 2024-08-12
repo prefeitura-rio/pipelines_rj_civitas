@@ -9,7 +9,7 @@
         }
     )
 }}
--- Cleaning and transformation
+-- Cleaning and transformation.
 WITH stg_denuncias AS (
     SELECT
         denuncia_numero AS numero_denuncia,
