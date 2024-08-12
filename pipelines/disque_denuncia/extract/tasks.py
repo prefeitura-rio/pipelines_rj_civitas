@@ -210,7 +210,6 @@ def get_reports_from_start_date(
     file_dir = Path(file_dir) / partition
     file_dir.mkdir(parents=True, exist_ok=True)
 
-    temp_limiter = 0  # TEMPORARY LIMITER
     last_page = False
     xml_file_path_list = []
     capture_status_list = []
@@ -252,9 +251,12 @@ def get_reports_from_start_date(
 
             log_mod("XML files saved to RAW", level="info", index=iter_counter, mod=mod)
             xml_file_path_list.append(saved_xml["xml_file_path"])
+            report_id_list = saved_xml["report_id_list"]
+
+            if loop_limiter:
+                break  # TEMPORARY LIMITER
 
             # Confirm that the data has been saved. The next iteration will display new 15 reports
-            report_id_list = saved_xml["report_id_list"]
             capture_status_list.extend(
                 capture_reports(
                     ids_list=report_id_list,
@@ -266,11 +268,6 @@ def get_reports_from_start_date(
             )
 
         last_page = report_response["report_qty"] < 15
-
-        if loop_limiter:
-            temp_limiter += 1  # TEMPORARY LIMITER
-            if temp_limiter >= 5:  # TEMPORARY LIMITER
-                break  # TEMPORARY LIMITER
 
         iter_counter += 1
 
