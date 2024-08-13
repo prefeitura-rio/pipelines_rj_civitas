@@ -194,4 +194,4 @@ GROUP BY
   latitude,
   longitude,
   relato,
-  status_denuncia;
+  status_denuncia

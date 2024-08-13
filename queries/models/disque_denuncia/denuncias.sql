@@ -30,4 +30,4 @@ UNION ALL
 SELECT
   *
 FROM
-  `rj-civitas.disque_denuncia.denuncias_api`;
+  `rj-civitas.disque_denuncia.denuncias_api`
