@@ -21,9 +21,6 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 )
 
 from pipelines.constants import constants
-from pipelines.disque_denuncia.dump_historico.schedules import (
-    disque_denuncia_one_time_schedule,
-)
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
@@ -62,5 +59,3 @@ dump_historico_disque_denuncia.run_config = KubernetesRun(
         constants.RJ_CIVITAS_AGENT_LABEL.value,
     ],
 )
-
-dump_historico_disque_denuncia.schedule = disque_denuncia_one_time_schedule
