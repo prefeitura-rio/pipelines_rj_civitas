@@ -93,7 +93,7 @@ with Flow(
         # PROD TABLES
 
         dump_prod_tables_to_materialize_parameters = [
-            {"dataset_id": "disque_denuncia", "table_id": "denuncias", "dbt_alias": False}
+            {"dataset_id": "disque_denuncia", "table_id": "denuncias_api", "dbt_alias": False}
         ]
 
         dump_prod_materialization_flow_runs = create_flow_run.map(
