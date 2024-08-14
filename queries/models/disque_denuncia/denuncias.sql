@@ -1,10 +1,10 @@
 {{
     config(
-        materialized='materialized view',
+        materialized='materialized_view',
         unique_key='id_denuncia',
         partition_by={
             "field": "data_denuncia",
-            "data_type": "date",
+            "data_type": "datetime",
             "granularity": "month",
         }
     )

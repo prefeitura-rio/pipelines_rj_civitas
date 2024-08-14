@@ -4,7 +4,7 @@
         unique_key='id_denuncia',
         partition_by={
             "field": "data_denuncia",
-            "data_type": "date",
+            "data_type": "datetime",
             "granularity": "month",
         }
     )
