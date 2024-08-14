@@ -4,6 +4,4 @@ This module imports functions and classes from the 'pipelines.reports_disque_den
 module.
 """
 
-from pipelines.disque_denuncia.dump_historico.flows import *  # noqa
 from pipelines.disque_denuncia.extract.flows import *  # noqa
-from pipelines.disque_denuncia.materialize.flows import *  # noqa
