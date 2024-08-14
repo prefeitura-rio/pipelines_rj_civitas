@@ -1,12 +1,6 @@
 {{
     config(
-        materialized='table',
-        unique_key='id_denuncia',
-        partition_by={
-            "field": "data_denuncia",
-            "data_type": "datetime",
-            "granularity": "month",
-        }
+        materialized='ephemeral'
     )
 }}
 -- Cleaning and transformation.
@@ -27,7 +21,7 @@ WITH stg_denuncias AS (
         DATETIME(den_dt_alt) AS data_difusao,
         den_imediata AS denuncia_imediata,
         -- Clean and format address fields
-        den_logr_tp AS tipo_logradouro,
+        TRIM(den_logr_tp) AS tipo_logradouro,
         TRIM(REGEXP_REPLACE(den_logr_ds, r'\s+', ' ')) AS logradouro,
         TRIM(REGEXP_REPLACE(den_logr_num, r'\s+', ' ')) AS numero_logradouro,
         TRIM(REGEXP_REPLACE(den_logr_cmpl, r'\s+', ' ')) AS complemento_logradouro,
@@ -39,43 +33,33 @@ WITH stg_denuncias AS (
         TRIM(den_logr_uf) AS estado,
         CAST(den_gps_lat AS FLOAT64) AS latitude,
         CAST(den_gps_long AS FLOAT64) as longitude,
-        den_texto AS relato,
+        TRIM(den_texto) AS relato,
         dxp_xpt_cd AS id_xpto,
-        '' AS nome_xpto, -- FALTA CRIAR TABELA XPTOS
+        TRIM(xpt_ds) AS nome_xpto,
         dex_ext_cd AS id_orgao,
-        ext_ds AS nome_orgao,
+        TRIM(ext_ds) AS nome_orgao,
         (CASE dex_dit_cd
           WHEN '1' THEN 'OPERACIONAL'
           WHEN '2' THEN 'INFORMATIVA'
           ELSE NULL
           END) AS tipo_orgao,
         ass_cla_cd AS id_classe,
-        cla_ds AS descricao_classe,
+        TRIM(cla_ds) AS descricao_classe,
         CAST(ass_principal AS INT) AS assunto_principal,
         ass_tpa_cd AS id_tipo,
-        tpa_ds AS descricao_tipo,
+        TRIM(tpa_ds) AS descricao_tipo,
         env_cd AS id_envolvido,
         -- Clean and format involved person's details
         TRIM(REGEXP_REPLACE(env_nome, r'\s+', ' ')) AS nome_envolvido,
         TRIM(REGEXP_REPLACE(env_vulgo, r'\s+', ' ')) AS vulgo_envolvido,
         TRIM(REGEXP_REPLACE(env_sexo, r'\s+', ' ')) AS sexo_envolvido,
         CAST(env_idade AS INT) AS idade_envolvido,
-        -- >>>>>>>>>>>>>>> TABELA AUXILIAR 'CARACTERISTICAS' FALTANDO <<<<<<<<<<<<<<<<<
-        -- TRIM(REGEXP_REPLACE(env_pele, r'\s+', ' ')) AS pele_envolvido,
-        -- TRIM(REGEXP_REPLACE(env_estatura, r'\s+', ' ')) AS estatura_envolvido,
-        -- TRIM(REGEXP_REPLACE(env_olhos, r'\s+', ' ')) AS olhos_envolvido,
-        -- TRIM(REGEXP_REPLACE(env_cabelo, r'\s+', ' ')) AS cabelos_envolvido,
-        -- TRIM(REGEXP_REPLACE(env_porte, r'\s+', ' ')) AS porte_envolvido,
-        -- TRIM(REGEXP_REPLACE(env_caract, r'\s+', ' ')) AS outras_caracteristicas_envolvido,
-
-        -- >>>>>>>>>>>>> APAGAR <<<<<<<<<<<<<<<<
-        '' AS pele_envolvido,
-        '' AS estatura_envolvido,
-        '' AS olhos_envolvido,
-        '' AS cabelos_envolvido,
-        '' AS porte_envolvido,
-        '' AS outras_caracteristicas_envolvido,
-
+        TRIM(REGEXP_REPLACE(pel_ds, r'\s+', ' ')) AS pele_envolvido,
+        TRIM(REGEXP_REPLACE(est_ds, r'\s+', ' ')) AS estatura_envolvido,
+        TRIM(REGEXP_REPLACE(olh_ds, r'\s+', ' ')) AS olhos_envolvido,
+        TRIM(REGEXP_REPLACE(cab_ds, r'\s+', ' ')) AS cabelos_envolvido,
+        TRIM(REGEXP_REPLACE(prt_ds, r'\s+', ' ')) AS porte_envolvido,
+        TRIM(REGEXP_REPLACE(env_caract, r'\s+', ' ')) AS outras_caracteristicas_envolvido,
         '' AS status_denuncia,
         -- Extract source file name for tracking the data origin
         REGEXP_EXTRACT(
@@ -86,6 +70,8 @@ WITH stg_denuncias AS (
       `rj-civitas.disque_denuncia_staging.denuncias_historico` den
     LEFT JOIN
       `rj-civitas.disque_denuncia_staging.xpto_denuncia` dxp ON den_cd = dxp_den_cd
+    LEFT JOIN
+      `rj-civitas.disque_denuncia_staging.xptos` xpt ON dxp_xpt_cd = xpt_cd
     LEFT JOIN
       `rj-civitas.disque_denuncia_staging.difusao_externa` dex ON den_cd = dex_den_cd
     LEFT JOIN
@@ -98,11 +84,23 @@ WITH stg_denuncias AS (
       `rj-civitas.disque_denuncia_staging.assuntos_tipos` tpa ON ass_tpa_cd = tpa_cd
     LEFT JOIN
       `rj-civitas.disque_denuncia_staging.envolvidos` env ON den_cd = env_den_cd
+    LEFT JOIN
+      `rj-civitas.disque_denuncia_staging.envolvidos_pele` pel ON env_pele = pel_cd
+    LEFT JOIN
+      `rj-civitas.disque_denuncia_staging.envolvidos_estatura` est ON env_estatura = est_cd
+    LEFT JOIN
+      `rj-civitas.disque_denuncia_staging.envolvidos_olhos` olh ON env_olhos = olh_cd
+    LEFT JOIN
+      `rj-civitas.disque_denuncia_staging.envolvidos_cabelo` cab ON env_cabelo = cab_cd
+    LEFT JOIN
+      `rj-civitas.disque_denuncia_staging.envolvidos_porte` prt ON env_porte = prt_cd
 ),
 -- Rank the 'denuncias' to identify the most recent entry for each unique denuncia
 denuncias_ranking AS (
     SELECT
         *,
+        -- 2024-07-15 is the max date of data in denuncias_historico
+        TIMESTAMP('2024-07-15 00:00:00.000000') AS timestamp_insercao,
         DENSE_RANK() OVER(
             PARTITION BY
                 id_denuncia
@@ -170,7 +168,8 @@ SELECT
       dr.outras_caracteristicas_envolvido AS outras_caracteristicas
     )
   ) AS envolvidos,
-  dr.status_denuncia
+  dr.status_denuncia,
+  dr.timestamp_insercao
 FROM
     denuncias_ranking dr
 -- Filter to keep only the most recent ranking
@@ -194,4 +193,5 @@ GROUP BY
   latitude,
   longitude,
   relato,
-  status_denuncia
+  status_denuncia,
+  timestamp_insercao

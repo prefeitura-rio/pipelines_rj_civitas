@@ -1,12 +1,6 @@
 {{
     config(
-        materialized='table',
-        unique_key='id_denuncia',
-        partition_by={
-            "field": "data_denuncia",
-            "data_type": "datetime",
-            "granularity": "month",
-        }
+        materialized='ephemeral'
     )
 }}
 -- Cleaning and transformation.
@@ -69,6 +63,17 @@ WITH stg_denuncias AS (
 denuncias_ranking AS (
     SELECT
         *,
+        TIMESTAMP(
+          CONCAT(
+            SUBSTR(nome_arquivo, 1, 4), '-',      -- Ano (YYYY)
+            SUBSTR(nome_arquivo, 5, 2), '-',      -- Mês (MM)
+            SUBSTR(nome_arquivo, 7, 2), ' ',      -- Dia (DD)
+            SUBSTR(nome_arquivo, 10, 2), ':',     -- Hora (HH)
+            SUBSTR(nome_arquivo, 12, 2), ':',     -- Minuto (MM)
+            SUBSTR(nome_arquivo, 14, 2), '.',     -- Segundo (SS)
+            SUBSTR(nome_arquivo, 17, 6)           -- Microsegundos (FFFFFF)
+          )
+        ) AS timestamp_insercao,
         DENSE_RANK() OVER(
             PARTITION BY
                 id_denuncia
@@ -135,7 +140,8 @@ SELECT
       dr.outras_caracteristicas_envolvido AS outras_caracteristicas
     )
   ) AS envolvidos,
-  dr.status_denuncia
+  dr.status_denuncia,
+  dr.timestamp_insercao
 FROM
     denuncias_ranking dr
 -- Filter to keep only the most recent ranking
@@ -159,4 +165,5 @@ GROUP BY
   latitude,
   longitude,
   relato,
-  status_denuncia
+  status_denuncia,
+  timestamp_insercao
