@@ -1,6 +1,6 @@
 {{
     config(
-        materialized='materialized_view',
+        materialized='view',
         unique_key='id_denuncia',
         partition_by={
             "field": "data_denuncia",
