@@ -21,6 +21,7 @@ from prefeitura_rio.pipelines_utils.prefect import (
 from prefeitura_rio.pipelines_utils.state_handlers import (
     handler_initialize_sentry,
     handler_inject_bd_credentials,
+    handler_skip_if_running,
 )
 from prefeitura_rio.pipelines_utils.tasks import (  # task_run_dbt_model_task,
     create_table_and_upload_to_gcs,
@@ -28,7 +29,7 @@ from prefeitura_rio.pipelines_utils.tasks import (  # task_run_dbt_model_task,
 
 from pipelines.constants import constants
 from pipelines.disque_denuncia.extract.schedules import (
-    disque_denuncia_etl_hour_update_schedule,
+    disque_denuncia_etl_minutely_update_schedule,
 )
 from pipelines.disque_denuncia.extract.tasks import (
     get_reports_from_start_date,
@@ -38,7 +39,11 @@ from pipelines.disque_denuncia.extract.tasks import (
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
     name="CIVITAS: DataLake - Extração e carga de dados no datalake do Disque Denúncia",
-    state_handlers=[handler_inject_bd_credentials, handler_initialize_sentry],
+    state_handlers=[
+        handler_inject_bd_credentials,
+        handler_initialize_sentry,
+        handler_skip_if_running,
+    ],
 ) as extracao_disque_denuncia:
 
     start_date = Parameter("start_date", default="2021-01-01")
@@ -88,10 +93,6 @@ with Flow(
     materialization_labels = task_get_current_flow_run_labels()
 
     with case(task=materialize_after_dump, value=True):
-        # task_run_dbt_model_task(dataset_id=dataset_id, table_id=table_id, dbt_alias=dbt_alias)
-        # task_run_dbt_model_task.set_upstream(create_table)
-        # PROD TABLES
-
         dump_prod_tables_to_materialize_parameters = [
             {"dataset_id": "disque_denuncia", "table_id": "denuncias", "dbt_alias": False}
         ]
@@ -119,4 +120,4 @@ extracao_disque_denuncia.run_config = KubernetesRun(
     ],
 )
 
-extracao_disque_denuncia.schedule = disque_denuncia_etl_hour_update_schedule
+extracao_disque_denuncia.schedule = disque_denuncia_etl_minutely_update_schedule
