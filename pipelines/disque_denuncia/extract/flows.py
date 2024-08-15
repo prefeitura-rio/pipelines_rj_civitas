@@ -93,28 +93,19 @@ with Flow(
         # PROD TABLES
 
         dump_prod_tables_to_materialize_parameters = [
-            {"dataset_id": "disque_denuncia", "table_id": "stg_denuncias", "dbt_alias": False},
-            {"dataset_id": "disque_denuncia", "table_id": "assuntos_classes", "dbt_alias": False},
-            {"dataset_id": "disque_denuncia", "table_id": "assuntos_tipos", "dbt_alias": False},
-            {"dataset_id": "disque_denuncia", "table_id": "denuncias_assuntos", "dbt_alias": False},
-            {"dataset_id": "disque_denuncia", "table_id": "denuncias_orgaos", "dbt_alias": False},
-            {"dataset_id": "disque_denuncia", "table_id": "denuncias_xptos", "dbt_alias": False},
-            {"dataset_id": "disque_denuncia", "table_id": "envolvidos", "dbt_alias": False},
-            {"dataset_id": "disque_denuncia", "table_id": "orgaos", "dbt_alias": False},
-            {"dataset_id": "disque_denuncia", "table_id": "xptos", "dbt_alias": False},
-            {"dataset_id": "disque_denuncia", "table_id": "denuncias", "dbt_alias": False},
+            {"dataset_id": "disque_denuncia", "table_id": "denuncias", "dbt_alias": False}
         ]
 
-        dum_prod_materialization_flow_runs = create_flow_run.map(
+        dump_prod_materialization_flow_runs = create_flow_run.map(
             flow_id=unmapped(materialization_flow_id),
             parameters=dump_prod_tables_to_materialize_parameters,
             labels=unmapped(materialization_labels),
         )
 
-        dum_prod_materialization_flow_runs.set_upstream(create_table)
+        dump_prod_materialization_flow_runs.set_upstream(create_table)
 
         dump_prod_wait_for_flow_run = wait_for_flow_run.map(
-            flow_run_id=dum_prod_materialization_flow_runs,
+            flow_run_id=dump_prod_materialization_flow_runs,
             stream_states=unmapped(True),
             stream_logs=unmapped(True),
             raise_final_state=unmapped(True),

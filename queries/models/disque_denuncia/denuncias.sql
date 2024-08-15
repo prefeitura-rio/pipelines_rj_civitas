@@ -1,46 +1,52 @@
 {{
     config(
-        materialized='table',
+        materialized='incremental',
+        incremental_strategy='merge',
         unique_key='id_denuncia',
         partition_by={
             "field": "data_denuncia",
-            "data_type": "date",
+            "data_type": "datetime",
             "granularity": "month",
         }
     )
 }}
--- CTE to rank records within each id_denuncia partition
-WITH denuncias_ranked AS (
-    SELECT
-        *,
-        -- Assign a row number within each id_denuncia partition, ordered by nome_arquivo (descending) and data_difusao (descending)
-        ROW_NUMBER() OVER (PARTITION BY id_denuncia ORDER BY nome_arquivo DESC, data_difusao DESC) AS ranking_unique
-    FROM
-        {{ref('stg_denuncias')}}
-    WHERE
-        ranking = 1
+-- CTE for retrieving id_denuncia from denuncias_api table (newest)
+WITH id_new_reports AS (
+  SELECT DISTINCT
+    id_denuncia
+  FROM
+    {{ ref('stg_denuncias_api') }}
 )
 
--- Final selection of the top-ranked records (ranking = 1) for each id_denuncia
-SELECT
-    id_denuncia,
-    numero_denuncia,
-    data_denuncia,
-    data_difusao,
-    tipo_logradouro,
-    logradouro,
-    numero_logradouro,
-    complemento_logradouro,
-    bairro,
-    subbairro,
-    cep_logradouro,
-    referencia_logradouro,
-    municipio,
-    estado,
-    latitude,
-    longitude,
-    relato
-FROM
-    denuncias_ranked
-WHERE
-    ranking_unique = 1
+{% if is_incremental() %}
+  ,max_timestamp_reports AS (
+  SELECT
+    MAX(timestamp_insercao) AS max_timestamp
+  FROM
+    {{ this }}
+  )
+  SELECT
+    *
+  FROM
+    {{ ref('stg_denuncias_api') }}
+  WHERE
+    timestamp_insercao > (SELECT max_timestamp FROM max_timestamp_reports)
+
+{% else %}
+  -- First execution (full refresh)
+  -- Keeping the most recent data when id_denuncia is in the denuncias_api and denuncias_historico tables
+  SELECT
+    *
+  FROM
+    {{ ref('stg_denuncias_historico') }}
+  WHERE
+    id_denuncia NOT IN (SELECT id_denuncia FROM id_new_reports)
+
+  UNION ALL
+
+  SELECT
+    *
+  FROM
+    {{ref('stg_denuncias_api')}}
+
+{% endif %}
