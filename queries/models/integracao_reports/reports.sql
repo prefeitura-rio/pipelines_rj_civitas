@@ -1,6 +1,6 @@
 {{
   config(
-    materialized = 'table',,
+    materialized = 'table',
     unique_key='id_report',
     partition_by={
         "field": "data_report",
