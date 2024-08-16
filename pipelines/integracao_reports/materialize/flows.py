@@ -12,8 +12,7 @@ from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
 from prefect.utilities.edges import unmapped
 from prefeitura_rio.core import settings
 from prefeitura_rio.pipelines_utils.custom import Flow
-from prefeitura_rio.pipelines_utils.prefect import (
-    get_flow_run_mode,
+from prefeitura_rio.pipelines_utils.prefect import (  # get_flow_run_mode,
     task_get_current_flow_run_labels,
     task_get_flow_group_id,
 )
@@ -38,7 +37,7 @@ with Flow(
     ],
 ) as materialize_integracao_reports:
 
-    environment = get_flow_run_mode()
+    # environment = get_flow_run_mode()
     dataset_id = Parameter("dataset_id", default="integracao_reports")
     table_id = Parameter("table_id", default="reports")
     dbt_alias = Parameter("dbt_alias", default=False)
@@ -46,7 +45,7 @@ with Flow(
     materialization_flow_id = task_get_flow_group_id(flow_name=settings.FLOW_NAME_EXECUTE_DBT_MODEL)
     materialization_labels = task_get_current_flow_run_labels()
 
-    dataset_id = dataset_id + "_" + environment if environment != "prod" else dataset_id
+    # dataset_id = dataset_id + "_" + environment if environment != "prod" else dataset_id
 
     dump_prod_tables_to_materialize_parameters = [
         {"dataset_id": dataset_id, "table_id": table_id, "dbt_alias": dbt_alias}
