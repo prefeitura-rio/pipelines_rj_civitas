@@ -4,7 +4,7 @@ models:
   - name: denuncias
     description: |
       **Descrição**: Tabela que contém dados de denúncias, incluindo informações de localização e detalhes do relato.
-      **Frequência de atualização**: A cada 1 hora
+      **Frequência de atualização**: A cada minuto
       **Cobertura temporal**: Janeiro de  2019
       **Publicado por**: Nicolas Evilasio
       **Publicado por (email)**: nicolas.evilasio@prefeitura.rio

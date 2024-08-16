@@ -1,0 +1,67 @@
+version: 2
+
+models:
+  - name: reports
+    description: |
+      **Descrição**: Tabela que integra ocorrências de diversas fontes.
+      Contém dados do Disque Denúncia e chamados do 1746.
+      **Frequência de atualização**: A cada minuto.
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+
+    columns:
+      - name: id_report
+        description: "ID único do registro na tabela."
+        tests:
+          - not_null
+          - unique
+
+      - name: id_source
+        description: "Identificador da tabela de origem dos dados. (DD, 1746, etc.)"
+        tests:
+          - not_null
+
+      - name: id_report_original
+        description: "ID único da ocorrência na tabela de origem."
+        tests:
+          - not_null
+
+      - name: data_report
+        description: "Data e hora da ocorrência no formato DATETIME GTM-3."
+        tests:
+          - not_null
+
+      - name: orgaos
+        description: "Array de órgãos associados à ocorrência."
+        subcolumns:
+          - name: nome
+            description: "Nome do órgão."
+
+      - name: categoria
+        description: "Categoria da ocorrência (Denúncia, chamado, etc.)."
+
+      - name: tipo_subtipo
+        description: "Array de assuntos associados à ocorrência."
+        subcolumns:
+          - name: tipo
+            description: "Tipo da ocorrência."
+          - name: subtipo
+            description: "Subtipo da ocorrência."
+
+      - name: descricao
+        description: "Texto com o relato da ocorrência."
+
+      - name: logradouro
+        description: "Nome do logradouro."
+
+      - name: numero_logradouro
+        description: "Número do logradouro."
+
+      - name: latitude
+        description: "Latitude da localização da denúncia."
+
+      - name: longitude
+        description: "Longitude da localização da denúncia."
+
+    meta:
+      primary_key: id_report
