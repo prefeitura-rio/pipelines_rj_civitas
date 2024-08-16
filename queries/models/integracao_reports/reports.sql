@@ -5,7 +5,7 @@
     partition_by={
         "field": "data_report",
         "data_type": "datetime",
-        "granularity": "hour",
+        "granularity": "month",
     }
     )
 }}
