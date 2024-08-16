@@ -27,3 +27,6 @@ models:
     disque_denuncia:
       +materialized: table
       +schema: disque_denuncia
+    integracao_reports:
+      +materialized: table
+      +schema: integracao_reports
