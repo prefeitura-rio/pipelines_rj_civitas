@@ -23,33 +23,41 @@ WITH cameras_cetrio AS (
   FROM `rj-cetrio.ocr_radar.equipamento` t1
   JOIN `rj-cetrio.ocr_radar.equipamento_codcet_to_camera_numero` t2
     ON t1.codcet = t2.codcet
+),
+-- Convert datahora to date for partitioning
+final_data AS (
+  SELECT
+    DATETIME(r.datahora, 'America/Sao_Paulo') AS datahora,
+    r.camera_numero,
+    r.empresa,
+    c.locequip,
+    c.bairro,
+    CASE
+      WHEN r.empresa = 'SPLICE' THEN r.camera_latitude
+      ELSE c.latitude
+    END AS latitude,
+    CASE
+      WHEN r.empresa = 'SPLICE' THEN r.camera_longitude
+      ELSE c.longitude
+    END AS longitude,
+    CASE
+      WHEN r.empresa = 'SPLICE' THEN ST_GEOGPOINT(CAST(r.camera_longitude AS FLOAT64), CAST(r.camera_latitude AS FLOAT64))
+      ELSE c.geo_coordinates
+    END AS geo_coordinates,
+    DATETIME(r.datahora_captura, 'America/Sao_Paulo') AS datahora_captura,
+    r.placa,
+    r.tipoveiculo,
+    r.velocidade
+  FROM `rj-cetrio.ocr_radar.readings_*` r
+  LEFT JOIN cameras_cetrio c
+    ON r.camera_numero = c.camera_numero
+  WHERE
+    DATETIME(r.datahora, 'America/Sao_Paulo') > '2024-05-30'
 )
 -- Final query
 SELECT
-  DATETIME(r.datahora, 'America/Sao_Paulo') AS datahora,
-  r.camera_numero,
-  r.empresa,
-  c.locequip,
-  c.bairro,
-  CASE
-    WHEN r.empresa = 'SPLICE' THEN r.camera_latitude
-    ELSE c.latitude
-  END AS latitude,
-  CASE
-    WHEN r.empresa = 'SPLICE' THEN r.camera_longitude
-    ELSE c.longitude
-  END AS longitude,
-  CASE
-    WHEN r.empresa = 'SPLICE' THEN ST_GEOGPOINT(CAST(r.camera_longitude AS FLOAT64), CAST(r.camera_latitude AS FLOAT64))
-    ELSE c.geo_coordinates
-  END AS geo_coordinates,
-  DATETIME(r.datahora_captura, 'America/Sao_Paulo') AS datahora_captura,
-  r.placa,
-  r.tipoveiculo,
-  r.velocidade
-FROM `rj-cetrio.ocr_radar.readings_*` r
-LEFT JOIN cameras_cetrio c
-  ON r.camera_numero = c.camera_numero
-WHERE
-  DATETIME(r.datahora, 'America/Sao_Paulo') > '2024-05-30'
-ORDER BY r.datahora
+  *
+FROM
+  final_data
+ORDER BY
+  datahora
