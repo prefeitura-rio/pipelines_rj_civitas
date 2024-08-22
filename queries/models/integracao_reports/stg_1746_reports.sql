@@ -49,7 +49,7 @@ LEFT JOIN orgaos_agg o ON c.id_chamado = o.id_report_original
 LEFT JOIN tipo_subtipo_agg t ON c.id_chamado = t.id_report_original
 LEFT JOIN logradouros l ON c.id_logradouro = l.id_logradouro
 JOIN
-    (SELECT * FROM `rj-civitas-dev.integracao_reports.tipos_interesse_1746` WHERE id_tipo IS NOT NULL and interesse = 1) ti
+    (SELECT * FROM `rj-civitas.integracao_reports.tipos_interesse_1746` WHERE id_tipo IS NOT NULL and interesse = 1) ti
   ON
     c.id_tipo = ti.id_tipo
     AND c.id_subtipo = ti.id_subtipo
