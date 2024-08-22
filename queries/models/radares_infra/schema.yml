@@ -1,0 +1,153 @@
+version: 2
+
+models:
+  - name: medicoes
+    description: |
+      **Descrição**: Esta tabela agrega os dados de leituras OCR dos radares.
+      Contém a contagem agregada de leituras para diferentes câmeras e empresas.
+      **Frequência de Atualização**: Diária.
+      **Publicado Por**: |
+        Amanda Amaro
+        Nicolas Evilasio
+      **Publicado Por (email)**: |
+        amanda.amaro@prefeitura.rio
+        nicolas.evilasio@prefeitura.rio
+
+    columns:
+      - name: datahora
+        description: "Data da leitura, no fuso horário GTM -3."
+
+      - name: empresa
+        description: "Empresa responsável pela câmera."
+
+      - name: camera_numero
+        description: "Identificador único da câmera."
+
+      - name: medicoes
+        description: "Contagem de leituras registradas pela câmera em uma determinada data."
+
+  - name: latencia
+    description: |
+      **Descrição**: Esta tabela fornece estatísticas de latência para leituras de câmeras,
+      calculadas com base no tempo de captura e no tempo registrado da leitura.
+      A latência é medida em segundos e inclui percentis para diferentes quantis.
+      **Frequência de Atualização**: Diária.
+      **Publicado Por**: |
+        Amanda Amaro
+        Nicolas Evilasio
+      **Publicado Por (email)**: |
+        amanda.amaro@prefeitura.rio
+        nicolas.evilasio@prefeitura.rioo
+
+    columns:
+      - name: empresa
+        description: "Empresa responsável pela câmera."
+
+      - name: data
+        description: "Data truncada para a hora mais próxima, fuso horário GTM-3."
+
+      - name: latency_50th
+        description: "Latência no 50º percentil (mediana) em segundos entre o tempo de captura e o tempo registrado da leitura."
+
+      - name: latency_75th
+        description: "Latência no 75º percentil em segundos entre o tempo de captura e o tempo registrado da leitura."
+
+      - name: latency_95th
+        description: "Latência no 95º percentil em segundos entre o tempo de captura e o tempo registrado da leitura."
+
+      - name: latency_99th
+        description: "Latência no 99º percentil em segundos entre o tempo de captura e o tempo registrado da leitura."
+
+  - name: inatividade
+    description: |
+      **Descrição**: Esta tabela fornece informações sobre períodos de inatividade das câmeras,
+      incluindo a quantidade de períodos em que a inatividade excedeu determinados limites.
+      Também inclui estatísticas de latência média e mediana para as câmeras.
+      **Frequência de Atualização**: Diária.
+      **Publicado Por**: |
+        Amanda Amaro
+        Nicolas Evilasio
+      **Publicado Por (email)**: |
+        amanda.amaro@prefeitura.rio
+        nicolas.evilasio@prefeitura.rio
+
+
+    columns:
+      - name: camera_numero
+        description: "Identificador único da câmera."
+
+      - name: date
+        description: "Data da leitura, ajustada para o fuso horário 'America/Sao_Paulo'."
+
+      - name: empresa
+        description: "Empresa ou organização responsável pela câmera."
+
+      - name: periods_exceeding_1h
+        description: "Número de períodos em que a inatividade excedeu 1 hora."
+
+      - name: periods_exceeding_3h
+        description: "Número de períodos em que a inatividade excedeu 3 horas."
+
+      - name: periods_exceeding_6h
+        description: "Número de períodos em que a inatividade excedeu 6 horas."
+
+      - name: periods_exceeding_12h
+        description: "Número de períodos em que a inatividade excedeu 12 horas."
+
+      - name: periods_exceeding_24h
+        description: "Número de períodos em que a inatividade excedeu 24 horas."
+
+      - name: avg_latency
+        description: "Latência média em segundos entre o tempo de captura e o tempo registrado da leitura."
+
+      - name: median_latency
+        description: "Latência mediana em segundos entre o tempo de captura e o tempo registrado da leitura."
+
+  - name: equipamentos
+    description: |
+      **Descrição**: Esta tabela combina informações de equipamentos com dados das leituras das câmeras.
+      Inclui detalhes como localização, coordenadas geográficas e dados do veículo, além da data e hora das capturas.
+      **Frequência de Atualização**: Diária.
+      **Publicado Por**: |
+        Amanda Amaro
+        Nicolas Evilasio
+      **Publicado Por (email)**: |
+        amanda.amaro@prefeitura.rio
+        nicolas.evilasio@prefeitura.rio
+
+    columns:
+      - name: datahora
+        description: "Data e hora da leitura, no fuso horário GTM-3."
+
+      - name: camera_numero
+        description: "Número identificador da câmera."
+
+      - name: empresa
+        description: "Empresa responsável pela câmera."
+
+      - name: locequip
+        description: "Localização do equipamento."
+
+      - name: bairro
+        description: "Bairro onde o equipamento está localizado."
+
+      - name: latitude
+        description: "Latitude do equipamento ou câmera."
+
+      - name: longitude
+        description: "Longitude do equipamento ou câmera."
+
+      - name: geo_coordinates
+        description: "Coordenadas geográficas (ponto) criadas a partir da latitude e longitude."
+
+      - name: datahora_captura
+        description: "Data e hora da captura, no fuso horário GTM-3.."
+
+      - name: placa
+        description: "Placa do veículo registrado na captura."
+
+      - name: tipoveiculo
+        description: "Tipo de veículo registrado na captura."
+
+      - name: velocidade
+        description: "Velocidade do veículo registrada na captura."
