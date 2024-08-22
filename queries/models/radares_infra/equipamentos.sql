@@ -59,5 +59,3 @@ SELECT
   *
 FROM
   final_data
-ORDER BY
-  datahora

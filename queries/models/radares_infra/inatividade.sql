@@ -6,7 +6,7 @@
         "data_type": "date",
         "granularity": "day"
     },
-    cluster_by = ["date", "empresa"]
+    cluster_by = ["camera_numero", "date"]
     )
 }}
 
@@ -88,7 +88,7 @@ latency_stats_per_day AS (
   FROM
     `rj-cetrio.ocr_radar.readings_2024*`
   GROUP BY
-    empresa, camera_numero, DATE(datahora)
+    empresa, camera_numero, `date`
 )
 -- Final query
 SELECT
@@ -117,5 +117,3 @@ ON
   c.camera_numero = l.camera_numero
   AND c.date = l.date
   AND c.empresa = l.empresa
-ORDER BY
-  c.camera_numero, c.date
