@@ -19,6 +19,8 @@ import pandas as pd
 import requests
 import xmltodict
 from prefect import task
+from prefect.engine.runner import ENDRUN
+from prefect.engine.state import Skipped
 from prefeitura_rio.pipelines_utils.bd import get_project_id
 from prefeitura_rio.pipelines_utils.logging import log, log_mod
 from prefeitura_rio.pipelines_utils.prefect import get_flow_run_mode
@@ -750,3 +752,11 @@ def loop_transform_report_data(
     log(f"log_fnames: {log_fnames}")
 
     return list(set(changed_file_path_list))
+
+
+# Check if there are any reports returned
+@task
+def check_report_qty(reports_response):
+    if not reports_response["xml_file_path_list"]:
+        skip = Skipped(message="No data returned by the API, finishing the flow.")
+        raise ENDRUN(state=skip)
