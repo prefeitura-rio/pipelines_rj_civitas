@@ -724,14 +724,14 @@ def loop_transform_report_data(
         )
         iter_counter += 1
 
-    log(
-        "CSV files saved: "
-        + [
+    saved_csv_path_str = "\n".join(
+        [
             file
             for file in glob.glob((final_file_dir / "**").as_posix(), recursive=True)
             if file.endswith(".csv")
         ]
     )
+    log(f"CSV files saved: {saved_csv_path_str}")
 
     return list(set(changed_file_path_list))
 
