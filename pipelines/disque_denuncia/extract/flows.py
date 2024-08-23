@@ -32,6 +32,7 @@ from pipelines.disque_denuncia.extract.schedules import (
     disque_denuncia_etl_minutely_update_schedule,
 )
 from pipelines.disque_denuncia.extract.tasks import (
+    check_report_qty,
     get_reports_from_start_date,
     loop_transform_report_data,
 )
@@ -69,6 +70,10 @@ with Flow(
     )
     reports_response.set_upstream(table_id)
 
+    # Task to check report quantity
+    report_qty_check = check_report_qty(reports_response)
+    report_qty_check.set_upstream(reports_response)
+
     # Extract the list of XML file paths from the reports response
     # Task to transform the XML files into CSV files
     csv_path_list = loop_transform_report_data(
@@ -76,7 +81,7 @@ with Flow(
         final_file_dir=Path("/tmp/pipelines/disque_denuncia/data/partition_directory"),
         mod=mod,
     )
-    csv_path_list.set_upstream(reports_response)
+    csv_path_list.set_upstream(report_qty_check)
 
     create_table = create_table_and_upload_to_gcs(
         data_path=Path("/tmp/pipelines/disque_denuncia/data/partition_directory"),
