@@ -12,17 +12,33 @@ WITH orgaos_agg AS (
   GROUP BY
     id_report_original
 ),
+subtipo_agg AS (
+  SELECT
+    id_chamado,
+    id_tipo,
+    ARRAY_AGG(subtipo) AS subtipo
+  FROM
+    `rj-segovi.adm_central_atendimento_1746.chamado`
+  GROUP BY
+    id_chamado,
+    id_tipo
+),
 tipo_subtipo_agg AS (
   SELECT
-    id_chamado AS id_report_original,
+    c.id_chamado AS id_report_original,
     ARRAY_AGG(
       STRUCT(
-        tipo,
-        subtipo
+        c.tipo,
+        s.subtipo
       )
     ) AS tipo_subtipo
   FROM
-    `rj-segovi.adm_central_atendimento_1746.chamado`
+    `rj-segovi.adm_central_atendimento_1746.chamado` c
+  LEFT JOIN
+    subtipo_agg s
+  ON
+    c.id_chamado = s.id_chamado
+    AND c.id_tipo = s.id_tipo
   GROUP BY
     id_report_original
 ),
