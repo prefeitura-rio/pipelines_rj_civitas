@@ -243,7 +243,6 @@ envolvidos_agg AS (
     id_denuncia,
     ARRAY_AGG(
       STRUCT(
-        id_denuncia,
         id,
         nome,
         vulgo,
