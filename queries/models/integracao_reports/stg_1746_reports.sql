@@ -6,7 +6,7 @@
 WITH orgaos_agg AS (
   SELECT
     id_chamado AS id_report_original,
-    ARRAY_AGG(STRUCT(nome_unidade_organizacional AS nome)) AS orgaos
+    ARRAY_AGG(IFNULL(nome_unidade_organizacional, '')) AS orgaos
   FROM
     `rj-segovi.adm_central_atendimento_1746.chamado`
   GROUP BY
@@ -16,7 +16,7 @@ subtipo_agg AS (
   SELECT
     id_chamado,
     id_tipo,
-    ARRAY_AGG(subtipo) AS subtipo
+    ARRAY_AGG(IFNULL(subtipo, '')) AS subtipo
   FROM
     `rj-segovi.adm_central_atendimento_1746.chamado`
   GROUP BY
@@ -29,16 +29,13 @@ tipo_subtipo_agg AS (
     ARRAY_AGG(
       STRUCT(
         c.tipo,
-        s.subtipo
+        t.subtipo
       )
     ) AS tipo_subtipo
   FROM
     `rj-segovi.adm_central_atendimento_1746.chamado` c
   LEFT JOIN
-    subtipo_agg s
-  ON
-    c.id_chamado = s.id_chamado
-    AND c.id_tipo = s.id_tipo
+    subtipo_agg t ON c.id_chamado = t.id_chamado AND c.id_tipo = t.id_tipo
   GROUP BY
     id_report_original
 ),
@@ -49,6 +46,7 @@ logradouros AS (
   FROM `datario.dados_mestres.logradouro`
 )
 SELECT
+  CONCAT('1746', id_chamado) AS id_report,
   '1746' as id_source,
   id_chamado AS id_report_original,
   data_inicio AS data_report,
