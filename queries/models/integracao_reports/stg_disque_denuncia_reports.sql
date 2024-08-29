@@ -7,7 +7,7 @@
 WITH orgaos_expanded AS (
   SELECT
     id_denuncia,
-    ARRAY_AGG(UPPER(orgao.nome)) AS orgaos
+    ARRAY_AGG(UPPER(IFNULL(orgao.nome, ''))) AS orgaos
   FROM `rj-civitas.disque_denuncia.denuncias`,
   UNNEST(orgaos) AS orgao
   GROUP BY id_denuncia
@@ -16,7 +16,7 @@ tipos_agg AS (
   SELECT
     d.id_denuncia,
     c.id_classe,
-    ARRAY_AGG(LOWER(t.tipo)) AS subtipo
+    ARRAY_AGG(LOWER(IFNULL(t.tipo, ''))) AS subtipo
   FROM `rj-civitas.disque_denuncia.denuncias` d,
   UNNEST(assuntos) c,
   UNNEST(c.tipos) t
