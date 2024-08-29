@@ -36,7 +36,6 @@ assuntos_expanded AS (
   GROUP BY id_denuncia
 )
 SELECT
-  CONCAT('DD', d.id_denuncia)  AS id_report,
   'DD' AS id_source,
   d.id_denuncia AS id_report_original,
   d.data_denuncia AS data_report,

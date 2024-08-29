@@ -46,7 +46,6 @@ logradouros AS (
   FROM `datario.dados_mestres.logradouro`
 )
 SELECT
-  CONCAT('1746', id_chamado) AS id_report,
   '1746' as id_source,
   id_chamado AS id_report_original,
   data_inicio AS data_report,
