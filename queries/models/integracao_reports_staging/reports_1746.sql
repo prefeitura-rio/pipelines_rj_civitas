@@ -10,6 +10,7 @@
     }
     )
 }}
+
 WITH orgaos_agg AS (
   SELECT
     id_chamado AS id_report_original,

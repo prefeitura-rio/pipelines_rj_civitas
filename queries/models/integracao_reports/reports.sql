@@ -12,7 +12,6 @@
     }
     )
 }}
-
 SELECT
     CONCAT(id_source, id_report_original) AS id_report,
     *

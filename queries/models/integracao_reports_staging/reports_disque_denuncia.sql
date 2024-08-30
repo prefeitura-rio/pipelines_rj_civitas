@@ -14,7 +14,7 @@
 WITH orgaos_expanded AS (
   SELECT
     id_denuncia,
-    ARRAY_AGG(UPPER(IFNULL(orgao.nome, ''))) AS orgaos
+    ARRAY_AGG(UPPER(IFNULL(orgao.nome, ''))) orgaos
   FROM `rj-civitas.disque_denuncia.denuncias`,
   UNNEST(orgaos) AS orgao
   GROUP BY id_denuncia
