@@ -1,4 +1,4 @@
-version: 2
+{# version: 2
 
 models:
   - name: reports
@@ -61,4 +61,4 @@ models:
         description: "Longitude da localização da denúncia."
 
     meta:
-      primary_key: id_report
+      primary_key: id_report #}
