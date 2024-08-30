@@ -1,6 +1,11 @@
 {{
   config(
     materialized = 'table',
+    partition_by={
+        "field": "data_report",
+        "data_type": "datetime",
+        "granularity": "month",
+    }
     )
 }}
 WITH orgaos_agg AS (
