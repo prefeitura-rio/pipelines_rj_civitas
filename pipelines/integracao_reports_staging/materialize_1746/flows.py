@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 This module defines a Prefect workflow for materializing tables using DBT.
-related to 'disque_denuncia.denuncias' and 'adm_central_atendimento_1746.chamado'.
+related to 'adm_central_atendimento_1746.chamado'...
 """
 
 
@@ -23,29 +23,29 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 )
 
 from pipelines.constants import constants
-from pipelines.integracao_reports.materialize.schedules import (
-    integracao_reports_minutely_update_schedule,
+from pipelines.integracao_reports_staging.materialize_1746.schedules import (
+    integracao_reports_1746_daily_update_schedule,
 )
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
-    name="CIVITAS: integracao_reports - Materialização da tabela",
+    name="CIVITAS: integracao_reports_staging - Materialização dos dados do 1746",
     state_handlers=[
         handler_inject_bd_credentials,
         handler_initialize_sentry,
         handler_skip_if_running,
     ],
-) as materialize_integracao_reports:
+) as materialize_integracao_reports_1746:
 
     # environment = get_flow_run_mode()
-    dataset_id = Parameter("dataset_id", default="integracao_reports")
-    table_id = Parameter("table_id", default="reports")
+    dataset_id = Parameter("dataset_id", default="integracao_reports_staging")
+    table_id = Parameter("table_id", default="reports_1746")
     dbt_alias = Parameter("dbt_alias", default=False)
 
-    materialization_flow_id = task_get_flow_group_id(flow_name=settings.FLOW_NAME_EXECUTE_DBT_MODEL)
+    materialization_flow_id = task_get_flow_group_id(
+        flow_name=settings.FLOW_NAME_EXECUTE_DBT_MODEL
+    )  # verificar .FLOW_NAME
     materialization_labels = task_get_current_flow_run_labels()
-
-    # dataset_id = dataset_id + "_" + environment if environment != "prod" else dataset_id
 
     dump_prod_tables_to_materialize_parameters = [
         {"dataset_id": dataset_id, "table_id": table_id, "dbt_alias": dbt_alias}
@@ -64,12 +64,12 @@ with Flow(
         raise_final_state=unmapped(True),
     )
 
-materialize_integracao_reports.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
-materialize_integracao_reports.run_config = KubernetesRun(
+materialize_integracao_reports_1746.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
+materialize_integracao_reports_1746.run_config = KubernetesRun(
     image=constants.DOCKER_IMAGE.value,
     labels=[
         constants.RJ_CIVITAS_AGENT_LABEL.value,
     ],
 )
 
-materialize_integracao_reports.schedule = integracao_reports_minutely_update_schedule
+materialize_integracao_reports_1746.schedule = integracao_reports_1746_daily_update_schedule

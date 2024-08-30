@@ -1,28 +1,49 @@
 {{
   config(
-    materialized = 'ephemeral',
+    materialized = 'incremental',
+    incremental_strategy = 'insert_overwrite',
+    unique_key = 'id_report_original',
+    partition_by={
+        "field": "data_report",
+        "data_type": "datetime",
+        "granularity": "month",
+    }
     )
 }}
+
 WITH orgaos_agg AS (
   SELECT
     id_chamado AS id_report_original,
-    ARRAY_AGG(STRUCT(nome_unidade_organizacional AS nome)) AS orgaos
+    ARRAY_AGG(IFNULL(nome_unidade_organizacional, '')) AS orgaos
   FROM
     `rj-segovi.adm_central_atendimento_1746.chamado`
   GROUP BY
     id_report_original
 ),
+subtipo_agg AS (
+  SELECT
+    id_chamado,
+    id_tipo,
+    ARRAY_AGG(IFNULL(subtipo, '')) AS subtipo
+  FROM
+    `rj-segovi.adm_central_atendimento_1746.chamado`
+  GROUP BY
+    id_chamado,
+    id_tipo
+),
 tipo_subtipo_agg AS (
   SELECT
-    id_chamado AS id_report_original,
+    c.id_chamado AS id_report_original,
     ARRAY_AGG(
       STRUCT(
-        tipo,
-        subtipo
+        c.tipo,
+        t.subtipo
       )
     ) AS tipo_subtipo
   FROM
-    `rj-segovi.adm_central_atendimento_1746.chamado`
+    `rj-segovi.adm_central_atendimento_1746.chamado` c
+  LEFT JOIN
+    subtipo_agg t ON c.id_chamado = t.id_chamado AND c.id_tipo = t.id_tipo
   GROUP BY
     id_report_original
 ),

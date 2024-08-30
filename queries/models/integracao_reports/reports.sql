@@ -1,7 +1,10 @@
 {{
   config(
-    materialized = 'table',
-    unique_key='id_report',
+    materialized = "materialized_view",
+    on_configuration_change = "apply",
+    enable_refresh = True,
+    refresh_interval_minutes = 1,
+    max_staleness = "INTERVAL 60 MINUTE",
     partition_by={
         "field": "data_report",
         "data_type": "datetime",
@@ -9,12 +12,11 @@
     }
     )
 }}
-
 SELECT
     CONCAT(id_source, id_report_original) AS id_report,
     *
 FROM
-    {{ ref("stg_disque_denuncia_reports") }}
+    `integracao_reports_staging.reports_disque_denuncia`
 
 UNION ALL
 
@@ -22,4 +24,4 @@ SELECT
     CONCAT(id_source, id_report_original) AS id_report,
     *
 FROM
-    {{ ref("stg_1746_reports") }}
+    `integracao_reports_staging.reports_1746`
