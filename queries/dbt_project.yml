@@ -27,6 +27,9 @@ models:
     integracao_reports:
       +materialized: table
       +schema: integracao_reports
+    integracao_reports_staging:
+      +materialized: table
+      +schema: integracao_reports_staging
     radares_infra:
       +materialized: table
       +schema: radares_infra
