@@ -322,3 +322,5 @@ LEFT JOIN
   classes_tipos_agg cla ON den.id_denuncia = cla.id_denuncia
 LEFT JOIN
   envolvidos_agg env ON den.id_denuncia = env.id_denuncia
+WHERE
+  LOWER(municipio) = 'rio de janeiro'
