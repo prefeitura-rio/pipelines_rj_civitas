@@ -2,7 +2,7 @@
   config(
     materialized = 'incremental',
     incremental_strategy = 'insert_overwrite',
-    unique_key = 'id_report_original'
+    unique_key = 'id_report_original',
     partition_by={
         "field": "data_report",
         "data_type": "datetime",
