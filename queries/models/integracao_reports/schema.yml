@@ -3,9 +3,9 @@ version: 2
 models:
   - name: reports
     description: |
-      **Descrição**: Tabela que integra ocorrências de diversas fontes.
+      **Descrição**: View materializada que integra ocorrências de diversas fontes.
       Contém dados do Disque Denúncia e chamados do 1746.
-      **Frequência de atualização**: A cada minuto.
+      **Frequência de atualização**: A cada minuto, de acordo com as alterações nas tabelas de origem.
       **Publicado por**: Nicolas Evilasio
       **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
 
@@ -33,9 +33,6 @@ models:
 
       - name: orgaos
         description: "Array de órgãos associados à ocorrência."
-        subcolumns:
-          - name: nome
-            description: "Nome do órgão."
 
       - name: categoria
         description: "Categoria da ocorrência (Denúncia, chamado, etc.)."
