@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 This module defines a Prefect workflow for materializing tables using DBT.
-related to 'disque_denuncia.denuncias' and 'adm_central_atendimento_1746.chamado'.
+related to 'adm_central_atendimento_1746.chamado'.
 """
 
 
@@ -23,13 +23,14 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 )
 
 from pipelines.constants import constants
-from pipelines.integracao_reports.materialize.schedules import (
-    integracao_reports_minutely_update_schedule,
-)
+
+# from pipelines.integracao_reports.materialize_reports.schedules import (
+# integracao_reports_minutely_update_schedule,
+# )
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
-    name="CIVITAS: integracao_reports - Materialização da tabela",
+    name="CIVITAS: integracao_reports - Materialização da tabela reports",
     state_handlers=[
         handler_inject_bd_credentials,
         handler_initialize_sentry,
@@ -42,10 +43,10 @@ with Flow(
     table_id = Parameter("table_id", default="reports")
     dbt_alias = Parameter("dbt_alias", default=False)
 
-    materialization_flow_id = task_get_flow_group_id(flow_name=settings.FLOW_NAME_EXECUTE_DBT_MODEL)
+    materialization_flow_id = task_get_flow_group_id(
+        flow_name=settings.FLOW_NAME_EXECUTE_DBT_MODEL
+    )  # verificar .FLOW_NAME
     materialization_labels = task_get_current_flow_run_labels()
-
-    # dataset_id = dataset_id + "_" + environment if environment != "prod" else dataset_id
 
     dump_prod_tables_to_materialize_parameters = [
         {"dataset_id": dataset_id, "table_id": table_id, "dbt_alias": dbt_alias}
@@ -72,4 +73,4 @@ materialize_integracao_reports.run_config = KubernetesRun(
     ],
 )
 
-materialize_integracao_reports.schedule = integracao_reports_minutely_update_schedule
+# materialize_integracao_reports.schedule = integracao_reports_minutely_update_schedule
