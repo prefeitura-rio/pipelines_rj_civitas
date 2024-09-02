@@ -12,39 +12,39 @@
 
 -- CTE to generate a list of dates
 WITH distinct_cameras AS (
-  SELECT DISTINCT 
-    camera_numero,   
+  SELECT DISTINCT
+    camera_numero,
     empresa,
-    DATE(MIN(datahora)) AS min_date,  
-    DATE(MAX(datahora)) AS max_date   
-  FROM 
+    DATE(MIN(datahora)) AS min_date,
+    DATE(MAX(datahora)) AS max_date
+  FROM
     `rj-cetrio.ocr_radar.readings_2024*`
-  WHERE 
+  WHERE
     datahora > '2024-05-30'
-  GROUP BY 
+  GROUP BY
     camera_numero, empresa
 ),
 dates AS (
-  SELECT 
+  SELECT
     camera_numero,
     empresa,
     date
-  FROM 
+  FROM
     distinct_cameras c,
     UNNEST(GENERATE_DATE_ARRAY('2024-05-30', current_date())) AS date
 ),
 camera_data AS (
-  SELECT 
+  SELECT
     d.camera_numero,
     d.empresa,
     d.date,
     r.datahora
-  FROM 
+  FROM
     dates d
-  LEFT JOIN 
+  LEFT JOIN
     `rj-cetrio.ocr_radar.readings_2024*` r
-  ON 
-    d.camera_numero = r.camera_numero 
+  ON
+    d.camera_numero = r.camera_numero
     AND d.empresa = r.empresa
     AND DATE(r.datahora) = d.date
 ),
@@ -64,7 +64,7 @@ InactivityPeriods AS (
     camera_numero,
     empresa,
     date,
-    CASE 
+    CASE
       WHEN datahora IS NULL THEN 24 -- Dia inteiro sem leituras
       WHEN next_capture IS NULL THEN TIMESTAMP_DIFF(end_of_day, datahora, HOUR) -- Até o final do dia
       ELSE TIMESTAMP_DIFF(next_capture, datahora, HOUR)
@@ -96,24 +96,24 @@ SELECT
   CASE WHEN total_inactivity_hours >= 24 THEN 1 ELSE 0 END AS periods_exceeding_24h
 FROM
   AggregatedInactivity
-ORDER BY 
+ORDER BY
   camera_numero, date
 ),
 latency_stats_per_day AS (
-  SELECT 
+  SELECT
     empresa,
     camera_numero,
     DATE(datahora) AS date,
     AVG(TIMESTAMP_DIFF(datahora_captura, datahora, SECOND)) AS avg_latency,
     APPROX_QUANTILES(TIMESTAMP_DIFF(datahora_captura, datahora, SECOND), 100)[OFFSET(50)] AS median_latency
-  FROM 
+  FROM
     `rj-cetrio.ocr_radar.readings_2024*`
   GROUP BY
     empresa, camera_numero, DATE(datahora)
 )
-SELECT
-  c.camera_numero, 
-  c.date, 
+SELECT DISTINCT
+  c.camera_numero,
+  c.date,
   c.empresa,
   COALESCE(g.periods_exceeding_1h, 0) AS periods_exceeding_1h,
   COALESCE(g.periods_exceeding_3h, 0) AS periods_exceeding_3h,
@@ -122,12 +122,12 @@ SELECT
   COALESCE(g.periods_exceeding_24h, 0) AS periods_exceeding_24h,
   COALESCE(l.avg_latency, 0) AS avg_latency,
   COALESCE(l.median_latency, 0) AS median_latency
-FROM 
+FROM
   camera_data c
-LEFT JOIN 
-  gaps g 
-ON 
-  c.camera_numero = g.camera_numero 
+LEFT JOIN
+  gaps g
+ON
+  c.camera_numero = g.camera_numero
   AND c.date = g.date
   AND c.empresa = g.empresa
 LEFT JOIN
