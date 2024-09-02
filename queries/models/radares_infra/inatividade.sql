@@ -11,91 +11,110 @@
 }}
 
 -- CTE to generate a list of dates
-WITH dates AS (
-  SELECT
+WITH distinct_cameras AS (
+  SELECT DISTINCT 
+    camera_numero,   
+    empresa,
+    DATE(MIN(datahora)) AS min_date,  
+    DATE(MAX(datahora)) AS max_date   
+  FROM 
+    `rj-cetrio.ocr_radar.readings_2024*`
+  WHERE 
+    datahora > '2024-05-30'
+  GROUP BY 
+    camera_numero, empresa
+),
+dates AS (
+  SELECT 
+    camera_numero,
+    empresa,
     date
-  FROM
-    UNNEST(GENERATE_DATE_ARRAY('2024-05-30', current_date('America/Sao_Paulo'))) AS date
+  FROM 
+    distinct_cameras c,
+    UNNEST(GENERATE_DATE_ARRAY('2024-05-30', current_date())) AS date
 ),
--- CTE to retrieve distinct camera numbers and companies for previously generated dates
 camera_data AS (
-  SELECT
+  SELECT 
+    d.camera_numero,
+    d.empresa,
     d.date,
-    r.camera_numero,
-    r.empresa
-  FROM
+    r.datahora
+  FROM 
     dates d
-  JOIN (
-    SELECT DISTINCT
-      camera_numero,
-      empresa
-    FROM
-      `rj-cetrio.ocr_radar.readings_2024*`
-    WHERE
-      DATE(datahora, 'America/Sao_Paulo') > '2024-05-30'
-  ) r
-  ON 1=1
+  LEFT JOIN 
+    `rj-cetrio.ocr_radar.readings_2024*` r
+  ON 
+    d.camera_numero = r.camera_numero 
+    AND d.empresa = r.empresa
+    AND DATE(r.datahora) = d.date
 ),
--- CTE to calculate the previous capture time for each camera and company
 RadarActivity AS (
   SELECT
     camera_numero,
     empresa,
-    LAG(TIMESTAMP(DATETIME(datahora, 'America/Sao_Paulo'))) OVER (PARTITION BY camera_numero ORDER BY datahora) AS prev_capture,
-    TIMESTAMP(DATETIME(datahora, 'America/Sao_Paulo')) AS datahora
+    date,
+    datahora,
+    LEAD(datahora) OVER (PARTITION BY camera_numero ORDER BY date, datahora) AS next_capture,
+    TIMESTAMP(date + INTERVAL 1 DAY) AS end_of_day
   FROM
-    `rj-cetrio.ocr_radar.readings_2024*`
+    camera_data
 ),
--- CTE to calculate inactivity periods in hours between consecutive captures
 InactivityPeriods AS (
   SELECT
     camera_numero,
     empresa,
-    datahora,
-    prev_capture,
-    -- Calculate the difference in hours between the current and previous capture
-    TIMESTAMP_DIFF(datahora, prev_capture, HOUR) AS inactivity_hours
+    date,
+    CASE 
+      WHEN datahora IS NULL THEN 24 -- Dia inteiro sem leituras
+      WHEN next_capture IS NULL THEN TIMESTAMP_DIFF(end_of_day, datahora, HOUR) -- Até o final do dia
+      ELSE TIMESTAMP_DIFF(next_capture, datahora, HOUR)
+    END AS inactivity_hours
   FROM
     RadarActivity
 ),
--- CTE to identify periods of inactivity exceeding certain thresholds
-gaps AS (
+AggregatedInactivity AS (
   SELECT
     camera_numero,
     empresa,
-    DATE(datahora) AS date,
-    -- Determine if there were inactivity periods exceeding specific hours
-    MAX(CASE WHEN inactivity_hours > 1 THEN 1 ELSE 0 END) AS periods_exceeding_1h,
-    MAX(CASE WHEN inactivity_hours > 3 THEN 1 ELSE 0 END) AS periods_exceeding_3h,
-    MAX(CASE WHEN inactivity_hours > 6 THEN 1 ELSE 0 END) AS periods_exceeding_6h,
-    MAX(CASE WHEN inactivity_hours > 12 THEN 1 ELSE 0 END) AS periods_exceeding_12h,
-    MAX(CASE WHEN inactivity_hours > 24 THEN 1 ELSE 0 END) AS periods_exceeding_24h
+    date,
+    SUM(inactivity_hours) AS total_inactivity_hours
   FROM
     InactivityPeriods
   GROUP BY
-    camera_numero, DATE(datahora), empresa
+    camera_numero, empresa, date
 ),
--- CTE to calculate average and median latency per day for each camera and company.
+gaps as (
+SELECT
+  camera_numero,
+  empresa,
+  date,
+  total_inactivity_hours,
+  CASE WHEN total_inactivity_hours > 1 THEN 1 ELSE 0 END AS periods_exceeding_1h,
+  CASE WHEN total_inactivity_hours > 3 THEN 1 ELSE 0 END AS periods_exceeding_3h,
+  CASE WHEN total_inactivity_hours > 6 THEN 1 ELSE 0 END AS periods_exceeding_6h,
+  CASE WHEN total_inactivity_hours > 12 THEN 1 ELSE 0 END AS periods_exceeding_12h,
+  CASE WHEN total_inactivity_hours >= 24 THEN 1 ELSE 0 END AS periods_exceeding_24h
+FROM
+  AggregatedInactivity
+ORDER BY 
+  camera_numero, date
+),
 latency_stats_per_day AS (
-  SELECT
+  SELECT 
     empresa,
     camera_numero,
-    DATE(datahora, 'America/Sao_Paulo') AS date,
-    -- Calculate the average latency in seconds
+    DATE(datahora) AS date,
     AVG(TIMESTAMP_DIFF(datahora_captura, datahora, SECOND)) AS avg_latency,
-    -- Calculate the median latency using approximate quantiles
     APPROX_QUANTILES(TIMESTAMP_DIFF(datahora_captura, datahora, SECOND), 100)[OFFSET(50)] AS median_latency
-  FROM
+  FROM 
     `rj-cetrio.ocr_radar.readings_2024*`
   GROUP BY
-    empresa, camera_numero, `date`
+    empresa, camera_numero, DATE(datahora)
 )
--- Final query
 SELECT
-  c.camera_numero,
-  c.date,
+  c.camera_numero, 
+  c.date, 
   c.empresa,
-   -- Use COALESCE to handle NULL values and provide default 0 for inactivity periods
   COALESCE(g.periods_exceeding_1h, 0) AS periods_exceeding_1h,
   COALESCE(g.periods_exceeding_3h, 0) AS periods_exceeding_3h,
   COALESCE(g.periods_exceeding_6h, 0) AS periods_exceeding_6h,
@@ -103,12 +122,12 @@ SELECT
   COALESCE(g.periods_exceeding_24h, 0) AS periods_exceeding_24h,
   COALESCE(l.avg_latency, 0) AS avg_latency,
   COALESCE(l.median_latency, 0) AS median_latency
-FROM
+FROM 
   camera_data c
-LEFT JOIN
-  gaps g
-ON
-  c.camera_numero = g.camera_numero
+LEFT JOIN 
+  gaps g 
+ON 
+  c.camera_numero = g.camera_numero 
   AND c.date = g.date
   AND c.empresa = g.empresa
 LEFT JOIN
