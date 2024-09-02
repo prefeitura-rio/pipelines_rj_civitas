@@ -21,9 +21,15 @@ models:
     relation: true
     columns: true
   queries:
-    example:
-      +materialized: view
-      +schema: example
     disque_denuncia:
       +materialized: table
       +schema: disque_denuncia
+    integracao_reports:
+      +materialized: table
+      +schema: integracao_reports
+    integracao_reports_staging:
+      +materialized: table
+      +schema: integracao_reports_staging
+    radares_infra:
+      +materialized: table
+      +schema: radares_infra

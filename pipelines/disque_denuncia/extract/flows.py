@@ -32,6 +32,7 @@ from pipelines.disque_denuncia.extract.schedules import (
     disque_denuncia_etl_minutely_update_schedule,
 )
 from pipelines.disque_denuncia.extract.tasks import (
+    check_report_qty,
     get_reports_from_start_date,
     loop_transform_report_data,
 )
@@ -52,6 +53,7 @@ with Flow(
     dump_mode = Parameter("dump_mode", default="append")
     biglake_table = Parameter("biglake_table", default=True)
     materialize_after_dump = Parameter("materialize_after_dump", default=True)
+    materialize_reports_dd_after_dump = Parameter("materialize_reports_dd_after_dump", default=True)
     dbt_alias = Parameter("dbt_alias", default=False)
     loop_limiter = Parameter("loop_limiter", default=False)
     tipo_difusao = Parameter("tipo_difusao", default="interesse")
@@ -69,6 +71,10 @@ with Flow(
     )
     reports_response.set_upstream(table_id)
 
+    # Task to check report quantity
+    report_qty_check = check_report_qty(reports_response)
+    report_qty_check.set_upstream(reports_response)
+
     # Extract the list of XML file paths from the reports response
     # Task to transform the XML files into CSV files
     csv_path_list = loop_transform_report_data(
@@ -76,7 +82,7 @@ with Flow(
         final_file_dir=Path("/tmp/pipelines/disque_denuncia/data/partition_directory"),
         mod=mod,
     )
-    csv_path_list.set_upstream(reports_response)
+    csv_path_list.set_upstream(report_qty_check)
 
     create_table = create_table_and_upload_to_gcs(
         data_path=Path("/tmp/pipelines/disque_denuncia/data/partition_directory"),
@@ -87,6 +93,7 @@ with Flow(
     )
     create_table.set_upstream(csv_path_list)
 
+    # Run DBT to create/update "denuncias" table in "disque_denuncia" dataset
     materialization_flow_id = task_get_flow_group_id(
         flow_name=settings.FLOW_NAME_EXECUTE_DBT_MODEL
     )  # verificar .FLOW_NAME
@@ -111,6 +118,36 @@ with Flow(
             stream_logs=unmapped(True),
             raise_final_state=unmapped(True),
         )
+
+        # Run DBT to create/update "reports_disque_denuncia" table in "integracao_reports" dataset
+        # Execute only if "materialize_after_dump" is True
+        materialize_reports_dd_flow_id = task_get_flow_group_id(
+            flow_name="CIVITAS: integracao_reports_staging - Materialize disque denuncia"
+        )
+
+        with case(task=materialize_reports_dd_after_dump, value=True):
+            reports_dd_tables_to_materialize_parameters = [
+                {
+                    "dataset_id": "integracao_reports_staging",
+                    "table_id": "reports_disque_denuncia",
+                    "dbt_alias": False,
+                }
+            ]
+
+            reports_dd_materialization_flow_runs = create_flow_run.map(
+                flow_id=unmapped(materialize_reports_dd_flow_id),
+                parameters=reports_dd_tables_to_materialize_parameters,
+                labels=unmapped(materialization_labels),
+            )
+
+            reports_dd_materialization_flow_runs.set_upstream(dump_prod_materialization_flow_runs)
+
+            reports_dd_wait_for_flow_run = wait_for_flow_run.map(
+                flow_run_id=reports_dd_materialization_flow_runs,
+                stream_states=unmapped(True),
+                stream_logs=unmapped(True),
+                raise_final_state=unmapped(True),
+            )
 
 extracao_disque_denuncia.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
 extracao_disque_denuncia.run_config = KubernetesRun(

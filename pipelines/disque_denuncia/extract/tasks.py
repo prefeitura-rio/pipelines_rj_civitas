@@ -9,6 +9,7 @@ Tasks include:
 - Transforming XML data into structured CSV files
 """
 
+import glob
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -19,6 +20,8 @@ import pandas as pd
 import requests
 import xmltodict
 from prefect import task
+from prefect.engine.runner import ENDRUN
+from prefect.engine.state import Skipped
 from prefeitura_rio.pipelines_utils.bd import get_project_id
 from prefeitura_rio.pipelines_utils.logging import log, log_mod
 from prefeitura_rio.pipelines_utils.prefect import get_flow_run_mode
@@ -721,32 +724,22 @@ def loop_transform_report_data(
         )
         iter_counter += 1
 
-    import glob
-    from os import walk
-    from os.path import join
-
-    log("glob")
-    log(glob.glob(str(final_file_dir) + "/*"))
-    log(glob.glob(str(final_file_dir) + "/*/*"))
-    log(glob.glob(str(final_file_dir) + "/*/*/*"))
-    log(glob.glob(str(final_file_dir) + "/*/*/*/*"))
-    data_type = "csv"
-    found = False
-
-    for subdir, _, filenames in walk(str(final_file_dir)):
-        log(f"subdir: {subdir}")
-        log(f"filenames: {filenames}")
-        for fname in filenames:
-            log(f"fname: {fname}")
-            if fname.endswith(f".{'data_type'}"):
-                file = join(subdir, fname)
-                log(f"Found {data_type.upper()} file: {file}")
-                found = True
-                break
-        if found:
-            break
-
-    log_fnames = next(walk(str(final_file_dir)), (None, None, []))[2]  # [] if no file
-    log(f"log_fnames: {log_fnames}")
+    saved_csv_path_str = "\n".join(
+        [
+            file
+            for file in glob.glob((final_file_dir / "**").as_posix(), recursive=True)
+            if file.endswith(".csv")
+        ]
+    )
+    log(f"CSV files saved: {saved_csv_path_str}")
 
     return list(set(changed_file_path_list))
+
+
+# Check if there are any reports returned
+@task
+def check_report_qty(reports_response):
+    if not reports_response["xml_file_path_list"]:
+        log("No data returned by the API, finishing the flow.", level="info")
+        skip = Skipped(message="No data returned by the API, finishing the flow.")
+        raise ENDRUN(state=skip)
