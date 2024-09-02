@@ -57,3 +57,15 @@ SELECT
 FROM `rj-civitas.disque_denuncia.denuncias` d
 LEFT JOIN orgaos_expanded o ON d.id_denuncia = o.id_denuncia
 LEFT JOIN assuntos_expanded a ON d.id_denuncia = a.id_denuncia
+WHERE
+  (
+    NOT IS_NAN(latitude)
+    AND NOT IS_NAN(longitude)
+  )
+  AND ST_WITHIN(
+    ST_GEOGPOINT(
+      longitude,
+      latitude
+    ),
+    (SELECT ST_UNION_AGG(geometry) AS city_geometry FROM `datario.dados_mestres.bairro`)
+  )
