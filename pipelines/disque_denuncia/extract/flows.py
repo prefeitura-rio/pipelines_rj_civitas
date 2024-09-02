@@ -128,7 +128,7 @@ with Flow(
         with case(task=materialize_reports_dd_after_dump, value=True):
             reports_dd_tables_to_materialize_parameters = [
                 {
-                    "dataset_id": "integracao_reports",
+                    "dataset_id": "integracao_reports_staging",
                     "table_id": "reports_disque_denuncia",
                     "dbt_alias": False,
                 }
