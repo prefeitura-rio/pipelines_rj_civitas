@@ -10,7 +10,7 @@
     }
     )
 }}
-
+-- Expand the organs associated with each report and aggregate organ names into an array
 WITH orgaos_expanded AS (
   SELECT
     id_denuncia,
@@ -19,6 +19,7 @@ WITH orgaos_expanded AS (
   UNNEST(orgaos) AS orgao
   GROUP BY id_denuncia
 ),
+-- Aggregate the subtypes into an array, grouped by report ID and class ID
 tipos_agg AS (
   SELECT
     d.id_denuncia,
@@ -31,6 +32,7 @@ tipos_agg AS (
     id_denuncia,
     id_classe
 ),
+-- Expand the subtype associated with each report and combine with aggregated types
 assuntos_expanded AS (
   SELECT
     d.id_denuncia,
@@ -42,6 +44,7 @@ assuntos_expanded AS (
 
   GROUP BY id_denuncia
 )
+-- Select final data, joining expanded information and filtering by location
 SELECT
   'DD' AS id_source,
   d.id_denuncia AS id_report_original,
