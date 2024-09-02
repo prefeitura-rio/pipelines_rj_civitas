@@ -53,6 +53,7 @@ with Flow(
     dump_mode = Parameter("dump_mode", default="append")
     biglake_table = Parameter("biglake_table", default=True)
     materialize_after_dump = Parameter("materialize_after_dump", default=True)
+    materialize_reports_dd_after_dump = Parameter("materialize_reports_dd_after_dump", default=True)
     dbt_alias = Parameter("dbt_alias", default=False)
     loop_limiter = Parameter("loop_limiter", default=False)
     tipo_difusao = Parameter("tipo_difusao", default="interesse")
@@ -92,6 +93,7 @@ with Flow(
     )
     create_table.set_upstream(csv_path_list)
 
+    # Run DBT to create/update "denuncias" table in "disque_denuncia" dataset
     materialization_flow_id = task_get_flow_group_id(
         flow_name=settings.FLOW_NAME_EXECUTE_DBT_MODEL
     )  # verificar .FLOW_NAME
@@ -109,6 +111,35 @@ with Flow(
         )
 
         dump_prod_materialization_flow_runs.set_upstream(create_table)
+
+        dump_prod_wait_for_flow_run = wait_for_flow_run.map(
+            flow_run_id=dump_prod_materialization_flow_runs,
+            stream_states=unmapped(True),
+            stream_logs=unmapped(True),
+            raise_final_state=unmapped(True),
+        )
+
+    # Run DBT to create/update "reports_disque_denuncia" table in "integracao_reports" dataset
+    materialize_reports_dd_flow_id = task_get_flow_group_id(
+        flow_name="CIVITAS: integracao_reports_staging - Materialize disque denuncia"
+    )
+
+    with case(task=materialize_reports_dd_after_dump, value=True):
+        dump_prod_tables_to_materialize_parameters = [
+            {
+                "dataset_id": "integracao_reports",
+                "table_id": "reports_disque_denuncia",
+                "dbt_alias": False,
+            }
+        ]
+
+        dump_prod_materialization_flow_runs = create_flow_run.map(
+            flow_id=unmapped(materialize_reports_dd_flow_id),
+            parameters=dump_prod_tables_to_materialize_parameters,
+            labels=unmapped(materialization_labels),
+        )
+
+        dump_prod_materialization_flow_runs.set_upstream(dump_prod_materialization_flow_runs)
 
         dump_prod_wait_for_flow_run = wait_for_flow_run.map(
             flow_run_id=dump_prod_materialization_flow_runs,

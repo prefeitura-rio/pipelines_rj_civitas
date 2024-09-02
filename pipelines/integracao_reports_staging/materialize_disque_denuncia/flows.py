@@ -23,13 +23,14 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 )
 
 from pipelines.constants import constants
-from pipelines.integracao_reports_staging.materialize_disque_denuncia.schedules import (
-    integracao_reports_disque_denuncia_minutely_update_schedule,
-)
+
+# from pipelines.integracao_reports_staging.materialize_disque_denuncia.schedules import (
+#     integracao_reports_disque_denuncia_minutely_update_schedule,
+# )
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
-    name="CIVITAS: integracao_reports_staging - Materialização dos dados do disque denuncia",
+    name="CIVITAS: integracao_reports_staging - Materialize disque denuncia",
     state_handlers=[
         handler_inject_bd_credentials,
         handler_initialize_sentry,
@@ -72,6 +73,6 @@ materialize_integracao_reports_disque_denuncia.run_config = KubernetesRun(
     ],
 )
 
-materialize_integracao_reports_disque_denuncia.schedule = (
-    integracao_reports_disque_denuncia_minutely_update_schedule
-)
+# materialize_integracao_reports_disque_denuncia.schedule = (
+#     integracao_reports_disque_denuncia_minutely_update_schedule
+# )
