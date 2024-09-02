@@ -136,5 +136,4 @@ ON
   c.camera_numero = l.camera_numero
   AND c.date = l.date
   AND c.empresa = l.empresa
-ORDER BY 
-  c.camera_numero, c.date
+)
