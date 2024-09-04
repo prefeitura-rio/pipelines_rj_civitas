@@ -11,7 +11,7 @@ WITH radar_placa_tipo AS (
     WHERE DATE(datahora) = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)  -- Limita ao dia anterior
 ),
 
--- Apenas 1 radar marcou o veículo como sendo daquele tipo!
+-- Apenas 1 radar marcou o veículo como sendo daquele tipo
 um_erro AS (
     SELECT placa, tipoveiculo
     FROM radar_placa_tipo
