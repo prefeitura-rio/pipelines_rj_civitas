@@ -33,3 +33,6 @@ models:
     radares_infra:
       +materialized: table
       +schema: radares_infra
+    placas_clonadas:
+      +materialized: table
+      +schema: placas_clonadas
