@@ -15,7 +15,6 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "target"
   - "dbt_packages"
 
-
 models:
   +persist_docs:
     relation: true
@@ -33,3 +32,6 @@ models:
     radares_infra:
       +materialized: table
       +schema: radares_infra
+    placas_clonadas:
+      +materialized: table
+      +schema: placas_clonadas
