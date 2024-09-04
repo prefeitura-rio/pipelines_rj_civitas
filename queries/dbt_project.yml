@@ -15,7 +15,6 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "target"
   - "dbt_packages"
 
-
 models:
   +persist_docs:
     relation: true
