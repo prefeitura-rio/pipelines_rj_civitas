@@ -3,7 +3,7 @@
     materialized = 'table',
     partition_by = {
         'field': 'datahora',
-        'data_type': 'datetime', --verificar timestamp
+        'data_type': 'timestamp',
         'granularity': 'day'	
     },
     cluster_by = ['camera_numero', 'placa']
