@@ -1,12 +1,7 @@
 {{
   config(
     materialized = 'table',
-    partition_by = {
-        'field': 'datahora',
-        'data_type': 'timestamp',
-        'granularity': 'day'	
-    },
-    cluster_by = ['camera_numero', 'placa']
+    cluster_by = ['camera_numero']
   )
 }}
 
