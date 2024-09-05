@@ -9,15 +9,15 @@ WITH placa_tipos_confiavel AS (
   SELECT 
     vm.placa,
     COUNT(DISTINCT vm.tipo_confiavel) AS qtd_tipos_confiavel
-  FROM `rj-civitas-dev.teste_placa_clonada.radar_placa_filtrado` vm
-  INNER JOIN `rj-civitas-dev.teste_placa_clonada.radares_confiaveis` rc
+  FROM `rj-civitas.placas_clonadas.dados_radares` vm
+  INNER JOIN `rj-civitas.dbt.radares_confiaveis` rc
     ON vm.camera_numero = rc.camera_numero
   GROUP BY vm.placa
 ),
 
 placa_tipos as (
   SELECT placa, COUNT(DISTINCT tipoveiculo) AS qtd_tipos
-  FROM `rj-civitas-dev.teste_placa_clonada.radar_placa_filtrado`
+  FROM `rj-civitas.placas_clonadas.dados_radares`
   GROUP BY placa
 ),
 
@@ -31,7 +31,7 @@ cameras as (
       tipos_diferentes,
       tipo_confiavel,
       camera_final AS camera2
-    FROM `rj-civitas-dev.teste_placa_clonada.velocidade_movimentacao`
+    FROM `rj-civitas.placas_clonadas.identificacao_anomalias_placas`
   UNION ALL
     SELECT
       placa,
@@ -42,7 +42,7 @@ cameras as (
       tipos_diferentes,
       tipo_confiavel,
       camera_inicial AS camera2
-    FROM `rj-civitas-dev.teste_placa_clonada.velocidade_movimentacao`
+    FROM `rj-civitas.placas_clonadas.identificacao_anomalias_placas`
 ),
 
 -- Identifica radares com muitas vel. médias acima do esperado
@@ -57,7 +57,7 @@ cameras_validas as (
 
 velocidade_veiculo as (
   select placa, GREATEST(150, MAX(velocidade) + 30) AS velocidade_maxima
-  from `rj-civitas-dev.teste_placa_clonada.radar_placa_filtrado`
+  from `rj-civitas.placas_clonadas.dados_radares`
   group by placa
 ),
 
@@ -71,7 +71,7 @@ inconsistencias_deslocamento AS (
   COUNTIF(c.tipos_diferentes AND c.tipo_confiavel) AS mudanca_tipo_confiavel,
   COUNTIF(c.tipos_diferentes) AS mudanca_tipo_total
 FROM cameras c
-inner join placa_tipos pt
+inner join placa_tipos ptpp
   on c.placa = pt.placa
 left join placa_tipos_confiavel ptc
   on c.placa = ptc.placa
