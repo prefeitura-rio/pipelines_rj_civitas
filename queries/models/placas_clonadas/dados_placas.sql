@@ -36,4 +36,4 @@ SELECT
 FROM `rj-civitas.placas_clonadas.dados_radares` pv
 JOIN mediana_cameras mc
   ON pv.placa = mc.placa AND EXTRACT(YEAR FROM pv.datahora) = mc.ano AND EXTRACT(MONTH FROM pv.datahora) = mc.mes
-GROUP BY pv.placa, mc.ano_mes, mc.ano, mc.mes, mc.mediana_primeira_camera, mc.mediana_ultima_camera;
+GROUP BY pv.placa, mc.ano_mes, mc.ano, mc.mes, mc.mediana_primeira_camera, mc.mediana_ultima_camera
