@@ -1,7 +1,7 @@
 {{
   config(
     materialized = 'table',
-    cluster_by = ['placa', 'pontos_clonagem']
+    cluster_by = ['placa']
   )
 }}
 
