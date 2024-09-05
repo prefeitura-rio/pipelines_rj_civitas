@@ -4,7 +4,7 @@
     unique_key = 'placa',
     partition_by = {
         'field': 'datahora_inicial',
-        'data_type': 'day'
+        'data_type': 'timestamp'
     },
     cluster_by = ['placa', 'camera_inicial', 'camera_final']
   )
