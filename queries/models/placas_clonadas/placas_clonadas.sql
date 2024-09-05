@@ -71,7 +71,7 @@ inconsistencias_deslocamento AS (
   COUNTIF(c.tipos_diferentes AND c.tipo_confiavel) AS mudanca_tipo_confiavel,
   COUNTIF(c.tipos_diferentes) AS mudanca_tipo_total
 FROM cameras c
-inner join placa_tipos ptpp
+inner join placa_tipos pt
   on c.placa = pt.placa
 left join placa_tipos_confiavel ptc
   on c.placa = ptc.placa
