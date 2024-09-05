@@ -38,7 +38,7 @@ SELECT
         ELSE c.longitude
     END AS longitude,
     (rc.camera_numero IS NOT NULL) AS tipo_confiavel
-FROM `rj-cetrio.ocr_radar.readings_2024_06` r
+FROM `rj-cetrio.ocr_radar.readings_2024_06` r -- TODO: trocar a data para *
 LEFT JOIN cameras_cetrio c
     ON r.camera_numero = c.camera_numero
 LEFT JOIN `rj-civitas.dbt.radares_confiaveis` rc
