@@ -120,7 +120,7 @@ with Flow(
     materialization_labels = task_get_current_flow_run_labels()
 
     extracao_fogo_cruzado_update_flow_runs = create_flow_run(
-        flow_name=template_extracao_fogo_cruzado.name(),
+        flow_name=template_extracao_fogo_cruzado.name,
         parameters={"start_date": (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")},
         labels=materialization_labels,
     )
@@ -142,7 +142,7 @@ with Flow(
     materialization_labels = task_get_current_flow_run_labels()
 
     extracao_fogo_cruzado_full_refresh_flow_runs = create_flow_run(
-        flow_name=template_extracao_fogo_cruzado.name(),
+        flow_name=template_extracao_fogo_cruzado.name,
         parameters={},
         labels=materialization_labels,
     )
