@@ -47,10 +47,14 @@ with Flow(
     # dataset_id = dataset_id + "_" + environment if environment != "prod" else dataset_id
 
     dump_prod_tables_to_materialize_parameters = [
-        # {"dataset_id": dataset_id, "table_id": "radares_confiaveis", "dbt_alias": False},
+        {"dataset_id": dataset_id, "table_id": "radares_confiaveis", "dbt_alias": False},
         # {"dataset_id": dataset_id, "table_id": "dados_radares", "dbt_alias": False},
         {"dataset_id": dataset_id, "table_id": "dados_placas", "dbt_alias": False},
-        # {"dataset_id": dataset_id, "table_id": "identificacao_anomalias_placas", "dbt_alias": False},
+        {
+            "dataset_id": dataset_id,
+            "table_id": "identificacao_anomalias_placas",
+            "dbt_alias": False,
+        },
         # {"dataset_id": dataset_id, "table_id": "placas_clonadas", "dbt_alias": False},
     ]
 

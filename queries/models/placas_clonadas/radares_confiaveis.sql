@@ -4,7 +4,7 @@
     cluster_by = ['camera_numero']
   )
 }}
-
+-- CTE para remover duplicidades
 WITH radar_placa_tipo AS (
     SELECT DISTINCT camera_numero, placa, tipoveiculo
     FROM `rj-cetrio.ocr_radar.readings_2024_*`
@@ -36,7 +36,7 @@ veiculos_por_camera AS (
 
 -- Contagem de leituras por placa
 placa_counts AS (
-    SELECT 
+    SELECT
         camera_numero,
         placa,
         COUNT(*) AS placa_count
@@ -56,12 +56,12 @@ mediana_placa_count_por_radar AS (
 
 -- Identificar placas que excedem a mediana
 placas_acima_mediana AS (
-    SELECT 
+    SELECT
         pc.camera_numero,
         pc.placa,
-        CASE 
-            WHEN pc.placa_count > mpcr.mediana_placa_count THEN 1 
-            ELSE 0 
+        CASE
+            WHEN pc.placa_count > mpcr.mediana_placa_count THEN 1
+            ELSE 0
         END AS acima_mediana
     FROM placa_counts pc
     JOIN mediana_placa_count_por_radar mpcr
@@ -70,7 +70,7 @@ placas_acima_mediana AS (
 
 -- Contagem de placas acima da mediana por radar
 contagem_acima_mediana AS (
-    SELECT 
+    SELECT
         camera_numero,
         SUM(acima_mediana) AS total_acima_mediana
     FROM placas_acima_mediana
@@ -89,15 +89,15 @@ diferencas_de_tempo AS (
 
 -- Contagem de leituras frequentes por radar
 leituras_frequentes_por_radar AS (
-    SELECT 
-        camera_numero, 
+    SELECT
+        camera_numero,
         COUNTIF(diff_seconds <= 60) AS total_leituras_frequentes
     FROM diferencas_de_tempo
     GROUP BY camera_numero
 )
 
-SELECT 
-    rpt.camera_numero, 
+SELECT
+    rpt.camera_numero,
     COUNT(ue.placa) AS qtd_inconsistencias,
     vpc.qtd_registros,
     COALESCE(lfpr.total_leituras_frequentes, 0) AS total_leituras_frequentes,
