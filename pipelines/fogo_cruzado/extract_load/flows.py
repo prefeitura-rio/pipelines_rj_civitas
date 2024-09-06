@@ -56,12 +56,7 @@ with Flow(
     project_id = Parameter("project_id", default="rj-civitas")
     dataset_id = Parameter("dataset_id", default="fogo_cruzado_staging")
     table_id = Parameter("table_id", default="ocorrencias")
-    # dump_mode = Parameter("dump_mode", default="append")
-    # biglake_table = Parameter("biglake_table", default=True)
     materialize_after_dump = Parameter("materialize_after_dump", default=False)
-    # dbt_alias = Parameter("dbt_alias", default=False)
-    # loop_limiter = Parameter("loop_limiter", default=False)
-    # mod = Parameter("mod", default=100)
     secrets = task_get_secret_folder(secret_path="/api-fogo-cruzado")
 
     # Task to get reports from the specified start date
@@ -118,18 +113,45 @@ template_extracao_fogo_cruzado.run_config = KubernetesRun(
     ],
 )
 
-
 with Flow(
     name="CIVITAS: Fogo Cruzado - Atualização",
 ) as extracao_fogo_cruzado_update:
-    template_extracao_fogo_cruzado(
-        start_date=(datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+
+    materialization_labels = task_get_current_flow_run_labels()
+
+    extracao_fogo_cruzado_update_flow_runs = create_flow_run(
+        flow_name=template_extracao_fogo_cruzado.name(),
+        parameters={"start_date": (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")},
+        labels=materialization_labels,
     )
+
+    dump_prod_wait_for_flow_run = wait_for_flow_run(
+        flow_run_id=extracao_fogo_cruzado_update_flow_runs,
+        stream_states=True,
+        stream_logs=True,
+        raise_final_state=True,
+    )
+
 extracao_fogo_cruzado_update.schedule = fogo_cruzado_etl_minutely_update_schedule
 
 
 with Flow(
     name="CIVITAS: Fogo Cruzado - FULL REFRESH",
 ) as extracao_fogo_cruzado_full_refresh:
-    template_extracao_fogo_cruzado()
+
+    materialization_labels = task_get_current_flow_run_labels()
+
+    extracao_fogo_cruzado_full_refresh_flow_runs = create_flow_run(
+        flow_name=template_extracao_fogo_cruzado.name(),
+        parameters={},
+        labels=materialization_labels,
+    )
+
+    dump_prod_wait_for_flow_run = wait_for_flow_run(
+        flow_run_id=extracao_fogo_cruzado_full_refresh_flow_runs,
+        stream_states=True,
+        stream_logs=True,
+        raise_final_state=True,
+    )
+
 extracao_fogo_cruzado_full_refresh = fogo_cruzado_etl_daily_update_schedule
