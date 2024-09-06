@@ -229,7 +229,7 @@ def task_get_secret_folder(
     Returns:
         _type_: _description_
     """
-    log_mod(f"SECRET_PATH: {secret_path}")
+    log(f"SECRET_PATH: {secret_path}")
 
     secrets = get_secret_folder(
         secret_path=secret_path,
@@ -239,5 +239,5 @@ def task_get_secret_folder(
         client=client,
     )
 
-    log_mod(f'SECRET_USERNAME: {secrets["FOGOCRUZADO_USERNAME"]}')
+    log(f'SECRET_USERNAME: {secrets["FOGOCRUZADO_USERNAME"]}')
     return secrets
