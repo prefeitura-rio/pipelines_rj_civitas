@@ -69,7 +69,7 @@ with Flow(
     # Task to get reports from the specified start date
     occurrences_reponse = fetch_occurrences(
         email=secrets["FOGOCRUZADO_USERNAME"],
-        password=secrets("FOGOCRUZADO_PASSWORD"),
+        password=secrets["FOGOCRUZADO_PASSWORD"],
         initial_date=start_date,
     )
 
