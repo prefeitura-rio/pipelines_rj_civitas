@@ -11,12 +11,15 @@ Tasks include:
 
 
 from datetime import timedelta
+from typing import Literal
 
 import requests
 import urllib3
+from infisical import InfisicalClient
 from prefect import task
 from prefect.engine.runner import ENDRUN
 from prefect.engine.state import Skipped
+from prefeitura_rio.pipelines_utils.infisical import get_secret_folder
 from prefeitura_rio.pipelines_utils.logging import log, log_mod
 from pytz import timezone
 
@@ -204,3 +207,34 @@ def check_report_qty(task_response: list):
         log("No data returned by the API, finishing the flow.", level="info")
         skip = Skipped(message="No data returned by the API, finishing the flow.")
         raise ENDRUN(state=skip)
+
+
+@task
+def task_get_secret_folder(
+    secret_path: str = "/",
+    secret_name: str = None,
+    type: Literal["shared", "personal"] = "personal",
+    environment: str = None,
+    client: InfisicalClient = None,
+) -> dict:
+    """
+    Fetches secrets from Infisical. If passing only `secret_path` and
+    no `secret_name`, returns all secrets inside a folder.
+
+    Args:
+        secret_name (str, optional): _description_. Defaults to None.
+        secret_path (str, optional): _description_. Defaults to '/'.
+        environment (str, optional): _description_. Defaults to 'dev'.
+
+    Returns:
+        _type_: _description_
+    """
+    secrets = get_secret_folder(
+        secret_path=secret_path,
+        secret_name=secret_name,
+        type=type,
+        environment=environment,
+        client=client,
+    )
+    log_mod(secrets["FOGOCRUZADO_USERNAME"])
+    return secrets

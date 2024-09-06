@@ -4,7 +4,6 @@ This module defines a Prefect workflow for extracting and transforming data.
 related to 'Disque Denúncia' reports.
 """
 from datetime import datetime, timedelta
-from os import environ
 
 from prefect import Parameter, case
 from prefect.run_configs import KubernetesRun
@@ -32,17 +31,22 @@ from pipelines.fogo_cruzado.extract_load.tasks import (
     check_report_qty,
     fetch_occurrences,
     load_to_table,
+    task_get_secret_folder,
 )
-from pipelines.fogo_cruzado.extract_load.utils import (
-    handler_inject_fogocruzado_credentials,
-)
+
+# from os import environ
+
+
+# from pipelines.fogo_cruzado.extract_load.utils import (
+#     handler_inject_fogocruzado_credentials,
+# )
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
     name="CIVITAS: Fogo Cruzado - Extração e Carga",
     state_handlers=[
         handler_inject_bd_credentials,
-        handler_inject_fogocruzado_credentials,
+        # handler_inject_fogocruzado_credentials,
         handler_initialize_sentry,
         handler_skip_if_running,
     ],
@@ -60,11 +64,12 @@ with Flow(
     # dbt_alias = Parameter("dbt_alias", default=False)
     # loop_limiter = Parameter("loop_limiter", default=False)
     # mod = Parameter("mod", default=100)
+    secrets = task_get_secret_folder(secret_path="/api-fogo-cruzado")
 
     # Task to get reports from the specified start date
     occurrences_reponse = fetch_occurrences(
-        email=environ.get("FOGOCRUZADO_USERNAME"),
-        password=environ.get("FOGOCRUZADO_PASSWORD"),
+        email=secrets["FOGOCRUZADO_USERNAME"],
+        password=secrets("FOGOCRUZADO_PASSWORD"),
         initial_date=start_date,
     )
 
