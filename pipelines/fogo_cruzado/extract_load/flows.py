@@ -76,7 +76,7 @@ with Flow(
         project_id=project_id,
         dataset_id=dataset_id,
         table_id=table_id,
-        ocurrences=occurrences_reponse[0],
+        occurrences=occurrences_reponse[0],
     )
 
     load_to_table_response.set_upstream(report_qty_check)
