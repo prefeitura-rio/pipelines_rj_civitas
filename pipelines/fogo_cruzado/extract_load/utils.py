@@ -28,10 +28,10 @@ def save_data_in_bq(project_id: str, dataset_id: str, table_id: str, json_data: 
         # to an existing table by default, but with WRITE_TRUNCATE write
         # disposition it replaces the table with the loaded data.
         write_disposition="WRITE_TRUNCATE",
-        time_partitioning=bigquery.TimePartitioning(
-            type_=bigquery.TimePartitioningType.DAY,
-            field="data_particao",  # name of column to use for partitioning
-        ),
+        # time_partitioning=bigquery.TimePartitioning(
+        #     type_=bigquery.TimePartitioningType.DAY,
+        #     field="data_particao",  # name of column to use for partitioning
+        # ),
     )
 
     json_data["timestamp_insercao"] = datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M:%S")
