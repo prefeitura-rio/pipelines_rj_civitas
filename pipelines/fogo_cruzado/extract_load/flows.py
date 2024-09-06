@@ -23,10 +23,10 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 )
 
 from pipelines.constants import constants
-
-# from pipelines.disque_denuncia.extract.schedules import (
-#     disque_denuncia_etl_minutely_update_schedule,
-# )
+from pipelines.fogo_cruzado.extract_load.schedules import (
+    fogo_cruzado_etl_daily_update_schedule,
+    fogo_cruzado_etl_minutely_update_schedule,
+)
 from pipelines.fogo_cruzado.extract_load.tasks import (
     check_report_qty,
     fetch_occurrences,
@@ -43,18 +43,16 @@ from pipelines.fogo_cruzado.extract_load.tasks import (
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
-    name="CIVITAS: Fogo Cruzado - Extração e Carga",
+    name="[TEMPLATE]: Fogo Cruzado - Extração e Carga",
     state_handlers=[
         handler_inject_bd_credentials,
         # handler_inject_fogocruzado_credentials,
         handler_initialize_sentry,
         handler_skip_if_running,
     ],
-) as extracao_fogo_cruzado:
+) as template_extracao_fogo_cruzado:
 
-    start_date = Parameter(
-        "start_date", default=(datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
-    )
+    start_date = Parameter("start_date", default=None)
     project_id = Parameter("project_id", default="rj-civitas")
     dataset_id = Parameter("dataset_id", default="fogo_cruzado_staging")
     table_id = Parameter("table_id", default="ocorrencias")
@@ -112,12 +110,26 @@ with Flow(
             raise_final_state=unmapped(True),
         )
 
-extracao_fogo_cruzado.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
-extracao_fogo_cruzado.run_config = KubernetesRun(
+template_extracao_fogo_cruzado.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
+template_extracao_fogo_cruzado.run_config = KubernetesRun(
     image=constants.DOCKER_IMAGE.value,
     labels=[
         constants.RJ_CIVITAS_AGENT_LABEL.value,
     ],
 )
 
-# extracao_fogo_cruzado.schedule = disque_denuncia_etl_minutely_update_schedule
+
+with Flow(
+    name="CIVITAS: Fogo Cruzado - Atualização",
+) as extracao_fogo_cruzado_update:
+    template_extracao_fogo_cruzado(
+        start_date=(datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+    )
+extracao_fogo_cruzado_update.schedule = fogo_cruzado_etl_minutely_update_schedule
+
+
+with Flow(
+    name="CIVITAS: Fogo Cruzado - FULL REFRESH",
+) as extracao_fogo_cruzado_full_refresh:
+    template_extracao_fogo_cruzado()
+extracao_fogo_cruzado_full_refresh = fogo_cruzado_etl_daily_update_schedule

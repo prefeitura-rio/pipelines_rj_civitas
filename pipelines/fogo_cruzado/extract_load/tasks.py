@@ -11,7 +11,7 @@ Tasks include:
 
 
 from datetime import timedelta
-from typing import Literal
+from typing import Literal, Optional
 
 import requests
 import urllib3
@@ -59,7 +59,7 @@ def auth(email: str, password: str) -> str:
 
 def get_occurrences(
     token: str,
-    initial_date: str,
+    initial_date: Optional[str] = None,
     take: int = 1000,
     id_state: str = "b112ffbe-17b3-4ad0-8f2a-2038745d1d14",
 ) -> list[dict]:
@@ -85,8 +85,14 @@ def get_occurrences(
         A list of dictionaries containing the occurrence data.
     """
     occurrences = []
+
+    # Associate parameters names with values
+    params_dict = {"initial_date": initial_date, "id_state": id_state, "take": take}
+
+    # Filter and create final parameters dictionary with values not None
+    params = {k: v for k, v in params_dict.items() if v is not None}
+
     headers = {"Authorization": f"Bearer {token}"}
-    params = {"initialdate": initial_date, "idState": id_state, "take": take}
     base_url = "https://api-service.fogocruzado.org.br/api/v2/occurrences?page={page}"
 
     # First request to get the total page number
@@ -111,7 +117,7 @@ def get_occurrences(
 
 
 @task(max_retries=5, retry_delay=timedelta(seconds=30))
-def fetch_occurrences(email: str, password: str, initial_date: str) -> list[dict]:
+def fetch_occurrences(email: str, password: str, initial_date: Optional[str] = None) -> list[dict]:
     """
     Task that Fetches occurrences from the Fogo Cruzado API.
 
