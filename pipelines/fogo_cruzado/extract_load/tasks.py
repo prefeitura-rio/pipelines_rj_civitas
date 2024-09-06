@@ -54,7 +54,7 @@ def auth(email: str, password: str) -> str:
     return data["data"]["accessToken"]
 
 
-def get_ocorrencias(
+def get_occurrences(
     token: str,
     initial_date: str,
     take: int = 1000,
@@ -81,34 +81,34 @@ def get_ocorrencias(
     list
         A list of dictionaries containing the occurrence data.
     """
-    ocorrencias = []
+    occurrences = []
     headers = {"Authorization": f"Bearer {token}"}
     params = {"initialdate": initial_date, "idState": id_state, "take": take}
     base_url = "https://api-service.fogocruzado.org.br/api/v2/occurrences?page={page}"
 
-    # Primeira requisição para obter o número total de páginas
+    # First request to get the total page number
     initial_url = base_url.format(page=1)
     log_mod(msg="Loop 1: Getting data from API.", level="info", mod=100)
     response = requests.get(initial_url, headers=headers, params=params)
     response.raise_for_status()
     initial_data = response.json()
     total_pages = initial_data["pageMeta"]["pageCount"]
-    ocorrencias.extend(initial_data["data"])
+    occurrences.extend(initial_data["data"])
 
-    # Requisições subsequentes para as demais páginas
+    # Request next pages
     for page in range(2, total_pages + 1):
         url = base_url.format(page=page)
         log_mod(msg=f"Loop {page}: Getting data from API.", level="info", mod=100)
         response = requests.get(url, headers=headers, params=params)
         response.raise_for_status()
         data = response.json()
-        ocorrencias.extend(data["data"])
+        occurrences.extend(data["data"])
 
-    return ocorrencias
+    return occurrences
 
 
 @task(max_retries=5, retry_delay=timedelta(seconds=30))
-def fetch_ocorrencias(email: str, password: str, initial_date: str) -> list[dict]:
+def fetch_occurrences(email: str, password: str, initial_date: str) -> list[dict]:
     """
     Task that Fetches occurrences from the Fogo Cruzado API.
 
@@ -128,34 +128,34 @@ def fetch_ocorrencias(email: str, password: str, initial_date: str) -> list[dict
     """
 
     token = auth(email=email, password=password)
-    ocorrencias = get_ocorrencias(token=token, initial_date=initial_date)
+    occurrences = get_occurrences(token=token, initial_date=initial_date)
 
-    log("Fetching ocorrencias...")
-    return ocorrencias
-    # # if len(ocorrencias) == 0:
-    #     # raise ValueError("Ocorrencias is None")  # SKIP FLOW
+    log("Fetching occurrences...")
+    return occurrences
+    # # if len(occurrences) == 0:
+    #     # raise ValueError("occurrences is None")  # SKIP FLOW
 
-    # df_ocorrencias = pd.DataFrame(ocorrencias)
+    # df_occurrences = pd.DataFrame(occurrences)
 
     # ########## -------------- APAGAR AQUI -------------- ##########
     # csv_dir = Path.cwd() / 'pipelines' / 'fogo_cruzado' /'data' / 'raw'
-    # # df_ocorrencias = pd.read_csv(csv_dir / 'ocorrencias.csv')
+    # # df_occurrences = pd.read_csv(csv_dir / 'occurrences.csv')
     # csv_dir.mkdir(parents=True, exist_ok=True)
-    # df_ocorrencias.to_csv(csv_dir / 'ocorrencias.csv', index=False)
+    # df_occurrences.to_csv(csv_dir / 'occurrences.csv', index=False)
     # ########## -------------- APAGAR AQUI -------------- ##########
 
     # ########## -------------- OPÇÃO 01 - TABELA NATIVA -------------- ##########
     # ########## -------------- OPÇÃO 01 - TABELA NATIVA -------------- ##########
 
     # ########## -------------- OPÇÃO 02 - GCS -------------- ##########
-    # df_ocorrencias['new_date'] = pd.to_datetime(df_ocorrencias['date'])
-    # df_ocorrencias['new_date'] = df_ocorrencias['new_date'].dt.tz_convert('America/Sao_Paulo')
+    # df_occurrences['new_date'] = pd.to_datetime(df_occurrences['date'])
+    # df_occurrences['new_date'] = df_occurrences['new_date'].dt.tz_convert('America/Sao_Paulo')
 
-    # df_ocorrencias.groupby(['new_date'])
+    # df_occurrences.groupby(['new_date'])
 
-    # log('Writing ocorrencias...')
-    # for i, (data_hora, group) in enumerate(df_ocorrencias.groupby(
-    # df_ocorrencias['new_date'].dt.date)):
+    # log('Writing occurrences...')
+    # for i, (data_hora, group) in enumerate(df_occurrences.groupby(
+    # df_occurrences['new_date'].dt.date)):
     #     ano_particao = data_hora.strftime('%Y')
     #     mes_particao = data_hora.strftime('%m')
     # file_dir = Path.cwd() / 'pipelines' /
@@ -164,7 +164,7 @@ def fetch_ocorrencias(email: str, password: str, initial_date: str) -> list[dict
 
     #     # Ensure the final directory exists
     #     file_dir.mkdir(parents=True, exist_ok=True)
-    #     file_name = f'ocorrencias_{data_hora}.json'
+    #     file_name = f'occurrences_{data_hora}.json'
     #     group.to_json(file_dir / file_name, orient='records', lines=True)
 
     #     if i % 100 == 0:
@@ -173,7 +173,7 @@ def fetch_ocorrencias(email: str, password: str, initial_date: str) -> list[dict
 
 
 @task(max_retries=5, retry_delay=timedelta(seconds=30))
-def load_to_table(project_id: str, dataset_id: str, table_id: str, ocorrencias: list[dict]):
+def load_to_table(project_id: str, dataset_id: str, table_id: str, occurrences: list[dict]):
     """
     Save a list of dictionaries to a BigQuery table.
 
@@ -181,11 +181,11 @@ def load_to_table(project_id: str, dataset_id: str, table_id: str, ocorrencias: 
         project_id (str): The ID of the GCP project.
         dataset_id (str): The ID of the dataset.
         table_id (str): The ID of the table.
-        ocorrencias (list[dict]): The list of dictionaries to be saved to BigQuery.
+        occurrences (list[dict]): The list of dictionaries to be saved to BigQuery.
     """
-    log(f"Writing ocorrencias to {project_id}.{dataset_id}.{table_id}")
+    log(f"Writing occurrences to {project_id}.{dataset_id}.{table_id}")
     save_data_in_bq(
-        project_id=project_id, dataset_id=dataset_id, table_id=table_id, json_data=ocorrencias
+        project_id=project_id, dataset_id=dataset_id, table_id=table_id, json_data=occurrences
     )
 
     # ########## -------------- OPÇÃO 02 - GCS -------------- ##########

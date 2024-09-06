@@ -30,7 +30,7 @@ from pipelines.constants import constants
 # )
 from pipelines.fogo_cruzado.extract_load.tasks import (
     check_report_qty,
-    fetch_ocorrencias,
+    fetch_occurrences,
     load_to_table,
 )
 from pipelines.fogo_cruzado.extract_load.utils import (
@@ -62,7 +62,7 @@ with Flow(
     # mod = Parameter("mod", default=100)
 
     # Task to get reports from the specified start date
-    occurrences_reponse = fetch_ocorrencias(
+    occurrences_reponse = fetch_occurrences(
         email=environ.get("FOGOCRUZADO_USERNAME"),
         password=environ.get("FOGOCRUZADO_PASSWORD"),
         initial_date=start_date,
@@ -76,7 +76,7 @@ with Flow(
         project_id=project_id,
         dataset_id=dataset_id,
         table_id=table_id,
-        occurrences_reponse=occurrences_reponse[0],
+        ocurrences=occurrences_reponse[0],
     )
 
     load_to_table_response.set_upstream(report_qty_check)
