@@ -117,7 +117,6 @@ with Flow(
     name="CIVITAS: Fogo Cruzado - Atualização",
     state_handlers=[
         handler_inject_bd_credentials,
-        # handler_inject_fogocruzado_credentials,
         handler_initialize_sentry,
         handler_skip_if_running,
     ],
@@ -152,7 +151,6 @@ with Flow(
     name="CIVITAS: Fogo Cruzado - FULL REFRESH",
     state_handlers=[
         handler_inject_bd_credentials,
-        # handler_inject_fogocruzado_credentials,
         handler_initialize_sentry,
         handler_skip_if_running,
     ],

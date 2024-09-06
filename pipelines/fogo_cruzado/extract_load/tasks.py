@@ -87,7 +87,7 @@ def get_occurrences(
     occurrences = []
 
     # Associate parameters names with values
-    params_dict = {"initial_date": initial_date, "id_state": id_state, "take": take}
+    params_dict = {"initialdate": initial_date, "idState": id_state, "take": take}
 
     # Filter and create final parameters dictionary with values not None
     params = {k: v for k, v in params_dict.items() if v is not None}
