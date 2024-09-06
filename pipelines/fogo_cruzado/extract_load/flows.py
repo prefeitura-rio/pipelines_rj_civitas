@@ -138,6 +138,13 @@ with Flow(
         raise_final_state=True,
     )
 
+extracao_fogo_cruzado_update.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
+extracao_fogo_cruzado_update.run_config = KubernetesRun(
+    image=constants.DOCKER_IMAGE.value,
+    labels=[
+        constants.RJ_CIVITAS_AGENT_LABEL.value,
+    ],
+)
 extracao_fogo_cruzado_update.schedule = fogo_cruzado_etl_minutely_update_schedule
 
 
@@ -166,4 +173,11 @@ with Flow(
         raise_final_state=True,
     )
 
+extracao_fogo_cruzado_full_refresh.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
+extracao_fogo_cruzado_full_refresh.run_config = KubernetesRun(
+    image=constants.DOCKER_IMAGE.value,
+    labels=[
+        constants.RJ_CIVITAS_AGENT_LABEL.value,
+    ],
+)
 extracao_fogo_cruzado_full_refresh = fogo_cruzado_etl_daily_update_schedule
