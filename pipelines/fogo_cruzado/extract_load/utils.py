@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import json
+# import json
 from datetime import datetime
 from typing import Any, Dict, List
 
@@ -62,7 +62,7 @@ def save_data_in_bq(
         for data in json_data
     ]
 
-    json_data = json.loads(json.dumps([json_data]))
+    # json_data = json.loads(json.dumps(json_data))
     try:
         job = client.load_table_from_json(json_data, table_full_name, job_config=job_config)
         job.result()
