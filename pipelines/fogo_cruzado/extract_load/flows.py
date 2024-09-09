@@ -3,7 +3,6 @@
 This module defines a Prefect workflow for extracting and transforming data.
 related to 'Disque Denúncia' reports.
 """
-from datetime import datetime, timedelta
 
 from prefect import Parameter, case
 from prefect.run_configs import KubernetesRun
@@ -15,6 +14,7 @@ from prefeitura_rio.pipelines_utils.custom import Flow
 from prefeitura_rio.pipelines_utils.prefect import (
     task_get_current_flow_run_labels,
     task_get_flow_group_id,
+    task_rename_current_flow_run_dataset_table,
 )
 from prefeitura_rio.pipelines_utils.state_handlers import (
     handler_initialize_sentry,
@@ -24,8 +24,7 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 
 from pipelines.constants import constants
 from pipelines.fogo_cruzado.extract_load.schedules import (
-    fogo_cruzado_etl_daily_update_schedule,
-    fogo_cruzado_etl_minutely_update_schedule,
+    fogo_cruzado_etl_update_schedule,
 )
 from pipelines.fogo_cruzado.extract_load.tasks import (
     check_report_qty,
@@ -43,14 +42,14 @@ from pipelines.fogo_cruzado.extract_load.tasks import (
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
-    name="[TEMPLATE]: Fogo Cruzado - Extração e Carga",
+    name="Fogo Cruzado - Extração e Carga",
     state_handlers=[
         handler_inject_bd_credentials,
         # handler_inject_fogocruzado_credentials,
         handler_initialize_sentry,
         handler_skip_if_running,
     ],
-) as template_extracao_fogo_cruzado:
+) as extracao_fogo_cruzado:
 
     start_date = Parameter("start_date", default=None)
     project_id = Parameter("project_id", default="rj-civitas")
@@ -58,6 +57,12 @@ with Flow(
     table_id = Parameter("table_id", default="ocorrencias")
     materialize_after_dump = Parameter("materialize_after_dump", default=False)
     secrets = task_get_secret_folder(secret_path="/api-fogo-cruzado")
+
+    # Rename current flow run to identify if is full refresh or partial
+    prefix = "FULL_REFRESH -" if start_date else "PARTIAL_REFRESH -"
+    task_rename_current_flow_run_dataset_table(
+        prefix=prefix, dataset_id=dataset_id, table_id=table_id
+    )
 
     # Task to get reports from the specified start date
     occurrences_reponse = fetch_occurrences(
@@ -105,77 +110,12 @@ with Flow(
             raise_final_state=unmapped(True),
         )
 
-template_extracao_fogo_cruzado.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
-template_extracao_fogo_cruzado.run_config = KubernetesRun(
+extracao_fogo_cruzado.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
+extracao_fogo_cruzado.run_config = KubernetesRun(
     image=constants.DOCKER_IMAGE.value,
     labels=[
         constants.RJ_CIVITAS_AGENT_LABEL.value,
     ],
 )
 
-with Flow(
-    name="CIVITAS: Fogo Cruzado - Atualização",
-    state_handlers=[
-        handler_inject_bd_credentials,
-        handler_initialize_sentry,
-        handler_skip_if_running,
-    ],
-) as extracao_fogo_cruzado_update:
-
-    materialization_labels = task_get_current_flow_run_labels()
-
-    extracao_fogo_cruzado_update_flow_runs = create_flow_run(
-        flow_name=template_extracao_fogo_cruzado.name,
-        parameters={"start_date": (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")},
-        labels=materialization_labels,
-    )
-
-    dump_prod_wait_for_flow_run = wait_for_flow_run(
-        flow_run_id=extracao_fogo_cruzado_update_flow_runs,
-        stream_states=True,
-        stream_logs=True,
-        raise_final_state=True,
-    )
-
-extracao_fogo_cruzado_update.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
-extracao_fogo_cruzado_update.run_config = KubernetesRun(
-    image=constants.DOCKER_IMAGE.value,
-    labels=[
-        constants.RJ_CIVITAS_AGENT_LABEL.value,
-    ],
-)
-extracao_fogo_cruzado_update.schedule = fogo_cruzado_etl_minutely_update_schedule
-
-
-with Flow(
-    name="CIVITAS: Fogo Cruzado - FULL REFRESH",
-    state_handlers=[
-        handler_inject_bd_credentials,
-        handler_initialize_sentry,
-        handler_skip_if_running,
-    ],
-) as extracao_fogo_cruzado_full_refresh:
-
-    materialization_labels = task_get_current_flow_run_labels()
-
-    extracao_fogo_cruzado_full_refresh_flow_runs = create_flow_run(
-        flow_name=template_extracao_fogo_cruzado.name,
-        parameters={},
-        labels=materialization_labels,
-    )
-
-    dump_prod_wait_for_flow_run = wait_for_flow_run(
-        flow_run_id=extracao_fogo_cruzado_full_refresh_flow_runs,
-        stream_states=True,
-        stream_logs=True,
-        raise_final_state=True,
-    )
-
-extracao_fogo_cruzado_full_refresh.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
-extracao_fogo_cruzado_full_refresh.run_config = KubernetesRun(
-    image=constants.DOCKER_IMAGE.value,
-    labels=[
-        constants.RJ_CIVITAS_AGENT_LABEL.value,
-    ],
-)
-extracao_fogo_cruzado_full_refresh = fogo_cruzado_etl_daily_update_schedule
+extracao_fogo_cruzado.schedule = fogo_cruzado_etl_update_schedule
