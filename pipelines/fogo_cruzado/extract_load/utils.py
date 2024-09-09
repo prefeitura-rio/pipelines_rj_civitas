@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 from datetime import datetime
+from typing import Any, Dict, List
 
 import pytz
 from google.cloud import bigquery
@@ -18,7 +19,22 @@ from prefeitura_rio.pipelines_utils.prefect import get_flow_run_mode
 tz = pytz.timezone("America/Sao_Paulo")
 
 
-def save_data_in_bq(project_id: str, dataset_id: str, table_id: str, json_data: dict) -> None:
+def save_data_in_bq(
+    project_id: str, dataset_id: str, table_id: str, json_data: List[Dict[str, Any]]
+) -> None:
+    """
+    Saves a list of dictionaries to a BigQuery table.
+
+    Args:
+        project_id: The ID of the GCP project.
+        dataset_id: The ID of the dataset.
+        table_id: The ID of the table.
+        json_data: The list of dictionaries to be saved to BigQuery.
+
+    Raises:
+        Exception: If there is an error while inserting the data into BigQuery.
+    """
+
     client = bigquery.Client()
     table_full_name = f"{project_id}.{dataset_id}.{table_id}"
 
@@ -34,7 +50,17 @@ def save_data_in_bq(project_id: str, dataset_id: str, table_id: str, json_data: 
         # ),
     )
 
-    json_data["timestamp_insercao"] = datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M:%S")
+    # Adding timestamp inside 'date' dict
+    json_data = [
+        {
+            **data,
+            "date": {
+                **data["date"],
+                "timestamp_insercao": datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M:%S"),
+            },
+        }
+        for data in json_data
+    ]
 
     json_data = json.loads(json.dumps([json_data]))
     try:

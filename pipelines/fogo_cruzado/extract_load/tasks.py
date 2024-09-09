@@ -11,7 +11,7 @@ Tasks include:
 
 
 from datetime import timedelta
-from typing import Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 import requests
 import urllib3
@@ -62,7 +62,7 @@ def get_occurrences(
     initial_date: Optional[str] = None,
     take: int = 1000,
     id_state: str = "b112ffbe-17b3-4ad0-8f2a-2038745d1d14",
-) -> list[dict]:
+) -> List[Dict]:
 
     """
     Fetches occurrences from the Fogo Cruzado API.
@@ -81,7 +81,7 @@ def get_occurrences(
 
     Returns
     -------
-    list
+    List
         A list of dictionaries containing the occurrence data.
     """
     occurrences = []
@@ -117,7 +117,7 @@ def get_occurrences(
 
 
 @task(max_retries=5, retry_delay=timedelta(seconds=30))
-def fetch_occurrences(email: str, password: str, initial_date: Optional[str] = None) -> list[dict]:
+def fetch_occurrences(email: str, password: str, initial_date: Optional[str] = None) -> List[Dict]:
     """
     Task that Fetches occurrences from the Fogo Cruzado API.
 
@@ -132,7 +132,7 @@ def fetch_occurrences(email: str, password: str, initial_date: Optional[str] = N
 
     Returns
     -------
-    list
+    List
         A list of dictionaries containing the occurrence data.
     """
 
@@ -185,7 +185,9 @@ def fetch_occurrences(email: str, password: str, initial_date: Optional[str] = N
 
 
 @task(max_retries=5, retry_delay=timedelta(seconds=30))
-def load_to_table(project_id: str, dataset_id: str, table_id: str, occurrences: list[dict]):
+def load_to_table(
+    project_id: str, dataset_id: str, table_id: str, occurrences: List[Dict[str, Any]]
+):
     """
     Save a list of dictionaries to a BigQuery table.
 
@@ -193,7 +195,7 @@ def load_to_table(project_id: str, dataset_id: str, table_id: str, occurrences: 
         project_id (str): The ID of the GCP project.
         dataset_id (str): The ID of the dataset.
         table_id (str): The ID of the table.
-        occurrences (list[dict]): The list of dictionaries to be saved to BigQuery.
+        occurrences (List[Dict]): The list of dictionaries to be saved to BigQuery.
     """
     log(f"Writing occurrences to {project_id}.{dataset_id}.{table_id}")
     save_data_in_bq(
@@ -205,7 +207,7 @@ def load_to_table(project_id: str, dataset_id: str, table_id: str, occurrences: 
 
 # Check if there are any reports returned
 @task
-def check_report_qty(task_response: list):
+def check_report_qty(task_response: List):
     """
     Check if there are any data returned from the API.
 
@@ -225,7 +227,7 @@ def task_get_secret_folder(
     type: Literal["shared", "personal"] = "personal",
     environment: str = None,
     client: InfisicalClient = None,
-) -> dict:
+) -> Dict:
     """
     Fetches secrets from Infisical. If passing only `secret_path` and
     no `secret_name`, returns all secrets inside a folder.
