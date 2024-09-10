@@ -323,10 +323,7 @@ def save_data_in_bq(
     json_data = [
         {
             **data,
-            "date": {
-                **data["date"],
-                "timestamp_insercao": datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M:%S"),
-            },
+            "timestamp_insercao": datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M:%S"),
         }
         for data in json_data
     ]
