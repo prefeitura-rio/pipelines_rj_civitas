@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 This module defines a Prefect workflow for extracting and transforming data.
-related to 'Disque Denúncia' reports...
+related to 'Disque Denúncia' reports..
 """
 
 from prefect import Parameter, case

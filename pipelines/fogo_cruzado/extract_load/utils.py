@@ -146,7 +146,15 @@ def save_data_in_bq(
             fields=[
                 bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
                 bigquery.SchemaField(name="occurrenceId", field_type="STRING", mode="NULLABLE"),
-                bigquery.SchemaField(name="transport", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(
+                    name="transport",
+                    field_type="STRUCT",
+                    mode="NULLABLE",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
                 bigquery.SchemaField(
                     name="interruptedTransport", field_type="STRING", mode="NULLABLE"
                 ),
@@ -247,7 +255,15 @@ def save_data_in_bq(
                         bigquery.SchemaField(name="type", field_type="STRING", mode="NULLABLE"),
                     ],
                 ),
-                bigquery.SchemaField(name="partie", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(
+                    name="partie",
+                    field_type="STRUCT",
+                    mode="NULLABLE",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
                 bigquery.SchemaField(
                     name="coorporation",
                     field_type="STRUCT",
@@ -289,7 +305,15 @@ def save_data_in_bq(
                 bigquery.SchemaField(name="occurrenceId", field_type="STRING", mode="NULLABLE"),
                 bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
                 bigquery.SchemaField(name="type", field_type="STRING", mode="NULLABLE"),
-                bigquery.SchemaField(name="animalType", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(
+                    name="animalType",
+                    field_type="STRUCT",
+                    mode="NULLABLE",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="type", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
                 bigquery.SchemaField(name="situation", field_type="STRING", mode="NULLABLE"),
                 bigquery.SchemaField(
                     name="circumstances",
@@ -332,8 +356,8 @@ def save_data_in_bq(
     try:
         job = client.load_table_from_json(json_data, table_full_name, job_config=job_config)
         job.result()
-    except Exception:
-        raise Exception(json_data)
+    except Exception as e:
+        raise Exception(e)
 
 
 def inject_fogocruzado_credentials() -> None:
