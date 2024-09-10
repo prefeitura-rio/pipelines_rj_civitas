@@ -140,7 +140,7 @@ def fetch_occurrences(email: str, password: str, initial_date: Optional[str] = N
     occurrences = get_occurrences(token=token, initial_date=initial_date)
 
     # embedding all the occurrences in an unique key-value pair
-    occurrences = [{"date": row} for row in occurrences]
+    # occurrences = [{"date": row} for row in occurrences]
 
     log("Fetching occurrences...")
     return occurrences
