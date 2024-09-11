@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Literal, Optional
 
 import requests
 import urllib3
+from google.cloud import bigquery
 from infisical import InfisicalClient
 from prefect import task
 from prefect.engine.runner import ENDRUN
@@ -160,8 +161,306 @@ def load_to_table(
         occurrences (List[Dict]): The list of dictionaries to be saved to BigQuery.
     """
     log(f"Writing occurrences to {project_id}.{dataset_id}.{table_id}")
+    SCHEMA = [
+        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="documentNumber", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="address", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(
+            name="state",
+            field_type="STRUCT",
+            mode="NULLABLE",
+            fields=(
+                bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+            ),
+        ),
+        bigquery.SchemaField(
+            name="region",
+            field_type="STRUCT",
+            mode="NULLABLE",
+            fields=(
+                bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="region", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="state", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="enabled", field_type="STRING", mode="NULLABLE"),
+            ),
+        ),
+        bigquery.SchemaField(
+            name="city",
+            field_type="STRUCT",
+            mode="NULLABLE",
+            fields=[
+                bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+            ],
+        ),
+        bigquery.SchemaField(
+            name="neighborhood",
+            field_type="STRUCT",
+            mode="NULLABLE",
+            fields=[
+                bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+            ],
+        ),
+        bigquery.SchemaField(
+            name="subNeighborhood",
+            field_type="STRUCT",
+            mode="NULLABLE",
+            fields=[
+                bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+            ],
+        ),
+        bigquery.SchemaField(
+            name="locality",
+            field_type="STRUCT",
+            mode="NULLABLE",
+            fields=[
+                bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+            ],
+        ),
+        bigquery.SchemaField(name="latitude", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="longitude", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="date", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="policeAction", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="agentPresence", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="relatedRecord", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(
+            name="contextInfo",
+            field_type="STRUCT",
+            mode="NULLABLE",
+            fields=[
+                bigquery.SchemaField(
+                    name="mainReason",
+                    field_type="STRUCT",
+                    mode="NULLABLE",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(
+                    name="complementaryReasons",
+                    field_type="STRUCT",
+                    mode="REPEATED",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(
+                    name="clippings",
+                    field_type="STRUCT",
+                    mode="REPEATED",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(name="massacre", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="policeUnit", field_type="STRING", mode="NULLABLE"),
+            ],
+        ),
+        bigquery.SchemaField(
+            name="transports",
+            field_type="STRUCT",
+            mode="REPEATED",
+            fields=[
+                bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="occurrenceId", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(
+                    name="transport",
+                    field_type="STRUCT",
+                    mode="NULLABLE",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(
+                    name="interruptedTransport", field_type="STRING", mode="NULLABLE"
+                ),
+                bigquery.SchemaField(name="dateInterruption", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="releaseDate", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(
+                    name="transportDescription", field_type="STRING", mode="NULLABLE"
+                ),
+            ],
+        ),
+        bigquery.SchemaField(
+            name="victims",
+            field_type="STRUCT",
+            mode="REPEATED",
+            fields=[
+                bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="occurrenceId", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="type", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="situation", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(
+                    name="circumstances",
+                    field_type="STRUCT",
+                    mode="REPEATED",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="type", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(name="deathDate", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="personType", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="age", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(
+                    name="ageGroup",
+                    field_type="STRUCT",
+                    mode="NULLABLE",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(
+                    name="genre",
+                    field_type="STRUCT",
+                    mode="NULLABLE",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(name="race", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(
+                    name="place",
+                    field_type="STRUCT",
+                    mode="NULLABLE",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(
+                    name="serviceStatus",
+                    field_type="STRUCT",
+                    mode="NULLABLE",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="type", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(
+                    name="qualifications",
+                    field_type="STRUCT",
+                    mode="REPEATED",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="type", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(
+                    name="politicalPosition",
+                    field_type="STRUCT",
+                    mode="NULLABLE",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="type", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(
+                    name="politicalStatus",
+                    field_type="STRUCT",
+                    mode="NULLABLE",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="type", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(
+                    name="partie",
+                    field_type="STRUCT",
+                    mode="NULLABLE",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(
+                    name="coorporation",
+                    field_type="STRUCT",
+                    mode="NULLABLE",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(
+                    name="agentPosition",
+                    field_type="STRUCT",
+                    mode="NULLABLE",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="type", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(
+                    name="agentStatus",
+                    field_type="STRUCT",
+                    mode="NULLABLE",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="type", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(name="unit", field_type="STRING", mode="NULLABLE"),
+            ],
+        ),
+        bigquery.SchemaField(
+            name="animalVictims",
+            field_type="STRUCT",
+            mode="REPEATED",
+            fields=[
+                bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="occurrenceId", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="type", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(
+                    name="animalType",
+                    field_type="STRUCT",
+                    mode="NULLABLE",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="type", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(name="situation", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(
+                    name="circumstances",
+                    field_type="STRUCT",
+                    mode="REPEATED",
+                    fields=[
+                        bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
+                        bigquery.SchemaField(name="type", field_type="STRING", mode="NULLABLE"),
+                    ],
+                ),
+                bigquery.SchemaField(name="deathDate", field_type="STRING", mode="NULLABLE"),
+            ],
+        ),
+        bigquery.SchemaField(name="timestamp_insercao", field_type="STRING", mode="NULLABLE"),
+    ]
+
     save_data_in_bq(
-        project_id=project_id, dataset_id=dataset_id, table_id=table_id, json_data=occurrences
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=table_id,
+        schema=SCHEMA,
+        json_data=occurrences,
     )
     log(f"{len(occurrences)} occurrences written to {project_id}.{dataset_id}.{table_id}")
 
