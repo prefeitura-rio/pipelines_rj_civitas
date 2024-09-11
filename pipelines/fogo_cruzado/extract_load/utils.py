@@ -6,21 +6,15 @@ from typing import Any, Dict, List
 import pytz
 from google.cloud import bigquery
 
-try:
-    from prefect.engine.state import State
-except ImportError:
-    from prefeitura_rio.utils import base_assert_dependencies
-
-    base_assert_dependencies(["prefect", "sentry_sdk"], extras=["pipelines"])
-
-from prefeitura_rio.pipelines_utils.infisical import get_infisical_client, inject_env
-from prefeitura_rio.pipelines_utils.prefect import get_flow_run_mode
-
 tz = pytz.timezone("America/Sao_Paulo")
 
 
 def save_data_in_bq(
-    project_id: str, dataset_id: str, table_id: str, json_data: List[Dict[str, Any]]
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    schema: List[bigquery.SchemaField],
+    json_data: List[Dict[str, Any]],
 ) -> None:
     """
     Saves a list of dictionaries to a BigQuery table.
@@ -29,12 +23,12 @@ def save_data_in_bq(
         project_id: The ID of the GCP project.
         dataset_id: The ID of the dataset.
         table_id: The ID of the table.
+        schema: List of BigQuery table schema.
         json_data: The list of dictionaries to be saved to BigQuery.
 
     Raises:
         Exception: If there is an error while inserting the data into BigQuery.
     """
-
     client = bigquery.Client()
     table_full_name = f"{project_id}.{dataset_id}.{table_id}"
     schema = [
@@ -343,7 +337,7 @@ def save_data_in_bq(
         # ),
     )
 
-    # Adding timestamp inside 'date' dict
+    # Adding timestamp
     json_data = [
         {
             **data,
@@ -352,37 +346,8 @@ def save_data_in_bq(
         for data in json_data
     ]
 
-    # json_data = json.loads(json.dumps(json_data))
     try:
         job = client.load_table_from_json(json_data, table_full_name, job_config=job_config)
         job.result()
     except Exception as e:
         raise Exception(e)
-
-
-def inject_fogocruzado_credentials() -> None:
-    """
-    Loads FOGOCRUZADO credentials from Infisical into environment variables.
-    """
-    client = get_infisical_client()
-
-    environment = get_flow_run_mode()
-
-    for secret_name in [
-        "FOGOCRUZADO_USERNAME",
-        "FOGOCRUZADO_PASSWORD",
-    ]:
-        inject_env(
-            secret_name=secret_name,
-            environment=environment,
-            client=client,
-        )
-
-
-def handler_inject_fogocruzado_credentials(obj, old_state: State, new_state: State) -> State:
-    """
-    State handler that will inject FOGOCRUZADO credentials into the environment.
-    """
-    if new_state.is_running():
-        inject_fogocruzado_credentials()
-    return new_state

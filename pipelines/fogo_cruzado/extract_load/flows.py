@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 This module defines a Prefect workflow for extracting and transforming data.
-related to 'Disque Denúncia' reports..
+related to 'Disque Denúncia' reports.
 """
 
 from prefect import Parameter, case
@@ -33,19 +33,11 @@ from pipelines.fogo_cruzado.extract_load.tasks import (
     task_get_secret_folder,
 )
 
-# from os import environ
-
-
-# from pipelines.fogo_cruzado.extract_load.utils import (
-#     handler_inject_fogocruzado_credentials,
-# )
-
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
     name="Fogo Cruzado - Extração e Carga",
     state_handlers=[
         handler_inject_bd_credentials,
-        # handler_inject_fogocruzado_credentials,
         handler_initialize_sentry,
         handler_skip_if_running,
     ],
@@ -88,7 +80,7 @@ with Flow(
         # Run DBT to create/update "denuncias" table in "disque_denuncia" dataset
         materialization_flow_id = task_get_flow_group_id(
             flow_name=settings.FLOW_NAME_EXECUTE_DBT_MODEL
-        )  # verificar .FLOW_NAME
+        )
         materialization_labels = task_get_current_flow_run_labels()
 
         dump_prod_tables_to_materialize_parameters = [

@@ -46,11 +46,6 @@ fogo_cruzado_etl_minutely_clocks = [
     ),
 ]
 
-# fogo_cruzado_etl_daily_update_schedule = Schedule(clocks=untuple(fogo_cruzado_daily_clocks))
-# fogo_cruzado_etl_minutely_update_schedule = Schedule(
-#     clocks=untuple(fogo_cruzado_etl_minutely_clocks)
-# )
-
 fogo_cruzado_etl_update_schedule = Schedule(
     clocks=untuple(fogo_cruzado_daily_clocks) + untuple(fogo_cruzado_etl_minutely_clocks)
 )

@@ -97,7 +97,7 @@ def get_occurrences(
 
     # First request to get the total page number
     initial_url = base_url.format(page=1)
-    log_mod(msg="Loop 1: Getting data from API.", level="info", mod=100)
+    log(msg="Loop 0: Getting data from API.", level="info")
     response = requests.get(initial_url, headers=headers, params=params)
     response.raise_for_status()
     initial_data = response.json()
@@ -107,11 +107,13 @@ def get_occurrences(
     # Request next pages
     for page in range(2, total_pages + 1):
         url = base_url.format(page=page)
-        log_mod(msg=f"Loop {page}: Getting data from API.", level="info", mod=100)
+        log_mod(msg=f"Loop {page}: Getting data from API.", level="info", index=page, mod=10)
         response = requests.get(url, headers=headers, params=params)
         response.raise_for_status()
         data = response.json()
         occurrences.extend(data["data"])
+
+    log(msg="Data collected from API successfully.", level="info")
 
     return occurrences
 
@@ -137,51 +139,11 @@ def fetch_occurrences(email: str, password: str, initial_date: Optional[str] = N
     """
 
     token = auth(email=email, password=password)
+    log(msg="Fetching data...", level="info")
     occurrences = get_occurrences(token=token, initial_date=initial_date)
+    log(msg="Data fetched successfully.", level="info")
 
-    # embedding all the occurrences in an unique key-value pair
-    # occurrences = [{"date": row} for row in occurrences]
-
-    log("Fetching occurrences...")
     return occurrences
-    # # if len(occurrences) == 0:
-    #     # raise ValueError("occurrences is None")  # SKIP FLOW
-
-    # df_occurrences = pd.DataFrame(occurrences)
-
-    # ########## -------------- APAGAR AQUI -------------- ##########
-    # csv_dir = Path.cwd() / 'pipelines' / 'fogo_cruzado' /'data' / 'raw'
-    # # df_occurrences = pd.read_csv(csv_dir / 'occurrences.csv')
-    # csv_dir.mkdir(parents=True, exist_ok=True)
-    # df_occurrences.to_csv(csv_dir / 'occurrences.csv', index=False)
-    # ########## -------------- APAGAR AQUI -------------- ##########
-
-    # ########## -------------- OPÇÃO 01 - TABELA NATIVA -------------- ##########
-    # ########## -------------- OPÇÃO 01 - TABELA NATIVA -------------- ##########
-
-    # ########## -------------- OPÇÃO 02 - GCS -------------- ##########
-    # df_occurrences['new_date'] = pd.to_datetime(df_occurrences['date'])
-    # df_occurrences['new_date'] = df_occurrences['new_date'].dt.tz_convert('America/Sao_Paulo')
-
-    # df_occurrences.groupby(['new_date'])
-
-    # log('Writing occurrences...')
-    # for i, (data_hora, group) in enumerate(df_occurrences.groupby(
-    # df_occurrences['new_date'].dt.date)):
-    #     ano_particao = data_hora.strftime('%Y')
-    #     mes_particao = data_hora.strftime('%m')
-    # file_dir = Path.cwd() / 'pipelines' /
-    #     'fogo_cruzado' / 'data' / 'partition_directory' /
-    #     f'ano_particao={ano_particao}' / f'mes_particao={mes_particao}'
-
-    #     # Ensure the final directory exists
-    #     file_dir.mkdir(parents=True, exist_ok=True)
-    #     file_name = f'occurrences_{data_hora}.json'
-    #     group.to_json(file_dir / file_name, orient='records', lines=True)
-
-    #     if i % 100 == 0:
-    #         log(f'iteration: {i}: Files saved to: {file_dir}')
-    #     # break
 
 
 @task(max_retries=5, retry_delay=timedelta(seconds=30))
@@ -201,8 +163,7 @@ def load_to_table(
     save_data_in_bq(
         project_id=project_id, dataset_id=dataset_id, table_id=table_id, json_data=occurrences
     )
-
-    # ########## -------------- OPÇÃO 02 - GCS -------------- ##########
+    log(f"{len(occurrences)} occurrences written to {project_id}.{dataset_id}.{table_id}")
 
 
 # Check if there are any reports returned
@@ -240,8 +201,6 @@ def task_get_secret_folder(
     Returns:
         _type_: _description_
     """
-    log(f"SECRET_PATH: {secret_path}")
-
     secrets = get_secret_folder(
         secret_path=secret_path,
         secret_name=secret_name,
@@ -249,6 +208,4 @@ def task_get_secret_folder(
         environment=environment,
         client=client,
     )
-
-    log(f'SECRET_USERNAME: {secrets["FOGOCRUZADO_USERNAME"]}')
     return secrets
