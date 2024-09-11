@@ -48,10 +48,11 @@ with Flow(
     dataset_id = Parameter("dataset_id", default="fogo_cruzado_staging")
     table_id = Parameter("table_id", default="ocorrencias")
     materialize_after_dump = Parameter("materialize_after_dump", default=False)
+    prefix = Parameter("prefix", default="FULL_REFRESH_")
+
     secrets = task_get_secret_folder(secret_path="/api-fogo-cruzado")
 
     # Rename current flow run to identify if is full refresh or partial
-    prefix = "FULL_REFRESH -" if start_date else "PARTIAL_REFRESH -"
     task_rename_current_flow_run_dataset_table(
         prefix=prefix, dataset_id=dataset_id, table_id=table_id
     )

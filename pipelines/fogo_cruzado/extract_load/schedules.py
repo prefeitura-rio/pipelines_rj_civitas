@@ -25,7 +25,8 @@ fogo_cruzado_daily_clocks = [
 ]
 
 fogo_cruzado_minutely_parameters = {
-    "start_date": (datetime.now(tz=tz) - timedelta(days=7)).strftime("%Y-%m-%d")
+    "start_date": (datetime.now(tz=tz) - timedelta(days=7)).strftime("%Y-%m-%d"),
+    "prefix": "PARTIAL_REFRESH_",
 }
 fogo_cruzado_etl_minutely_clocks = [
     CronClock(
