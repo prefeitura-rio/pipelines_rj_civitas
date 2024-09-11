@@ -221,9 +221,9 @@ def load_to_table(
                 bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
             ],
         ),
-        bigquery.SchemaField(name="latitude", field_type="STRING", mode="NULLABLE"),
-        bigquery.SchemaField(name="longitude", field_type="STRING", mode="NULLABLE"),
-        bigquery.SchemaField(name="date", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="latitude", field_type="FLOAT64", mode="NULLABLE"),
+        bigquery.SchemaField(name="longitude", field_type="FLOAT64", mode="NULLABLE"),
+        bigquery.SchemaField(name="date", field_type="TIMESTAMP", mode="NULLABLE"),
         bigquery.SchemaField(name="policeAction", field_type="STRING", mode="NULLABLE"),
         bigquery.SchemaField(name="agentPresence", field_type="STRING", mode="NULLABLE"),
         bigquery.SchemaField(name="relatedRecord", field_type="STRING", mode="NULLABLE"),
@@ -310,7 +310,7 @@ def load_to_table(
                 ),
                 bigquery.SchemaField(name="deathDate", field_type="STRING", mode="NULLABLE"),
                 bigquery.SchemaField(name="personType", field_type="STRING", mode="NULLABLE"),
-                bigquery.SchemaField(name="age", field_type="STRING", mode="NULLABLE"),
+                bigquery.SchemaField(name="age", field_type="INTEGER", mode="NULLABLE"),
                 bigquery.SchemaField(
                     name="ageGroup",
                     field_type="STRUCT",
@@ -452,7 +452,12 @@ def load_to_table(
                 bigquery.SchemaField(name="deathDate", field_type="STRING", mode="NULLABLE"),
             ],
         ),
-        bigquery.SchemaField(name="timestamp_insercao", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(
+            name="timestamp_insercao",
+            field_type="DATETIME",
+            mode="NULLABLE",
+            description="Data e hora de inserção no BD em GTM-3",
+        ),
     ]
 
     save_data_in_bq(
