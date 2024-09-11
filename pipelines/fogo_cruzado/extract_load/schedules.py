@@ -25,6 +25,7 @@ fogo_cruzado_daily_clocks = [
         labels=[
             constants.RJ_CIVITAS_AGENT_LABEL.value,
         ],
+        parameter_defaults=fogo_cruzado_daily_parameters,
     )
 ]
 
