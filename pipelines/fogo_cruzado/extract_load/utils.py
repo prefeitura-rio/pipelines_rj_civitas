@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # import json
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 
 import pytz
 from google.cloud import bigquery
@@ -15,6 +15,7 @@ def save_data_in_bq(
     table_id: str,
     schema: List[bigquery.SchemaField],
     json_data: List[Dict[str, Any]],
+    write_disposition: Literal["WRITE_TRUNCATE", "WRITE_APPEND"] = "WRITE_APPEND",
 ) -> None:
     """
     Saves a list of dictionaries to a BigQuery table.
@@ -37,7 +38,7 @@ def save_data_in_bq(
         # Optionally, set the write disposition. BigQuery appends loaded rows
         # to an existing table by default, but with WRITE_TRUNCATE write
         # disposition it replaces the table with the loaded data.
-        write_disposition="WRITE_TRUNCATE",
+        write_disposition=write_disposition,
         # time_partitioning=bigquery.TimePartitioning(
         #     type_=bigquery.TimePartitioningType.DAY,
         #     field="data_particao",  # name of column to use for partitioning

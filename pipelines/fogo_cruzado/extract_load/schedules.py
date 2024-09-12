@@ -14,10 +14,7 @@ from pipelines.constants import constants
 
 tz = pytz.timezone("America/Sao_Paulo")
 
-fogo_cruzado_daily_parameters = {
-    "table_id": "ocorrencias_historico",
-    "prefix": "FULL_REFRESH_",
-}
+
 fogo_cruzado_daily_clocks = [
     IntervalClock(
         interval=timedelta(hours=24),
@@ -25,14 +22,13 @@ fogo_cruzado_daily_clocks = [
         labels=[
             constants.RJ_CIVITAS_AGENT_LABEL.value,
         ],
-        parameter_defaults=fogo_cruzado_daily_parameters,
     )
 ]
 
 fogo_cruzado_minutely_parameters = {
-    "table_id": "ocorrencias_new",
     "start_date": datetime.now(tz=tz).strftime("%Y-%m-%d"),
     "prefix": "PARTIAL_REFRESH_",
+    "write_disposition": "WRITE_APPEND",
 }
 fogo_cruzado_etl_minutely_clocks = [
     CronClock(

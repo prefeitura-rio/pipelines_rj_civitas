@@ -149,7 +149,11 @@ def fetch_occurrences(email: str, password: str, initial_date: Optional[str] = N
 
 @task(max_retries=5, retry_delay=timedelta(seconds=30))
 def load_to_table(
-    project_id: str, dataset_id: str, table_id: str, occurrences: List[Dict[str, Any]]
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    occurrences: List[Dict[str, Any]],
+    write_disposition: Literal["WRITE_TRUNCATE", "WRITE_APPEND"] = "WRITE_APPEND",
 ):
     """
     Save a list of dictionaries to a BigQuery table.
@@ -466,6 +470,7 @@ def load_to_table(
         table_id=table_id,
         schema=SCHEMA,
         json_data=occurrences,
+        write_disposition=write_disposition,
     )
     log(f"{len(occurrences)} occurrences written to {project_id}.{dataset_id}.{table_id}")
 

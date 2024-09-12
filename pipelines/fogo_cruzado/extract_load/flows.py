@@ -47,6 +47,7 @@ with Flow(
     project_id = Parameter("project_id", default="rj-civitas")
     dataset_id = Parameter("dataset_id", default="fogo_cruzado_staging")
     table_id = Parameter("table_id", default="ocorrencias")
+    write_disposition = Parameter("write_disposition", default="WRITE_TRUNCATE")
     materialize_after_dump = Parameter("materialize_after_dump", default=False)
     prefix = Parameter("prefix", default="FULL_REFRESH_")
 
@@ -73,6 +74,7 @@ with Flow(
         dataset_id=dataset_id,
         table_id=table_id,
         occurrences=occurrences_reponse,
+        write_disposition=write_disposition,
     )
 
     load_to_table_response.set_upstream(report_qty_check)
