@@ -39,10 +39,11 @@ def save_data_in_bq(
         # to an existing table by default, but with WRITE_TRUNCATE write
         # disposition it replaces the table with the loaded data.
         write_disposition=write_disposition,
-        # time_partitioning=bigquery.TimePartitioning(
-        #     type_=bigquery.TimePartitioningType.DAY,
-        #     field="data_particao",  # name of column to use for partitioning
-        # ),
+        time_partitioning=bigquery.TimePartitioning(
+            type_=bigquery.TimePartitioningType.MONTH,
+            field="timestamp_insercao",  # name of column to use for partitioning
+        ),
+        clustering_fields=["timestamp_insercao"],
     )
 
     # Adding timestamp
