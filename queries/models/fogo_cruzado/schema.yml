@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: fogo_cruzado
+    database: rj-civitas
+    schema: fogo_cruzado_staging
+    tables:
+      - name: ocorrencias
+
+models:
+  - name: ocorrencias
+    description: |
+      **Descrição**: Tabela que contém dados de denúncias, incluindo informações de localização e detalhes do relato.
+      **Frequência de atualização**: A cada minuto
+      **Cobertura temporal**: Janeiro de  2019
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_ocorrencia
+        description: "Identificador único da ocorrência."
+        tests:
+          - not_null
