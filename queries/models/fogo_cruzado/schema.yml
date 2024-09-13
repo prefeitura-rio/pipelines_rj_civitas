@@ -1,5 +1,4 @@
 version: 2
-
 sources:
   - name: fogo_cruzado
     database: rj-civitas
@@ -10,13 +9,10 @@ sources:
 models:
   - name: ocorrencias
     description: |
-      **Descrição**: Tabela que contém dados de denúncias, incluindo informações de localização e detalhes do relato.
+      **Descrição**: Tabela que contém dados de tiroteios ocorridos no município do Rio de Janeiro.
+      **Fonte**: [API Fogo Cruzado](api.fogocruzado.org.br)
+
       **Frequência de atualização**: A cada minuto
-      **Cobertura temporal**: Janeiro de  2019
+      **Cobertura temporal**: Julho de  2016
       **Publicado por**: Nicolas Evilasio
       **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
-    columns:
-      - name: id_ocorrencia
-        description: "Identificador único da ocorrência."
-        tests:
-          - not_null

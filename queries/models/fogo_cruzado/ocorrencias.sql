@@ -180,7 +180,7 @@ animal_victims_agg AS (
   LEFT JOIN animal_victims_circumstances_agg avc ON o.id = avc.id AND av.id = avc.id_animal_vitima
   GROUP BY
     id
-), final_query AS  (
+)
 SELECT
   oc.id AS id_ocorrencia,
   documentNumber AS numero_ocorrencia,
@@ -213,6 +213,5 @@ LEFT JOIN clippings_agg cl ON oc.id = cl.id
 LEFT JOIN transports_agg tr ON oc.id = tr.id
 LEFT JOIN animal_victims_agg av ON oc.id = av.id
 LEFT JOIN victims_agg vi ON oc.id = vi.id
-)
-SELECT * FROM final_query
+
 
