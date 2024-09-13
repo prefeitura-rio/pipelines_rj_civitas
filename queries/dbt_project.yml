@@ -33,3 +33,6 @@ models:
     radares_infra:
       +materialized: table
       +schema: radares_infra
+    radar_readings:
+      +materialized: incremental
+      +schema: radar_readings
