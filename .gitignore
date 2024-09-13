@@ -13,7 +13,7 @@ setup.py
 *.hdf
 pipelines/reports_disque_denuncia/data/*.csv
 pipelines/reports_disque_denuncia/data/*.xml
-
+tmp/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
