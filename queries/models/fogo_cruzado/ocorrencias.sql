@@ -10,6 +10,7 @@
         }
     )
 }}
+-- Define a (CTE) to add row numbers partitioned by 'id' and ordered by 'timestamp_insercao'
 WITH row_number_data AS (
   SELECT
     *,
@@ -17,6 +18,7 @@ WITH row_number_data AS (
   FROM
     {{ source('fogo_cruzado', 'ocorrencias') }}
 ),
+-- Select the most recent row for each 'id', based on 'timestamp_insercao'
 newest_data AS (
   SELECT
     * EXCEPT(rn)
@@ -28,6 +30,7 @@ newest_data AS (
      AND timestamp_insercao > (SELECT MAX(timestamp_insercao) FROM {{ this }})
    {% endif %}
  ),
+ -- Aggregate complementary reasons into an array for each 'id'
 complementary_reasons_agg AS (
   SELECT
     o.id,
@@ -40,6 +43,7 @@ complementary_reasons_agg AS (
   GROUP BY
   id
 ),
+-- Aggregate clipping categories into an array for each 'id'
 clippings_agg AS (
   SELECT
     o.id,
@@ -52,6 +56,7 @@ clippings_agg AS (
   GROUP BY
   id
 ),
+-- Aggregate transport details into an array for each 'id'
 transports_agg AS (
   SELECT
     o.id,
@@ -70,6 +75,7 @@ transports_agg AS (
   GROUP BY
     id
 ),
+-- Aggregate victim circumstances into an array for each victim
 victims_circumstances_agg AS (
   SELECT
     o.id,
@@ -88,6 +94,7 @@ victims_circumstances_agg AS (
     id,
     id_vitima
 ),
+-- Aggregate victim qualifications into an array for each victim
 victims_qualifications AS (
   SELECT
     o.id,
@@ -106,6 +113,7 @@ victims_qualifications AS (
     id,
     id_vitima
 ),
+-- Aggregate all victim information into a single array for each 'id'
 victims_agg AS (
   SELECT
     o.id,
@@ -143,6 +151,7 @@ victims_agg AS (
   GROUP BY
     id
 ),
+-- Aggregate animal victim circumstances into an array for each animal victim
 animal_victims_circumstances_agg AS (
   SELECT
     o.id,
@@ -161,6 +170,7 @@ animal_victims_circumstances_agg AS (
     id,
     id_animal_vitima
 ),
+-- Aggregate all animal victim information into a single array for each 'id'
 animal_victims_agg AS (
   SELECT
     o.id,
@@ -181,6 +191,7 @@ animal_victims_agg AS (
   GROUP BY
     id
 )
+-- Final select to gather all aggregated information into the final result
 SELECT
   oc.id AS id_ocorrencia,
   documentNumber AS numero_ocorrencia,
