@@ -29,7 +29,9 @@ from pipelines.fogo_cruzado.extract_load.tasks import (
     check_report_qty,
     fetch_occurrences,
     load_to_table,
+    task_check_max_document_number,
     task_get_secret_folder,
+    task_update_max_document_number_on_redis,
 )
 
 # Define the Prefect Flow for data extraction and transformation
@@ -68,6 +70,12 @@ with Flow(
     report_qty_check = check_report_qty(task_response=occurrences_reponse)
     report_qty_check.set_upstream(occurrences_reponse)
 
+    # Task to check if there are any new occurrences
+    max_document_number_check = task_check_max_document_number(
+        occurrences=occurrences_reponse, dataset_id=dataset_id, table_id=table_id, prefix=prefix
+    )
+    max_document_number_check.set_upstream(report_qty_check)
+
     load_to_table_response = load_to_table(
         project_id=project_id,
         dataset_id=dataset_id + "_staging",
@@ -76,7 +84,7 @@ with Flow(
         write_disposition=write_disposition,
     )
 
-    load_to_table_response.set_upstream(report_qty_check)
+    load_to_table_response.set_upstream(max_document_number_check)
 
     with case(task=materialize_after_dump, value=True):
         materialization_flow_id = task_get_flow_group_id(
@@ -102,6 +110,12 @@ with Flow(
             stream_logs=unmapped(True),
             raise_final_state=unmapped(True),
         )
+
+        update_max_document_number_on_redis = task_update_max_document_number_on_redis(
+            new_document_number=max_document_number_check, dataset_id=dataset_id, table_id=table_id
+        )
+        update_max_document_number_on_redis.set_upstream(dump_prod_wait_for_flow_run)
+
 
 extracao_fogo_cruzado.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
 extracao_fogo_cruzado.run_config = KubernetesRun(

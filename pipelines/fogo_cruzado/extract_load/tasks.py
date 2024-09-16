@@ -24,7 +24,11 @@ from prefeitura_rio.pipelines_utils.infisical import get_secret_folder
 from prefeitura_rio.pipelines_utils.logging import log, log_mod
 from pytz import timezone
 
-from pipelines.fogo_cruzado.extract_load.utils import save_data_in_bq
+from pipelines.fogo_cruzado.extract_load.utils import (
+    get_on_redis,
+    save_data_in_bq,
+    save_on_redis,
+)
 
 tz = timezone("America/Sao_Paulo")
 # Disable the warning
@@ -518,3 +522,49 @@ def task_get_secret_folder(
         client=client,
     )
     return secrets
+
+
+@task
+def task_check_max_document_number(
+    occurrences: Dict, dataset_id: str, table_id: str, prefix: str = None
+):
+    """
+    Checks if there are new occurrences comparing the max document number from
+    the current flow run with the one stored in Redis. If there are no new
+    occurrences, raises a Skipped state to stop the flow. If there are new
+    occurrences, updates the Redis value with the new maximum.
+    """
+
+    new_document_number = max(
+        list(set([int(occurrence["documentNumber"]) for occurrence in occurrences]))
+    )
+    redis_document_number = get_on_redis(
+        dataset_id=dataset_id, table_id=table_id, name="max_document_number"
+    )
+
+    if redis_document_number == new_document_number and prefix == "PARTIAL_REFRESH_":
+        log(
+            f"""No new occurrence found.
+            Current max document number in Redis: {redis_document_number}.""",
+            level="info",
+        )
+        skip = Skipped(message="No new occurences found.")
+        raise ENDRUN(state=skip)
+    else:
+        return new_document_number
+
+
+@task
+def task_update_max_document_number_on_redis(
+    new_document_number: int, dataset_id: str, table_id: str
+):
+    save_on_redis(
+        data=new_document_number,
+        dataset_id=dataset_id,
+        table_id=table_id,
+        name="max_document_number",
+    )
+    log(
+        f"New occurrence found. Current max document number in Redis: {new_document_number}.",
+        level="info",
+    )
