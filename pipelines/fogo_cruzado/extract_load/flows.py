@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 This module defines a Prefect workflow for extracting and transforming data.
-related to 'Disque Denúncia' reports.
 """
 
 from prefect import Parameter, case
@@ -80,7 +79,6 @@ with Flow(
     load_to_table_response.set_upstream(report_qty_check)
 
     with case(task=materialize_after_dump, value=True):
-        # Run DBT to create/update "denuncias" table in "disque_denuncia" dataset
         materialization_flow_id = task_get_flow_group_id(
             flow_name=settings.FLOW_NAME_EXECUTE_DBT_MODEL
         )
