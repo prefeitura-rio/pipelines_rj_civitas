@@ -3,7 +3,7 @@ name: Requerimento de funcionalidade
 about: Sugira novas funcionalidades que podem ser úteis a todos os desenvolvedores.
 title: "[FEATURE]"
 labels: enhancement
-assignees: 
+assignees:
 ---
 
 **Essa funcionalidade está relacionada a um problema?**
