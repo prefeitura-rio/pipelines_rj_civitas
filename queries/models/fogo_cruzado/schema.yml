@@ -2,7 +2,7 @@ version: 2
 sources:
   - name: fogo_cruzado
     database: rj-civitas
-    schema: fogo_cruzado
+    schema: fogo_cruzado_staging
     tables:
       - name: ocorrencias
 
