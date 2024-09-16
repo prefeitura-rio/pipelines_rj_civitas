@@ -47,7 +47,7 @@ with Flow(
     dataset_id = Parameter("dataset_id", default="fogo_cruzado")
     table_id = Parameter("table_id", default="ocorrencias")
     write_disposition = Parameter("write_disposition", default="WRITE_TRUNCATE")
-    materialize_after_dump = Parameter("materialize_after_dump", default=False)
+    materialize_after_dump = Parameter("materialize_after_dump", default=True)
     prefix = Parameter("prefix", default="FULL_REFRESH_")
 
     secrets = task_get_secret_folder(secret_path="/api-fogo-cruzado")
