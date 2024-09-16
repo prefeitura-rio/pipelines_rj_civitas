@@ -3,7 +3,7 @@ name: Notificação de problema
 about: Notifique um problema que está ocorrendo para que possamos corrigí-lo.
 title: "[BUG]"
 labels: bug
-assignees: 
+assignees:
 ---
 
 **Descreva o problema**
