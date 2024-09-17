@@ -33,3 +33,6 @@ models:
     radares_infra:
       +materialized: table
       +schema: radares_infra
+    fogo_cruzado:
+      +materialized: table
+      +schema: fogo_cruzado

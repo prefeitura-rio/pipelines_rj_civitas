@@ -1,0 +1,18 @@
+version: 2
+sources:
+  - name: fogo_cruzado
+    database: rj-civitas
+    schema: fogo_cruzado_staging
+    tables:
+      - name: ocorrencias
+
+models:
+  - name: ocorrencias
+    description: |
+      **Descrição**: Tabela que contém dados de tiroteios ocorridos no município do Rio de Janeiro.
+      **Fonte**: [API Fogo Cruzado](api.fogocruzado.org.br)
+
+      **Frequência de atualização**: A cada minuto
+      **Cobertura temporal**: Julho de  2016
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
