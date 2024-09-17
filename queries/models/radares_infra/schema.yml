@@ -151,3 +151,28 @@ models:
 
       - name: velocidade
         description: "Velocidade do veículo registrada na captura."
+
+  - name: fluxo
+    description: |
+      **Descrição**:
+      **Frequência de Atualização**:
+      **Publicado Por**: |
+        Amanda Amaro
+      **Publicado Por (email)**: |
+        amanda.amaro@prefeitura.rio
+
+    columns:
+      - name: camera_numero
+        description: ""
+
+      - name: empresa
+        description: ""
+
+      - name: date
+        description: ""
+
+      - name: total_leituras
+        description: ""
+
+      - name: total_velocidade_zero
+        description: ""
