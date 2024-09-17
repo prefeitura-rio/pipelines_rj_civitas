@@ -53,6 +53,7 @@ with Flow(
     prefix = Parameter("prefix", default="FULL_REFRESH_")
 
     secrets = task_get_secret_folder(secret_path="/api-fogo-cruzado")
+    redis_password = task_get_secret_folder(secret_path="/redis", secret_name="REDIS_PASSWORD")
 
     # Rename current flow run to identify if is full refresh or partial
     task_rename_current_flow_run_dataset_table(
@@ -72,7 +73,11 @@ with Flow(
 
     # Task to check if there are any new occurrences
     max_document_number_check = task_check_max_document_number(
-        occurrences=occurrences_reponse, dataset_id=dataset_id, table_id=table_id, prefix=prefix
+        occurrences=occurrences_reponse,
+        dataset_id=dataset_id,
+        table_id=table_id,
+        prefix=prefix,
+        redis_password=redis_password,
     )
     max_document_number_check.set_upstream(report_qty_check)
 
@@ -112,7 +117,10 @@ with Flow(
         )
 
         update_max_document_number_on_redis = task_update_max_document_number_on_redis(
-            new_document_number=max_document_number_check, dataset_id=dataset_id, table_id=table_id
+            new_document_number=max_document_number_check,
+            dataset_id=dataset_id,
+            table_id=table_id,
+            redis_password=redis_password,
         )
         update_max_document_number_on_redis.set_upstream(dump_prod_wait_for_flow_run)
 

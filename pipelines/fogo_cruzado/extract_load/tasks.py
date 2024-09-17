@@ -526,7 +526,11 @@ def task_get_secret_folder(
 
 @task
 def task_check_max_document_number(
-    occurrences: List[Dict[str, int]], dataset_id: str, table_id: str, prefix: str = None
+    occurrences: List[Dict[str, int]],
+    dataset_id: str,
+    table_id: str,
+    prefix: str = None,
+    redis_password: str = None,
 ):
     """
     Checks if there are new occurrences comparing the max document number from
@@ -539,7 +543,10 @@ def task_check_max_document_number(
         list(set([int(occurrence["documentNumber"]) for occurrence in occurrences]))
     )
     redis_document_number = get_on_redis(
-        dataset_id=dataset_id, table_id=table_id, name="max_document_number"
+        dataset_id=dataset_id,
+        table_id=table_id,
+        name="max_document_number",
+        redis_password=redis_password,
     )
 
     if redis_document_number == new_document_number and prefix == "PARTIAL_REFRESH_":
@@ -556,13 +563,14 @@ def task_check_max_document_number(
 
 @task
 def task_update_max_document_number_on_redis(
-    new_document_number: int, dataset_id: str, table_id: str
+    new_document_number: int, dataset_id: str, table_id: str, redis_password: str = None
 ):
     save_on_redis(
         data=new_document_number,
         dataset_id=dataset_id,
         table_id=table_id,
         name="max_document_number",
+        redis_password=redis_password,
     )
     log(
         f"New occurrence found. Current max document number in Redis: {new_document_number}.",

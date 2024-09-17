@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Literal
 
 import pytz
 from google.cloud import bigquery
-from prefeitura_rio.pipelines_utils.redis_pal import get_redis_client
+from redis_pal import RedisPal
 
 tz = pytz.timezone("America/Sao_Paulo")
 
@@ -63,6 +63,23 @@ def save_data_in_bq(
         raise Exception(e)
 
 
+def get_redis_client(
+    host: str = "redis-master",
+    port: int = 6379,
+    db: int = 0,  # pylint: disable=C0103
+    password: str = None,
+) -> RedisPal:
+    """
+    Returns a Redis client.
+    """
+    return RedisPal(
+        host=host,
+        port=port,
+        db=db,
+        password=password,
+    )
+
+
 def build_redis_key(
     dataset_id: str, table_id: str, name: str = None, mode: Literal["dev", "prod"] = "prod"
 ) -> str:
@@ -91,7 +108,11 @@ def build_redis_key(
 
 
 def get_on_redis(
-    dataset_id: str, table_id: str, name: str = None, mode: Literal["dev", "prod"] = "prod"
+    dataset_id: str,
+    table_id: str,
+    name: str = None,
+    mode: Literal["dev", "prod"] = "prod",
+    redis_password: str = None,
 ) -> list:
     """
     Retrieves a list of values from Redis based on a given dataset ID, table ID
@@ -107,7 +128,7 @@ def get_on_redis(
     Returns:
         list: The list of values associated with the Redis key.
     """
-    redis_client = get_redis_client()
+    redis_client = get_redis_client(password=redis_password)
 
     key = build_redis_key(dataset_id, table_id, name, mode)
     files_on_redis = redis_client.get(key)
@@ -120,6 +141,7 @@ def save_on_redis(
     table_id: str,
     name: str = None,
     mode: Literal["dev", "prod"] = "prod",
+    redis_password: str = None,
 ) -> None:
     """
     Saves a given data to Redis based on a given dataset ID, table ID and
@@ -133,7 +155,7 @@ def save_on_redis(
         name (str, optional): The name of the Redis key. Defaults to None.
         mode (str, optional): The mode of the Redis key (prod or dev). Defaults to "prod".
     """
-    redis_client = get_redis_client()
+    redis_client = get_redis_client(password=redis_password)
     key = build_redis_key(dataset_id, table_id, name, mode)
     print(">>>> save on redis files ", data)
     redis_client.set(key, data)
