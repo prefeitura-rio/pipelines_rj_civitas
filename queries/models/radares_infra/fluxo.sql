@@ -3,7 +3,7 @@
     materialized = 'table',
     partition_by = {
         "field": "date",
-        "data_type": "datetime",
+        "data_type": "date",
         "granularity": "day"
     },
     cluster_by = ["date", "empresa", "camera_numero"]
