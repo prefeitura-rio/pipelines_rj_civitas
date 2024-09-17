@@ -526,7 +526,7 @@ def task_get_secret_folder(
 
 @task
 def task_check_max_document_number(
-    occurrences: Dict, dataset_id: str, table_id: str, prefix: str = None
+    occurrences: List[Dict[str, int]], dataset_id: str, table_id: str, prefix: str = None
 ):
     """
     Checks if there are new occurrences comparing the max document number from
