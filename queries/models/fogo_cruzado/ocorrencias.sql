@@ -3,11 +3,12 @@
         materialized='incremental',
         incremental_strategy='merge',
         unique_key='id_ocorrencia',
+        merge_exclude_columns = ['timestamp_insercao'],
         partition_by={
             "field": "data_ocorrencia",
             "data_type": "datetime",
             "granularity": "month",
-        }
+        },
     )
 }}
 -- Define a (CTE) to add row numbers partitioned by 'id' and ordered by 'timestamp_insercao'
