@@ -15,7 +15,7 @@ from pipelines.constants import constants
 radar_readings_twice_daily_clocks = [
     IntervalClock(
         interval=timedelta(hours=12),
-        start_date=datetime(2024, 9, 13, 5, 0, tzinfo=pytz.timezone("America/Sao_Paulo")),
+        start_date=datetime(2024, 9, 17, 18, 35, tzinfo=pytz.timezone("America/Sao_Paulo")),
         labels=[
             constants.RJ_CIVITAS_AGENT_LABEL.value,
         ],
