@@ -51,6 +51,7 @@ with Flow(
         {"dataset_id": dataset_id, "table_id": "inatividade", "dbt_alias": False},
         {"dataset_id": dataset_id, "table_id": "latencia", "dbt_alias": False},
         {"dataset_id": dataset_id, "table_id": "medicoes", "dbt_alias": False},
+        {"dataset_id": dataset_id, "table_id": "fluxo", "dbt_alias": False},
     ]
 
     dump_prod_materialization_flow_runs = create_flow_run.map(
