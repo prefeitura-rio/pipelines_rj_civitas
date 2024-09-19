@@ -6,7 +6,7 @@
           "data_type": "datetime",
           "granularity": "day"
       },
-      cluster_by = ["datahora", "empresa", "camera_numero"]
+      cluster_by = ["camera_numero","datahora"]
       )
   }}
 
@@ -50,7 +50,7 @@
 
   SELECT
     camera_numero,
-    empresa
+    empresa,
     COALESCE(datahora, TIMESTAMP(dia)) AS datahora, -- Substitui datahora nulo pela data como timestamp
     -- Propagação da última leitura válida
     COALESCE(
