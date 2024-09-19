@@ -14,10 +14,7 @@ from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
 from prefect.utilities.edges import unmapped
 from prefeitura_rio.core import settings
 from prefeitura_rio.pipelines_utils.custom import Flow
-from prefeitura_rio.pipelines_utils.prefect import (
-    task_get_current_flow_run_labels,
-    task_get_flow_group_id,
-)
+from prefeitura_rio.pipelines_utils.prefect import task_get_current_flow_run_labels
 from prefeitura_rio.pipelines_utils.state_handlers import (
     handler_initialize_sentry,
     handler_inject_bd_credentials,
@@ -25,6 +22,7 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 )
 from prefeitura_rio.pipelines_utils.tasks import (  # task_run_dbt_model_task,
     create_table_and_upload_to_gcs,
+    get_current_flow_project_name,
 )
 
 from pipelines.constants import constants
@@ -93,11 +91,10 @@ with Flow(
     )
     create_table.set_upstream(csv_path_list)
 
-    # Run DBT to create/update "denuncias" table in "disque_denuncia" dataset
-    materialization_flow_id = task_get_flow_group_id(
-        flow_name=settings.FLOW_NAME_EXECUTE_DBT_MODEL
-    )  # verificar .FLOW_NAME
+    # Get TEMPLATE flow name
+    materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
     materialization_labels = task_get_current_flow_run_labels()
+    current_flow_project_name = get_current_flow_project_name()
 
     with case(task=materialize_after_dump, value=True):
         dump_prod_tables_to_materialize_parameters = [
@@ -105,7 +102,8 @@ with Flow(
         ]
 
         dump_prod_materialization_flow_runs = create_flow_run.map(
-            flow_id=unmapped(materialization_flow_id),
+            flow_name=unmapped(materialization_flow_name),
+            project_name=unmapped(current_flow_project_name),
             parameters=dump_prod_tables_to_materialize_parameters,
             labels=unmapped(materialization_labels),
         )
@@ -121,10 +119,6 @@ with Flow(
 
         # Run DBT to create/update "reports_disque_denuncia" table in "integracao_reports" dataset
         # Execute only if "materialize_after_dump" is True
-        materialize_reports_dd_flow_id = task_get_flow_group_id(
-            flow_name="CIVITAS: integracao_reports_staging - Materialize disque denuncia"
-        )
-
         with case(task=materialize_reports_dd_after_dump, value=True):
             reports_dd_tables_to_materialize_parameters = [
                 {
@@ -135,7 +129,10 @@ with Flow(
             ]
 
             reports_dd_materialization_flow_runs = create_flow_run.map(
-                flow_id=unmapped(materialize_reports_dd_flow_id),
+                flow_name=unmapped(
+                    "CIVITAS: integracao_reports_staging - Materialize disque denuncia"
+                ),
+                project_name=unmapped(current_flow_project_name),
                 parameters=reports_dd_tables_to_materialize_parameters,
                 labels=unmapped(materialization_labels),
             )
