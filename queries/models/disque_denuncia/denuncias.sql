@@ -7,7 +7,8 @@
             "field": "data_denuncia",
             "data_type": "datetime",
             "granularity": "month",
-        }
+        },
+        cluster_by = ["timestamp_insercao"]
     )
 }}
 -- CTE for retrieving id_denuncia from denuncias_api table (newest)
