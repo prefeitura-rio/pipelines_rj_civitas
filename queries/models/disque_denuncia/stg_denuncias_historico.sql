@@ -68,33 +68,33 @@ WITH stg_denuncias AS (
         r'(\d{8}_\d{6}_\d{6})_.*\.csv$'
     ) AS nome_arquivo
   FROM
-    `rj-civitas.disque_denuncia_staging.denuncias_historico` den
+    {{ source('stg_disque_denuncia', 'denuncias_historico') }} den
   LEFT JOIN
-    `rj-civitas.disque_denuncia_staging.xpto_denuncia` dxp ON den_cd = dxp_den_cd
+    {{ source('stg_disque_denuncia', 'xpto_denuncia') }} dxp ON den_cd = dxp_den_cd
   LEFT JOIN
-    `rj-civitas.disque_denuncia_staging.xptos` xpt ON dxp_xpt_cd = xpt_cd
+    {{ source('stg_disque_denuncia', 'xptos') }} xpt ON dxp_xpt_cd = xpt_cd
   LEFT JOIN
-    `rj-civitas.disque_denuncia_staging.difusao_externa` dex ON den_cd = dex_den_cd
+    {{ source('stg_disque_denuncia', 'difusao_externa') }} dex ON den_cd = dex_den_cd
   LEFT JOIN
-    `rj-civitas.disque_denuncia_staging.orgaos_externos` oex ON dex_ext_cd = ext_cd
+    {{ source('stg_disque_denuncia', 'orgaos_externos') }} oex ON dex_ext_cd = ext_cd
   LEFT JOIN
-    `rj-civitas.disque_denuncia_staging.assuntos_denuncias` ass ON den_cd = ass_den_cd
+    {{ source('stg_disque_denuncia', 'assuntos_denuncias') }} ass ON den_cd = ass_den_cd
   LEFT JOIN
-    `rj-civitas.disque_denuncia_staging.assuntos_classes` cla ON ass_cla_cd = cla_cd
+    {{ source('stg_disque_denuncia', 'assuntos_classes') }} cla ON ass_cla_cd = cla_cd
   LEFT JOIN
-    `rj-civitas.disque_denuncia_staging.assuntos_tipos` tpa ON ass_tpa_cd = tpa_cd
+    {{ source('stg_disque_denuncia', 'assuntos_tipos') }} tpa ON ass_tpa_cd = tpa_cd
   LEFT JOIN
-    `rj-civitas.disque_denuncia_staging.envolvidos` env ON den_cd = env_den_cd
+    {{ source('stg_disque_denuncia', 'envolvidos') }} env ON den_cd = env_den_cd
   LEFT JOIN
-    `rj-civitas.disque_denuncia_staging.envolvidos_pele` pel ON env_pele = pel_cd
+    {{ source('stg_disque_denuncia', 'envolvidos_pele') }} pel ON env_pele = pel_cd
   LEFT JOIN
-    `rj-civitas.disque_denuncia_staging.envolvidos_estatura` est ON env_estatura = est_cd
+    {{ source('stg_disque_denuncia', 'envolvidos_estatura') }} est ON env_estatura = est_cd
   LEFT JOIN
-    `rj-civitas.disque_denuncia_staging.envolvidos_olhos` olh ON env_olhos = olh_cd
+    {{ source('stg_disque_denuncia', 'envolvidos_olhos') }} olh ON env_olhos = olh_cd
   LEFT JOIN
-    `rj-civitas.disque_denuncia_staging.envolvidos_cabelo` cab ON env_cabelo = cab_cd
+    {{ source('stg_disque_denuncia', 'envolvidos_cabelo') }} cab ON env_cabelo = cab_cd
   LEFT JOIN
-    `rj-civitas.disque_denuncia_staging.envolvidos_porte` prt ON env_porte = prt_cd
+    {{ source('stg_disque_denuncia', 'envolvidos_porte') }} prt ON env_porte = prt_cd
 ),
 -- Rank the 'denuncias' to identify the most recent entry for each unique denuncia
 denuncias_ranking AS (

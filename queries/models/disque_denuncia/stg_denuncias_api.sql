@@ -57,7 +57,7 @@ WITH stg_denuncias AS (
         r'(\d{8}_\d{6}_\d{6})_.*\.csv$'
     ) AS nome_arquivo
   FROM
-      `rj-civitas.disque_denuncia_staging.denuncias`
+      {{ source('stg_disque_denuncia', 'denuncias') }}
 ),
 -- Rank the 'denuncias' to identify the most recent entry for each unique denuncia
 denuncias_ranking AS (
