@@ -2,7 +2,13 @@ version: 2
 
 models:
   - name: previous_next_readings
-    description: "Modelo que verifica a leitura anterior e leitura futura para cada leitura do radar."
+    description: |
+      **Descrição**: Modelo que verifica a leitura anterior e leitura futura para cada leitura do radar.
+      **Frequência de Atualização**: Diária.
+      **Publicado Por**: |
+        Amanda Amaro
+      **Publicado Por (email)**: |
+        amanda.amaro@prefeitura.rio
     config:
       materialized: table
       partition_by:
