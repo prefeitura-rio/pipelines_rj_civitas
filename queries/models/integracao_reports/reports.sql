@@ -14,9 +14,9 @@
 }}
 SELECT
     CONCAT(id_source, id_report_original) AS id_report,
-    *
+    * EXCEPT (timestamp_insercao)
 FROM
-    `integracao_reports_staging.reports_disque_denuncia`
+    {{ source('stg_integracao_reports', 'reports_disque_denuncia') }}
 
 UNION ALL
 
@@ -24,4 +24,4 @@ SELECT
     CONCAT(id_source, id_report_original) AS id_report,
     *
 FROM
-    `integracao_reports_staging.reports_1746`
+    {{ source('stg_integracao_reports', 'reports_1746') }}
