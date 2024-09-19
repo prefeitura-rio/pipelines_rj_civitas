@@ -13,13 +13,13 @@ from prefeitura_rio.core import settings
 from prefeitura_rio.pipelines_utils.custom import Flow
 from prefeitura_rio.pipelines_utils.prefect import (  # get_flow_run_mode,
     task_get_current_flow_run_labels,
-    task_get_flow_group_id,
 )
 from prefeitura_rio.pipelines_utils.state_handlers import (
     handler_initialize_sentry,
     handler_inject_bd_credentials,
     handler_skip_if_running,
 )
+from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
 from pipelines.constants import constants
 from pipelines.radares_infra.materialize.schedules import (
@@ -36,16 +36,10 @@ with Flow(
     ],
 ) as materialize_radares_infra:
 
-    # environment = get_flow_run_mode()
     dataset_id = Parameter("dataset_id", default="radares_infra")
-    # table_id = Parameter("table_id", default="reports")
-    # dbt_alias = Parameter("dbt_alias", default=False)
 
-    materialization_flow_id = task_get_flow_group_id(flow_name=settings.FLOW_NAME_EXECUTE_DBT_MODEL)
     materialization_labels = task_get_current_flow_run_labels()
-
-    # dataset_id = dataset_id + "_" + environment if environment != "prod" else dataset_id
-
+    materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
     dump_prod_tables_to_materialize_parameters = [
         {"dataset_id": dataset_id, "table_id": "equipamentos", "dbt_alias": False},
         {"dataset_id": dataset_id, "table_id": "inatividade", "dbt_alias": False},
@@ -53,9 +47,11 @@ with Flow(
         {"dataset_id": dataset_id, "table_id": "medicoes", "dbt_alias": False},
         {"dataset_id": dataset_id, "table_id": "fluxo", "dbt_alias": False},
     ]
+    current_flow_project_name = get_current_flow_project_name()
 
     dump_prod_materialization_flow_runs = create_flow_run.map(
-        flow_id=unmapped(materialization_flow_id),
+        flow_name=unmapped(materialization_flow_name),
+        project_name=unmapped(current_flow_project_name),
         parameters=dump_prod_tables_to_materialize_parameters,
         labels=unmapped(materialization_labels),
     )
