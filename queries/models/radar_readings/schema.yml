@@ -1,0 +1,35 @@
+version: 2
+
+models:
+  - name: previous_next_readings
+    description: "Modelo que verifica a leitura anterior e leitura futura para cada leitura do radar."
+    config:
+      materialized: table
+      partition_by:
+        field: "datahora"
+        data_type: "datetime"
+        granularity: "day"
+      cluster_by: ["datahora", "empresa", "camera_numero"]
+    columns:
+      - name: camera_numero
+        description: "Código do radar."
+        tests:
+          - not_null
+
+      - name: empresa
+        description: "empresa responsável pelo radar."
+        tests:
+          - not_null
+
+      - name: datahora
+        description: "Data e hora da leitura do radar. Substitui data nula pelo timestamp correspondente ao dia."
+        tests:
+          - not_null
+
+      - name: ultima_leitura_valida
+        description: "leitura anterior à leitura do radar."
+
+
+      - name: proxima_leitura_valida
+        description: "leitura posterior à leitura do radar."
+
