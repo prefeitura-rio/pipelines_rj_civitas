@@ -14,13 +14,13 @@ from prefeitura_rio.core import settings
 from prefeitura_rio.pipelines_utils.custom import Flow
 from prefeitura_rio.pipelines_utils.prefect import (  # get_flow_run_mode,
     task_get_current_flow_run_labels,
-    task_get_flow_group_id,
 )
 from prefeitura_rio.pipelines_utils.state_handlers import (
     handler_initialize_sentry,
     handler_inject_bd_credentials,
     handler_skip_if_running,
 )
+from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
 from pipelines.constants import constants
 from pipelines.integracao_reports_staging.materialize_1746.schedules import (
@@ -42,17 +42,17 @@ with Flow(
     table_id = Parameter("table_id", default="reports_1746")
     dbt_alias = Parameter("dbt_alias", default=False)
 
-    materialization_flow_id = task_get_flow_group_id(
-        flow_name=settings.FLOW_NAME_EXECUTE_DBT_MODEL
-    )  # verificar .FLOW_NAME
+    materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
     materialization_labels = task_get_current_flow_run_labels()
 
     dump_prod_tables_to_materialize_parameters = [
         {"dataset_id": dataset_id, "table_id": table_id, "dbt_alias": dbt_alias}
     ]
+    current_flow_project_name = get_current_flow_project_name()
 
     dump_prod_materialization_flow_runs = create_flow_run.map(
-        flow_id=unmapped(materialization_flow_id),
+        flow_name=unmapped(current_flow_project_name),
+        project_name=unmapped(current_flow_project_name),
         parameters=dump_prod_tables_to_materialize_parameters,
         labels=unmapped(materialization_labels),
     )

@@ -12,7 +12,6 @@ from prefeitura_rio.core import settings
 from prefeitura_rio.pipelines_utils.custom import Flow
 from prefeitura_rio.pipelines_utils.prefect import (
     task_get_current_flow_run_labels,
-    task_get_flow_group_id,
     task_rename_current_flow_run_dataset_table,
 )
 from prefeitura_rio.pipelines_utils.state_handlers import (
@@ -20,6 +19,7 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
     handler_inject_bd_credentials,
     handler_skip_if_running,
 )
+from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
 from pipelines.constants import constants
 from pipelines.fogo_cruzado.extract_load.schedules import (
@@ -36,7 +36,7 @@ from pipelines.fogo_cruzado.extract_load.tasks import (
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
-    name="Fogo Cruzado - Extração e Carga",
+    name="CIVITAS: Fogo Cruzado - Extração e Carga",
     state_handlers=[
         handler_inject_bd_credentials,
         handler_initialize_sentry,
@@ -92,17 +92,17 @@ with Flow(
     load_to_table_response.set_upstream(max_document_number_check)
 
     with case(task=materialize_after_dump, value=True):
-        materialization_flow_id = task_get_flow_group_id(
-            flow_name=settings.FLOW_NAME_EXECUTE_DBT_MODEL
-        )
         materialization_labels = task_get_current_flow_run_labels()
 
+        materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
         dump_prod_tables_to_materialize_parameters = [
             {"dataset_id": dataset_id, "table_id": table_id, "dbt_alias": False}
         ]
+        current_flow_project_name = get_current_flow_project_name()
 
         dump_prod_materialization_flow_runs = create_flow_run.map(
-            flow_id=unmapped(materialization_flow_id),
+            flow_name=unmapped(materialization_flow_name),
+            project_name=unmapped(current_flow_project_name),
             parameters=dump_prod_tables_to_materialize_parameters,
             labels=unmapped(materialization_labels),
         )
