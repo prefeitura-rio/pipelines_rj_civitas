@@ -1,5 +1,26 @@
 version: 2
 
+sources:
+  - name: stg_disque_denuncia
+    database: rj-civitas
+    schema: disque_denuncia_staging
+    tables:
+      - name: denuncias
+      - name: denuncias_historico
+      - name: xpto_denuncia
+      - name: xptos
+      - name: difusao_externa
+      - name: orgaos_externos
+      - name: assuntos_denuncias
+      - name: assuntos_classes
+      - name: assuntos_tipos
+      - name: envolvidos
+      - name: envolvidos_pele
+      - name: envolvidos_estatura
+      - name: envolvidos_olhos
+      - name: envolvidos_cabelo
+      - name: envolvidos_porte
+
 models:
   - name: denuncias
     description: |
@@ -68,64 +89,84 @@ models:
 
       - name: xptos
         description: "Array de informações sobre XPTOs (tags) associados à denúncia."
-        subcolumns:
-          - name: id
-            description: "ID do XPTO."
-          - name: nome
-            description: "Nome do XPTO."
+
+      - name: xptos.id
+        description: "ID do XPTO."
+
+      - name: xptos.nome
+        description: "Nome do XPTO."
 
       - name: orgaos
         description: "Array de órgãos associados à denúncia."
-        subcolumns:
-          - name: id
-            description: "ID do órgão."
-          - name: nome
-            description: "Nome do órgão."
-          - name: tipo
-            description: "Tipo do órgão."
+
+      - name: orgaos.id
+        description: "ID do órgão."
+
+      - name: orgaos.nome
+        description: "Nome do órgão."
+
+      - name: orgaos.tipo
+        description: "Tipo do órgão."
 
       - name: assuntos
         description: "Array de assuntos associados à denúncia."
-        subcolumns:
-          - name: id_classe
-            description: "ID da classe do assunto."
-          - name: classe
-            description: "Descrição da classe do assunto."
-          - name: id_tipo
-            description: "ID do tipo de assunto."
-          - name: tipo
-            description: "Descrição do tipo de assunto."
-          - name: assunto_principal
-            description: "Indicador do assunto principal."
+
+      - name: assuntos.id_classe
+        description: "ID da classe do assunto."
+
+      - name: assuntos.classe
+        description: "Descrição da classe do assunto."
+
+      - name: assuntos.tipos
+        description: "Array de tipos associados à classe da denúncia."
+
+      - name: assuntos.tipos.id_tipo
+        description: "ID do tipo de assunto."
+
+      - name: assuntos.tipos.tipo
+        description: "Descrição do tipo de assunto."
+
+      - name: assuntos.tipos.assunto_principal
+        description: "Indicador do assunto principal."
 
       - name: relato
         description: "Descrição do relato da denúncia."
 
       - name: envolvidos
         description: "Array de pessoas envolvidas na denúncia."
-        subcolumns:
-          - name: id
-            description: "Identificador único do registro no banco de dados. NÃO É IDENTIFICADOR ÚNICO PARA O ENVOLVIDO."
-          - name: nome
-            description: "Nome do envolvido."
-          - name: vulgo
-            description: "Vulgo do envolvido."
-          - name: sexo
-            description: "Sexo do envolvido."
-          - name: idade
-            description: "Idade do envolvido."
-          - name: pele
-            description: "Descrição da pele do envolvido."
-          - name: estatura
-            description: "Estatura do envolvido."
-          - name: porte
-            description: "Porte do envolvido."
-          - name: cabelos
-            description: "Cor dos cabelos do envolvido."
-          - name: olhos
-            description: "Cor dos olhos do envolvido."
-          - name: outras_caracteristicas
-            description: "Outras características do envolvido."
+
+      - name: envolvidos.id
+        description: "Identificador único do registro no banco de dados. NÃO É IDENTIFICADOR ÚNICO PARA O ENVOLVIDO."
+
+      - name: envolvidos.nome
+        description: "Nome do envolvido."
+
+      - name: envolvidos.vulgo
+        description: "Vulgo do envolvido."
+
+      - name: envolvidos.sexo
+        description: "Sexo do envolvido."
+
+      - name: envolvidos.idade
+        description: "Idade do envolvido."
+
+      - name: envolvidos.pele
+        description: "Descrição da pele do envolvido."
+
+      - name: envolvidos.estatura
+        description: "Estatura do envolvido."
+
+      - name: envolvidos.porte
+        description: "Porte do envolvido."
+
+      - name: envolvidos.cabelos
+        description: "Cor dos cabelos do envolvido."
+
+      - name: envolvidos.olhos
+        description: "Cor dos olhos do envolvido."
+
+      - name: envolvidos.outras_caracteristicas
+        description: "Outras características do envolvido."
 
       - name: status_denuncia
         description: "Status atual da denúncia."
