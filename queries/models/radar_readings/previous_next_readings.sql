@@ -24,7 +24,7 @@
 
   -- Gerar todas as combinações de câmeras e dias
   cameras_e_datas AS (
-    SELECT 
+    SELECT
       DISTINCT lc.camera_numero, -- Mantém todas as câmeras
       td AS dia -- Junta todas as datas
     FROM (SELECT DISTINCT camera_numero FROM leituras_por_camera) lc
@@ -33,7 +33,7 @@
 
   -- Unir as leituras reais com todas as datas
   uniao_leituras AS (
-    SELECT 
+    SELECT
       cd.camera_numero,
       cd.dia,
       lc.datahora,
