@@ -19,7 +19,7 @@
       DATE(datahora) AS dia, -- Extrair apenas a data
       LEAD(datahora) OVER (PARTITION BY camera_numero ORDER BY datahora ASC) AS proxima_leitura_futura, -- Próxima leitura futura
       LAG(datahora) OVER (PARTITION BY camera_numero ORDER BY datahora ASC) AS ultima_leitura_anterior -- Última leitura anterior
-    FROM `rj-cetrio.ocr_radar.readings_2024_*`
+    FROM {{ source('ocr_radar', 'readings_2024_*') }}
   ),
 
   -- Gerar todas as combinações de câmeras e dias

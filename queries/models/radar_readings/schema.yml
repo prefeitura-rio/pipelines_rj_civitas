@@ -1,5 +1,12 @@
 version: 2
 
+sources:
+  - name: ocr_radar
+    database: rj-cetrio
+    schema: radar_readings
+    tables:
+      - name: readings_2024_*
+
 models:
   - name: previous_next_readings
     description: |
