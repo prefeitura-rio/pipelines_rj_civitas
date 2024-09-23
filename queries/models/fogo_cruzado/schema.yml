@@ -5,14 +5,233 @@ sources:
     schema: fogo_cruzado_staging
     tables:
       - name: ocorrencias
-
 models:
   - name: ocorrencias
-    description: |
-      **Descrição**: Tabela que contém dados de tiroteios ocorridos no município do Rio de Janeiro.
+    description: >-
+      **Descrição**: Tabela que contém dados de tiroteios ocorridos no município
+      do Rio de Janeiro.
+
       **Fonte**: [API Fogo Cruzado](api.fogocruzado.org.br)
 
+
       **Frequência de atualização**: A cada minuto
+
       **Cobertura temporal**: Julho de  2016
+
       **Publicado por**: Nicolas Evilasio
+
       **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+
+    columns:
+      - name: id_ocorrencia
+        description: Identificador único para cada ocorrência no banco de dados.
+
+      - name: numero_ocorrencia
+        description: Este campo representa o número único atribuído a cada ocorrência.
+
+      - name: endereco
+        description: Este campo contém o endereço onde a ocorrência ocorreu.
+
+      - name: estado
+        description: Este campo representa o estado onde a ocorrência ocorreu.
+
+      - name: regiao
+        description: O campo 'regiao' representa a região onde a ocorrência ocorreu.
+
+      - name: cidade
+        description: O campo 'cidade' representa o nome da cidade onde a ocorrência
+          ocorreu.
+
+      - name: bairro
+        description: O campo 'bairro' representa o bairro onde a ocorrência ocorreu.
+
+      - name: subbairro
+        description: Representa o sub-bairro onde a
+          ocorrência ocorreu.
+
+      - name: localidade
+        description: |
+          O campo 'localidade' representa a localidade específica onde a
+          ocorrência ocorreu. Este é um campo do tipo string que pode incluir
+          informações sobre o nome de um local específico, como favelas, morros, complexos ou áreas dentro
+          da cidade ou região.
+
+      - name: latitude
+        description: Este campo representa a latitude do local onde a ocorrência ocorreu.
+
+      - name: longitude
+        description: Este campo representa a longitude do local onde a ocorrência
+          ocorreu.
+
+      - name: data_ocorrencia
+        description: |
+          Este campo representa a data e hora em que a ocorrência ocorreu.
+          O tipo de dados é datetime e o fuso horário é setado para
+          'America/Sao_Paulo'.
+
+      - name: acao_policial
+        description: Indica se houve ação policial durante a ocorrência.
+
+      - name: presenca_agente_seguranca
+        description: Indica se havia agentes de segurança presentes durante a ocorrência, dentro ou fora de serviço.
+
+      - name: ocorrencia_relacionada
+        description: Este campo contém o número da ocorrência relacionada, caso haja.
+
+      - name: motivo_principal
+        description: Este campo representa o motivo principal da ocorrência.
+
+      - name: motivos_complementares
+        description: |
+          Este campo contém um array de motivos complementares relacionados
+          à ocorrência. Esses motivos são suplementares ao motivo principal da
+          ocorrência.
+
+      - name: categorias
+        description: |
+          Este campo contém um array de categorias relacionadas à
+          ocorrência. Cada categoria é representada por um valor de string. As
+          categorias fornecem contexto adicional e classificação para cada
+          ocorrência.
+
+      - name: massacre
+        description: Este campo representa se a ocorrência foi classificada como um
+          massacre.
+
+      - name: unidade_policial
+        description: Este campo contém o nome da unidade policial envolvida na ocorrência.
+
+      - name: transportes
+        description: Array de dados estruturados relacionados ao transporte afetado pela ocorrência.
+
+      - name: transportes.tipo_transporte
+        description: Tipo de transporte afetado pela ocorrência. (Trem, Metrô, BRT, etc)
+
+      - name: transportes.interrupcao_transporte
+        description: Indica se o transporte foi interrompido devido à ocorrência
+
+      - name: transportes.data_interrupcao_transporte
+        description: Data e hora em que o transporte foi interrompido
+
+      - name: transportes.data_retomada_transporte
+        description: Data e hora em que o transporte foi retomado
+
+      - name: transportes.descricao_interrupcao_transporte
+        description: Descrição adicional sobre como a ocorrência afetou o transporte
+
+      - name: vitimas
+        description: |
+          Este campo é um registro do tipo e contém informações sobre as
+          vítimas envolvidas na ocorrência.
+
+      - name: vitimas.id_vitima
+        description: Identificador único da vítima
+
+      - name: vitimas.situacao_vitima
+        description: Situação da vítima (por exemplo, morta, ferida)
+
+      - name: vitimas.circunstancias_vitima
+        description: Array de circunstâncias que levaram ao estado da vítima
+
+      - name: vitimas.circunstancias_vitima.descricao_circunstancia
+        description: Descrição da circunstância. (Chacina, Bala perdida, Suicídio, etc.)
+
+      - name: vitimas.circunstancias_vitima.tipo_circunstancia
+        description: ''
+
+      - name: vitimas.data_morte_vitima
+        description: Data e hora da morte da vítima, se aplicável
+
+      - name: vitimas.idade_vitima
+        description: Idade da vítima
+
+      - name: vitimas.faixa_etaria_vitima
+        description: Grupo de idade ao qual a vítima pertence
+
+      - name: vitimas.genero_vitima
+        description: Gênero da vítima
+
+      - name: vitimas.raca_vitima
+        description: Raça da vítima
+
+      - name: vitimas.local_ocorrencia
+        description: Lugar onde a vítima foi encontrada ou afetada
+
+      - name: vitimas.status_servico
+        description: Status de serviço da vítima, se aplicável. (De folga, Em serviço, Não se aplica ou Não identificado.)
+
+      - name: vitimas.tipo_servico
+        description: ''
+
+      - name: vitimas.qualificacoes_vitima
+        description: Array com qualificações ou características relevantes da vítima
+
+      - name: vitimas.qualificacoes_vitima.qualificacao_vitima
+        description: |
+          Descrição da qualificação profissional da vítima (Motorista de aplicativo, PPTE, Entregador / Motoboy, Político, etc.)
+
+      - name: vitimas.qualificacoes_vitima.tipo_qualificacao.vitima
+        description: Descrição do tipo de qualificação da vítima (Servico, Politico ou Agente)
+
+      - name: vitimas.posicao_politica_vitima
+        description: Cargo político da vítima, se aplicável
+
+      - name: vitimas.tipo_posicao_politica_vitima
+        description: ''
+
+      - name: vitimas.status_politico_vitima
+        description: Status do cargo político da vítima, se aplicável
+
+      - name: vitimas.tipo_status_politico_vitima
+        description: ''
+
+      - name: vitimas.partido_politico_vitima
+        description: Partido político ao qual a vítima pertence, se aplicável
+
+      - name: vitimas.corporacao_vitima
+        description: Corporação à qual a vítima pertence, se aplicável
+
+      - name: vitimas.patente_vitima
+        description: Cargo de agente de segurança ocupado pela vítima, se aplicável
+
+      - name: vitimas.tipo_patente_vitima
+        description: ''
+
+      - name: vitimas.status_agente_vitima
+        description: Status de serviço da vítima, se aplicável
+
+      - name: vitimas.unidade_policial_vitima
+        description: Unidade à qual a vítima pertence, se aplicável
+
+      - name: vitimas_animais
+        description: |
+          Este campo é um registro do tipo e contém dados agregados sobre
+          as vítimas animais envolvidas na ocorrência.
+
+      - name: vitimas_animais.nome_animal
+        description: Nome do animal, se conhecido
+
+      - name: vitimas_animais.tipo_animal
+        description: Tipo de animal (por exemplo, Cachorro, Gato, Papagaio etc.)
+
+      - name: vitimas_animais.situacao_animal
+        description: Situação da vítima animal (por exemplo, morta, ferida)
+
+      - name: vitimas_animais.circunstancias_animal
+        description: Array de circunstâncias que levaram ao estado da vítima animal
+
+      - name: vitimas_animais.circunstancias_animal.descricao_circunstancia
+        description: Descrição da circunstância
+
+      - name: vitimas_animais.circunstancias_animal.tipo_circunstancia
+        description: ''
+
+      - name: vitimas_animais.data_morte_animal
+        description: Data e hora da morte do animal, se aplicável
+
+      - name: timestamp_insercao
+        description: |
+          Este campo representa a data e hora quando o registro
+          foi inserido no banco de dados. É um campo do tipo datetime e o fuso horário é setado para
+          'America/Sao_Paulo'.
+
