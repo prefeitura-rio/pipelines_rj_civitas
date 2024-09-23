@@ -36,3 +36,6 @@ models:
     fogo_cruzado:
       +materialized: table
       +schema: fogo_cruzado
+    radar_readings:
+      +materialized: table
+      +schema: radar_readings
