@@ -17,13 +17,6 @@ models:
         Amanda Amaro
       **Publicado Por (email)**: |
         amanda.amaro@prefeitura.rio
-    config:
-      materialized: table
-      partition_by:
-        field: "datahora"
-        data_type: "datetime"
-        granularity: "day"
-      cluster_by: ["datahora", "empresa", "camera_numero"]
     columns:
       - name: camera_numero
         description: "Código do radar."
