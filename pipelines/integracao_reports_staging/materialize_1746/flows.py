@@ -51,7 +51,7 @@ with Flow(
     current_flow_project_name = get_current_flow_project_name()
 
     dump_prod_materialization_flow_runs = create_flow_run.map(
-        flow_name=unmapped(current_flow_project_name),
+        flow_name=unmapped(materialization_flow_name),
         project_name=unmapped(current_flow_project_name),
         parameters=dump_prod_tables_to_materialize_parameters,
         labels=unmapped(materialization_labels),
