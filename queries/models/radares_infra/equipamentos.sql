@@ -6,7 +6,7 @@
         "data_type": "datetime",
         "granularity": "day"
     },
-    cluster_by = ["datahora", "empresa", "camera_numero"]
+    cluster_by = ["camera_numero", "empresa", "datahora"]
     )
 }}
 
@@ -20,8 +20,8 @@ WITH cameras_cetrio AS (
     CAST(t1.longitude AS FLOAT64) AS longitude,
     -- Create geographic point from latitude and longitude
     ST_GEOGPOINT(CAST(t1.longitude AS FLOAT64), CAST(t1.latitude AS FLOAT64)) AS geo_coordinates
-  FROM `rj-cetrio.ocr_radar.equipamento` t1
-  JOIN `rj-cetrio.ocr_radar.equipamento_codcet_to_camera_numero` t2
+  FROM {{ source('ocr_radar', 'equipamento') }} t1
+  JOIN {{ source('ocr_radar', 'equipamento_codcet_to_camera_numero') }} t2
     ON t1.codcet = t2.codcet
 ),
 -- Convert datahora to date for partitioning
@@ -48,7 +48,7 @@ final_data AS (
     r.placa,
     r.tipoveiculo,
     r.velocidade
-  FROM `rj-cetrio.ocr_radar.readings_*` r
+  FROM {{ source('ocr_radar', 'readings_2024') }}r
   LEFT JOIN cameras_cetrio c
     ON r.camera_numero = c.camera_numero
   WHERE

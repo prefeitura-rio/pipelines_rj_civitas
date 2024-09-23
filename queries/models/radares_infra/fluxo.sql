@@ -17,6 +17,6 @@ SELECT
     COUNT(*) AS total_leituras,
 	COUNTIF(velocidade = 0) AS total_velocidade_zero -- Contagem de leituras com velocidade = 0
 FROM
-    `rj-cetrio.ocr_radar.readings_2024*`
+    {{ source('ocr_radar', 'readings_2024') }}
 GROUP BY
     empresa, camera_numero, DATE(datahora)
