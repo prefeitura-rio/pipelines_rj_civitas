@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This module defines a Prefect workflow for materializing tables using DBT...
+This module defines a Prefect workflow for materializing tables using DBT..
 """
 
 
@@ -45,6 +45,7 @@ with Flow(
         {"dataset_id": dataset_id, "table_id": "inatividade", "dbt_alias": False},
         {"dataset_id": dataset_id, "table_id": "latencia", "dbt_alias": False},
         {"dataset_id": dataset_id, "table_id": "medicoes", "dbt_alias": False},
+        {"dataset_id": dataset_id, "table_id": "fluxo", "dbt_alias": False},
     ]
     current_flow_project_name = get_current_flow_project_name()
 

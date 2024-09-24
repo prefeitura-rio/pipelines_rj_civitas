@@ -19,7 +19,7 @@ WITH datas_fuso AS (
     TIMESTAMP(DATETIME(datahora_captura, 'America/Sao_Paulo')) AS datahora_captura,
     TIMESTAMP(DATETIME(datahora, 'America/Sao_Paulo')) AS datahora
   FROM
-    `rj-cetrio.ocr_radar.readings_2024*`
+    {{ source('ocr_radar', 'readings_2024') }}
 )
 -- Final query
 SELECT
