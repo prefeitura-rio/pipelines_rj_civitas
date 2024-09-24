@@ -1,15 +1,5 @@
 version: 2
 
-sources:
-  - name: ocr_radar
-    database: rj-cetrio
-    schema: ocr_radar
-    tables:
-      - name: readings_2024
-        identifier: readings_2024_*
-      - name: equipamento
-      - name: equipamento_codcet_to_camera_numero
-
 models:
   - name: medicoes
     description: |

@@ -1,10 +1,5 @@
 version: 2
-sources:
-  - name: stg_fogo_cruzado
-    database: rj-civitas
-    schema: fogo_cruzado_staging
-    tables:
-      - name: ocorrencias
+
 models:
   - name: ocorrencias
     description: >-

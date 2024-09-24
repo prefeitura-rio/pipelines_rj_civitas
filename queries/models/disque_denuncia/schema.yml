@@ -1,26 +1,5 @@
 version: 2
 
-sources:
-  - name: stg_disque_denuncia
-    database: rj-civitas
-    schema: disque_denuncia_staging
-    tables:
-      - name: denuncias
-      - name: denuncias_historico
-      - name: xpto_denuncia
-      - name: xptos
-      - name: difusao_externa
-      - name: orgaos_externos
-      - name: assuntos_denuncias
-      - name: assuntos_classes
-      - name: assuntos_tipos
-      - name: envolvidos
-      - name: envolvidos_pele
-      - name: envolvidos_estatura
-      - name: envolvidos_olhos
-      - name: envolvidos_cabelo
-      - name: envolvidos_porte
-
 models:
   - name: denuncias
     description: |
