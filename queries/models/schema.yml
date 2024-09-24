@@ -1,0 +1,68 @@
+version: 2
+
+sources:
+  - name: stg_disque_denuncia
+    database: rj-civitas
+    schema: disque_denuncia_staging
+    tables:
+      - name: denuncias
+      - name: denuncias_historico
+      - name: xpto_denuncia
+      - name: xptos
+      - name: difusao_externa
+      - name: orgaos_externos
+      - name: assuntos_denuncias
+      - name: assuntos_classes
+      - name: assuntos_tipos
+      - name: envolvidos
+      - name: envolvidos_pele
+      - name: envolvidos_estatura
+      - name: envolvidos_olhos
+      - name: envolvidos_cabelo
+      - name: envolvidos_porte
+
+  - name: stg_fogo_cruzado
+    database: rj-civitas
+    schema: fogo_cruzado_staging
+    tables:
+      - name: ocorrencias
+
+  - name: stg_integracao_reports
+    database: rj-civitas
+    schema: integracao_reports_staging
+    tables:
+      - name: reports_1746
+      - name: reports_disque_denuncia
+
+  - name: disque_denuncia
+    database: rj-civitas
+    schema: disque_denuncia
+    tables:
+      - name: denuncias
+
+  - name: chamados_1746
+    database: rj-segovi
+    schema: adm_central_atendimento_1746
+    tables:
+      - name: chamado
+
+  - name: datario
+    database: datario
+    schema: dados_mestres
+    tables:
+      - name: logradouro
+
+  - name: integracao_reports
+    database: rj-civitas
+    schema: integracao_reports
+    tables:
+      - name: tipos_interesse_1746
+
+  - name: ocr_radar
+    database: rj-cetrio
+    schema: ocr_radar
+    tables:
+      - name: readings_2024
+        identifier: readings_2024_*
+      - name: equipamento
+      - name: equipamento_codcet_to_camera_numero
