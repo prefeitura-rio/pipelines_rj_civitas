@@ -14,7 +14,7 @@
 WITH ocrs AS (
   SELECT DISTINCT
     *
-  FROM `rj-cetrio.ocr_radar.readings_2024*`
+  FROM {{ source('ocr_radar', 'readings_2024') }}
 ),
 -- Convert datahora to date for partitioning
 final_data AS (

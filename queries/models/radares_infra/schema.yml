@@ -1,5 +1,15 @@
 version: 2
 
+sources:
+  - name: ocr_radar
+    database: rj-cetrio
+    schema: ocr_radar
+    tables:
+      - name: readings_2024
+        identifier: readings_2024_*
+      - name: equipamento
+      - name: equipamento_codcet_to_camera_numero
+
 models:
   - name: medicoes
     description: |
@@ -151,3 +161,28 @@ models:
 
       - name: velocidade
         description: "Velocidade do veículo registrada na captura."
+
+  - name: fluxo
+    description: |
+      **Descrição**:
+      **Frequência de Atualização**:
+      **Publicado Por**: |
+        Amanda Amaro
+      **Publicado Por (email)**: |
+        amanda.amaro@prefeitura.rio
+
+    columns:
+      - name: camera_numero
+        description: ""
+
+      - name: empresa
+        description: ""
+
+      - name: date
+        description: ""
+
+      - name: total_leituras
+        description: ""
+
+      - name: total_velocidade_zero
+        description: ""

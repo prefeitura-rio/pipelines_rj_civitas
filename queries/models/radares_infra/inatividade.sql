@@ -18,7 +18,7 @@ WITH distinct_cameras AS (
     DATE(MIN(datahora)) AS min_date,
     DATE(MAX(datahora)) AS max_date
   FROM
-    `rj-cetrio.ocr_radar.readings_2024*`
+    {{ source('ocr_radar', 'readings_2024') }}
   WHERE
     datahora > '2024-05-30'
   GROUP BY
@@ -42,7 +42,7 @@ camera_data AS (
   FROM
     dates d
   LEFT JOIN
-    `rj-cetrio.ocr_radar.readings_2024*` r
+    {{ source('ocr_radar', 'readings_2024') }} r
   ON
     d.camera_numero = r.camera_numero
     AND d.empresa = r.empresa
@@ -107,7 +107,7 @@ latency_stats_per_day AS (
     AVG(TIMESTAMP_DIFF(datahora_captura, datahora, SECOND)) AS avg_latency,
     APPROX_QUANTILES(TIMESTAMP_DIFF(datahora_captura, datahora, SECOND), 100)[OFFSET(50)] AS median_latency
   FROM
-    `rj-cetrio.ocr_radar.readings_2024*`
+    {{ source('ocr_radar', 'readings_2024') }}
   GROUP BY
     empresa, camera_numero, DATE(datahora)
 )
