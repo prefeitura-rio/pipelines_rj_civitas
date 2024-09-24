@@ -12,7 +12,7 @@
         cluster_by = ['timestamp_update']
     )
 }}
--- Define a (CTE) to add row numbers partitioned by 'id' and ordered by 'timestamp_insercao'
+-- Define a (CTE) to add row numbers partitioned by 'id' and ordered by 'timestamp_insercao'.
 WITH row_number_data AS (
   SELECT
     *,
