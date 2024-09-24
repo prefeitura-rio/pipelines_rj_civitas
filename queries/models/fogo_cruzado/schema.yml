@@ -1,6 +1,6 @@
 version: 2
 sources:
-  - name: fogo_cruzado
+  - name: stg_fogo_cruzado
     database: rj-civitas
     schema: fogo_cruzado_staging
     tables:
@@ -233,5 +233,11 @@ models:
         description: |
           Este campo representa a data e hora quando o registro
           foi inserido no banco de dados. É um campo do tipo datetime e o fuso horário é setado para
+          'America/Sao_Paulo'.
+
+      - name: timestamp_update
+        description: |
+          Este campo representa a data e hora quando o registro foi atualizado no banco de dados.
+          É um campo do tipo datetime e o fuso horário é setado para
           'America/Sao_Paulo'.
 

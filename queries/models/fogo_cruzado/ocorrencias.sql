@@ -9,6 +9,7 @@
             "data_type": "datetime",
             "granularity": "month",
         },
+        cluster_by = ['timestamp_update']
     )
 }}
 -- Define a (CTE) to add row numbers partitioned by 'id' and ordered by 'timestamp_insercao'
@@ -17,7 +18,7 @@ WITH row_number_data AS (
     *,
     ROW_NUMBER() OVER(PARTITION BY id ORDER BY timestamp_insercao) rn
   FROM
-    {{ source('fogo_cruzado', 'ocorrencias') }}
+    {{ source('stg_fogo_cruzado', 'ocorrencias') }}
 ),
 -- Select the most recent row for each 'id', based on 'timestamp_insercao'
 newest_data AS (
@@ -28,7 +29,7 @@ newest_data AS (
   WHERE
     rn = 1
    {% if is_incremental() %}
-     AND timestamp_insercao > (SELECT MAX(timestamp_insercao) FROM {{ this }})
+     AND timestamp_insercao > (SELECT MAX(timestamp_update) FROM {{ this }})
    {% endif %}
  ),
  -- Aggregate complementary reasons into an array for each 'id'
@@ -217,7 +218,8 @@ SELECT
   tr.transportes,
   vi.vitimas,
   av.vitimas_animais,
-  timestamp_insercao
+  timestamp_insercao,
+  DATETIME(FORMAT_DATETIME('%Y-%m-%d %H:%M:%S', CURRENT_DATETIME('America/Sao_Paulo'))) AS timestamp_update
 FROM
   newest_data oc
 LEFT JOIN complementary_reasons_agg cr ON oc.id = cr.id
