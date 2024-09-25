@@ -67,6 +67,7 @@ def get_occurrences(
     initial_date: Optional[str] = None,
     take: int = 1000,
     id_state: str = "b112ffbe-17b3-4ad0-8f2a-2038745d1d14",
+    id_city: str = "d1bf56cc-6d85-4e6a-a5f5-0ab3f4074be3",
 ) -> List[Dict]:
 
     """
@@ -82,7 +83,10 @@ def get_occurrences(
         The number of occurrences to fetch per page. Defaults to 1000.
     id_state : str, optional
         The ID of the state to fetch occurrences from.
-        Defaults to "b112ffbe-17b3-4ad0-8f2a-2038745d1d14" [Rio de Janeiro, RJ]
+        Defaults to "b112ffbe-17b3-4ad0-8f2a-2038745d1d14" [Rio de Janeiro - Brazil]
+    id_city : str, optional
+        The ID of the citie to fetch occurrences from.
+        Defaults to "d1bf56cc-6d85-4e6a-a5f5-0ab3f4074be3" [Rio de Janeiro, RJ - Brazil]
 
     Returns
     -------
@@ -92,7 +96,12 @@ def get_occurrences(
     occurrences = []
 
     # Associate parameters names with values
-    params_dict = {"initialdate": initial_date, "idState": id_state, "take": take}
+    params_dict = {
+        "initialdate": initial_date,
+        "idState": id_state,
+        "idCities": id_city,
+        "take": take,
+    }
 
     # Filter and create final parameters dictionary with values not None
     params = {k: v for k, v in params_dict.items() if v is not None}
