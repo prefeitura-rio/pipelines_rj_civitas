@@ -33,6 +33,7 @@ sources:
     tables:
       - name: reports_1746
       - name: reports_disque_denuncia
+      - name: reports_fogo_cruzado
 
   - name: disque_denuncia
     database: rj-civitas
@@ -66,3 +67,9 @@ sources:
         identifier: readings_2024_*
       - name: equipamento
       - name: equipamento_codcet_to_camera_numero
+
+  - name: fogo_cruzado
+    database: rj-civitas
+    schema: fogo_cruzado
+    tables:
+      - name: ocorrencias
