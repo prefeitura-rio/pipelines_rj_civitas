@@ -50,6 +50,7 @@ with Flow(
     table_id = Parameter("table_id", default="ocorrencias")
     write_disposition = Parameter("write_disposition", default="WRITE_TRUNCATE")
     materialize_after_dump = Parameter("materialize_after_dump", default=True)
+    materialize_reports_fc_after_dump = Parameter("materialize_reports_fc_after_dump", default=True)
     prefix = Parameter("prefix", default="FULL_REFRESH_")
 
     secrets = task_get_secret_folder(secret_path="/api-fogo-cruzado")
@@ -124,6 +125,33 @@ with Flow(
         )
         update_max_document_number_on_redis.set_upstream(dump_prod_wait_for_flow_run)
 
+        # Execute only if "materialize_after_dump" is True
+        with case(task=materialize_reports_fc_after_dump, value=True):
+            reports_fc_tables_to_materialize_parameters = [
+                {
+                    "dataset_id": "integracao_reports_staging",
+                    "table_id": "reports_fogo_cruzado",
+                    "dbt_alias": False,
+                }
+            ]
+
+            reports_fc_materialization_flow_runs = create_flow_run.map(
+                flow_name=unmapped(
+                    "CIVITAS: integracao_reports_staging - Materialize fogo cruzado"
+                ),
+                project_name=unmapped(current_flow_project_name),
+                parameters=reports_fc_tables_to_materialize_parameters,
+                labels=unmapped(materialization_labels),
+            )
+
+            reports_fc_materialization_flow_runs.set_upstream(update_max_document_number_on_redis)
+
+            # reports_fc_wait_for_flow_run = wait_for_flow_run.map(
+            #     flow_run_id=reports_fc_materialization_flow_runs,
+            #     stream_states=unmapped(True),
+            #     stream_logs=unmapped(True),
+            #     raise_final_state=unmapped(True),
+            # )
 
 extracao_fogo_cruzado.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
 extracao_fogo_cruzado.run_config = KubernetesRun(
