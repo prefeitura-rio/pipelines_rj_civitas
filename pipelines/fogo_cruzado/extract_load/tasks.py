@@ -10,7 +10,7 @@ Tasks include:
 """
 
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Literal, Optional
 
 import requests
@@ -585,3 +585,11 @@ def task_update_max_document_number_on_redis(
         f"New occurrence found. Current max document number in Redis: {new_document_number}.",
         level="info",
     )
+
+
+@task
+def get_current_timestamp():
+    datetime_now = datetime.now(tz=tz)
+    datetime_now = datetime_now.strftime("%Y-%m-%d %H:%M:%S")
+
+    return datetime_now
