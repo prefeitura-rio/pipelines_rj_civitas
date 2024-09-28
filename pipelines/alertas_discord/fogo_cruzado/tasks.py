@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""
+This module contains tasks for sending Fogo Cruzado ocurrences alerts.
+"""
 import asyncio
 from typing import Literal
 
