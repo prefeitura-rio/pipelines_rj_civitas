@@ -8,6 +8,8 @@ from typing import Literal
 import basedosdados as bd
 import pandas as pd
 from prefect import task
+from prefect.engine.runner import ENDRUN
+from prefect.engine.state import Skipped
 from prefeitura_rio.pipelines_utils.logging import log
 
 from pipelines.utils import generate_png_map, send_discord_message
@@ -194,3 +196,11 @@ def task_generate_png_maps(occurrences: pd.DataFrame, zoom_start: int = 10):
         maps.append(png_map)
 
     return maps
+
+
+@task
+def check_occurrences_qty(occurrences: pd.DataFrame):
+    if len(occurrences) == 0:
+        log("No data returned by the API, finishing the flow.")
+        skip = Skipped(message="No data returned by the API, finishing the flow.")
+        raise ENDRUN(state=skip)

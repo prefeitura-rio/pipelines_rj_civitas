@@ -12,6 +12,7 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 )
 
 from pipelines.alertas_discord.fogo_cruzado.tasks import (
+    check_occurrences_qty,
     generate_message,
     get_newest_occurrences,
     task_generate_png_maps,
@@ -28,8 +29,13 @@ with Flow(
 
     newest_occurrences = get_newest_occurrences(start_datetime=start_datetime)
 
+    check_response = check_occurrences_qty(newest_occurrences)
+
     messages = generate_message(newest_occurrences=newest_occurrences)
+    messages.set_upstream(check_response)
+
     maps = task_generate_png_maps(occurrences=newest_occurrences, zoom_start=20)
+    maps.set_upstream(check_response)
 
     send_to_discord = task_send_discord_messages(
         webhook_url=webhook_url, messages=messages, images=maps
