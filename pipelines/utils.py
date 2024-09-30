@@ -49,7 +49,7 @@ async def send_discord_message(
     async with aiohttp.ClientSession() as session:
         webhook = discord.Webhook.from_url(webhook_url, session=session)
         if image_data:
-            file = discord.File(io.BytesIO(image_data))
+            file = discord.File(io.BytesIO(image_data), filename="image.png")
             await webhook.send(content=message, file=file)
         else:
             await webhook.send(content=message)
