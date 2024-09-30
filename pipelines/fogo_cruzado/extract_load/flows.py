@@ -28,6 +28,7 @@ from pipelines.fogo_cruzado.extract_load.schedules import (
 from pipelines.fogo_cruzado.extract_load.tasks import (
     check_report_qty,
     fetch_occurrences,
+    get_current_timestamp,
     load_to_table,
     task_check_max_document_number,
     task_get_secret_folder,
@@ -52,6 +53,7 @@ with Flow(
     materialize_after_dump = Parameter("materialize_after_dump", default=True)
     materialize_reports_fc_after_dump = Parameter("materialize_reports_fc_after_dump", default=True)
     prefix = Parameter("prefix", default="FULL_REFRESH_")
+    send_discord_alerts = Parameter("send_discord_alerts", default=True)
 
     secrets = task_get_secret_folder(secret_path="/api-fogo-cruzado")
     redis_password = task_get_secret_folder(secret_path="/redis")
@@ -81,6 +83,8 @@ with Flow(
         redis_password=redis_password["REDIS_PASSWORD"],
     )
     max_document_number_check.set_upstream(report_qty_check)
+
+    start_timestamp = get_current_timestamp()
 
     load_to_table_response = load_to_table(
         project_id=project_id,
@@ -125,6 +129,22 @@ with Flow(
         )
         update_max_document_number_on_redis.set_upstream(dump_prod_wait_for_flow_run)
 
+        with case(task=send_discord_alerts, value=True):
+            alerta_discord_parameters = [
+                {
+                    "start_datetime": start_timestamp,
+                    "webhook_url": secrets["DISCORD_WEBHOOK_URL"],
+                }
+            ]
+
+            alerta_discord_flow_runs = create_flow_run.map(
+                flow_name=unmapped("CIVITAS: ALERTA DISCORD - Fogo Cruzado"),
+                project_name=unmapped(current_flow_project_name),
+                parameters=alerta_discord_parameters,
+                labels=unmapped(materialization_labels),
+            )
+            alerta_discord_flow_runs.set_upstream(update_max_document_number_on_redis)
+
         # Execute only if "materialize_after_dump" is True
         with case(task=materialize_reports_fc_after_dump, value=True):
             reports_fc_tables_to_materialize_parameters = [
@@ -145,13 +165,6 @@ with Flow(
             )
 
             reports_fc_materialization_flow_runs.set_upstream(update_max_document_number_on_redis)
-
-            # reports_fc_wait_for_flow_run = wait_for_flow_run.map(
-            #     flow_run_id=reports_fc_materialization_flow_runs,
-            #     stream_states=unmapped(True),
-            #     stream_logs=unmapped(True),
-            #     raise_final_state=unmapped(True),
-            # )
 
 extracao_fogo_cruzado.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
 extracao_fogo_cruzado.run_config = KubernetesRun(
