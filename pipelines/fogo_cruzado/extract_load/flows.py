@@ -84,6 +84,8 @@ with Flow(
     )
     max_document_number_check.set_upstream(report_qty_check)
 
+    start_timestamp = get_current_timestamp()
+
     load_to_table_response = load_to_table(
         project_id=project_id,
         dataset_id=dataset_id + "_staging",
@@ -102,8 +104,6 @@ with Flow(
             {"dataset_id": dataset_id, "table_id": table_id, "dbt_alias": False}
         ]
         current_flow_project_name = get_current_flow_project_name()
-
-        start_timestamp = get_current_timestamp()
 
         dump_prod_materialization_flow_runs = create_flow_run.map(
             flow_name=unmapped(materialization_flow_name),
