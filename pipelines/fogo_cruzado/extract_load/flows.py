@@ -85,6 +85,7 @@ with Flow(
     max_document_number_check.set_upstream(report_qty_check)
 
     start_timestamp = get_current_timestamp()
+    start_timestamp.set_upstream(max_document_number_check)
 
     load_to_table_response = load_to_table(
         project_id=project_id,
@@ -94,7 +95,7 @@ with Flow(
         write_disposition=write_disposition,
     )
 
-    load_to_table_response.set_upstream(max_document_number_check)
+    load_to_table_response.set_upstream(start_timestamp)
 
     with case(task=materialize_after_dump, value=True):
         materialization_labels = task_get_current_flow_run_labels()
