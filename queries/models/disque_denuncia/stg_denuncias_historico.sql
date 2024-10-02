@@ -32,8 +32,16 @@ WITH stg_denuncias AS (
     TRIM(REGEXP_REPLACE(den_loc_ref, r'\s+', ' ')) AS referencia_logradouro,
     TRIM(REGEXP_REPLACE(den_logr_mun, r'\s+', ' ')) AS municipio,
     TRIM(den_logr_uf) AS estado,
-    CAST(den_gps_lat AS FLOAT64) AS latitude,
-    CAST(den_gps_long AS FLOAT64) as longitude,
+    IF(
+      LOWER(den_gps_lat) = 'nan',
+      NULL,
+      SAFE_CAST(den_gps_lat AS FLOAT64)
+    ) AS latitude,
+    IF(
+      LOWER(den_gps_long) = 'nan',
+      NULL,
+      SAFE_CAST(den_gps_long AS FLOAT64)
+    ) AS longitude,
     TRIM(den_texto) AS relato,
     dxp_xpt_cd AS id_xpto,
     TRIM(xpt_ds) AS nome_xpto,
@@ -46,7 +54,7 @@ WITH stg_denuncias AS (
       END) AS tipo_orgao,
     ass_cla_cd AS id_classe,
     TRIM(cla_ds) AS descricao_classe,
-    CAST(ass_principal AS INT) AS assunto_principal,
+    SAFE_CAST(ass_principal AS INT) AS assunto_principal,
     ass_tpa_cd AS id_tipo,
     TRIM(tpa_ds) AS descricao_tipo,
     env_cd AS id_envolvido,
@@ -54,7 +62,11 @@ WITH stg_denuncias AS (
     TRIM(REGEXP_REPLACE(env_nome, r'\s+', ' ')) AS nome_envolvido,
     TRIM(REGEXP_REPLACE(env_vulgo, r'\s+', ' ')) AS vulgo_envolvido,
     TRIM(REGEXP_REPLACE(env_sexo, r'\s+', ' ')) AS sexo_envolvido,
-    CAST(env_idade AS INT) AS idade_envolvido,
+    IF (
+      LOWER(env_idade) = 'nan',
+      NULL,
+      SAFE_CAST(env_idade AS INT)
+    ) AS idade_envolvido,
     TRIM(REGEXP_REPLACE(pel_ds, r'\s+', ' ')) AS pele_envolvido,
     TRIM(REGEXP_REPLACE(est_ds, r'\s+', ' ')) AS estatura_envolvido,
     TRIM(REGEXP_REPLACE(olh_ds, r'\s+', ' ')) AS olhos_envolvido,
