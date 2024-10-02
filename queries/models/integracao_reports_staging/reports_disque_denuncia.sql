@@ -55,6 +55,21 @@ assuntos_expanded AS (
     tipos_agg t ON d.id_denuncia = t.id_denuncia AND c.id_classe = t.id_classe
 
   GROUP BY id_denuncia
+),
+lat_long_null AS (
+  SELECT
+    id_denuncia,
+  FROM
+    denuncias
+  WHERE
+    LOWER(municipio) = 'rio de janeiro'
+    AND NOT ST_WITHIN(
+      ST_GEOGPOINT(
+        longitude,
+        latitude
+      ),
+      (SELECT ST_UNION_AGG(geometry) AS city_geometry FROM `datario.dados_mestres.bairro`)
+    )
 )
 -- Select final data, joining expanded information and filtering by location
 SELECT
@@ -67,21 +82,16 @@ SELECT
   d.relato AS descricao,
   INITCAP(CONCAT(d.tipo_logradouro, ' ', d.logradouro)) AS logradouro,
   d.numero_logradouro,
-  d.latitude,
-  d.longitude,
+  IF(
+    l.id_denuncia IS NOT NULL,
+    NULL,
+    d.latitude) AS latitude,
+  IF(
+    l.id_denuncia IS NOT NULL,
+    NULL,
+    d.longitude) AS longitude,
   d.timestamp_insercao
 FROM denuncias d
 LEFT JOIN orgaos_expanded o ON d.id_denuncia = o.id_denuncia
 LEFT JOIN assuntos_expanded a ON d.id_denuncia = a.id_denuncia
-WHERE
-  (
-    NOT IS_NAN(latitude)
-    AND NOT IS_NAN(longitude)
-  )
-  AND ST_WITHIN(
-    ST_GEOGPOINT(
-      longitude,
-      latitude
-    ),
-    (SELECT ST_UNION_AGG(geometry) AS city_geometry FROM `datario.dados_mestres.bairro`)
-  )
+LEFT JOIN lat_long_null l ON d.id_denuncia = l.id_denuncia
