@@ -5,7 +5,7 @@
     unique_key = 'id_report_original',
     partition_by={
         "field": "data_report",
-        "data_type": "datetime",
+        "data_type": "timestamp",
         "granularity": "month",
     },
     cluster_by = ["timestamp_update"]
@@ -52,7 +52,7 @@ subtipo_agg AS (
   SELECT
     'FC' AS id_source,
     id_ocorrencia AS id_report_original,
-    data_ocorrencia AS data_report,
+    TIMESTAMP(data_ocorrencia, 'America/Sao_Paulo') AS data_report,
     o.orgaos,
     'Tiroteio' AS categoria,
     t.tipo_subtipo,

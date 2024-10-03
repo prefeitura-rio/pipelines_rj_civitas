@@ -7,7 +7,7 @@
     max_staleness = "INTERVAL 60 MINUTE",
     partition_by={
         "field": "data_report",
-        "data_type": "datetime",
+        "data_type": "timestamp",
         "granularity": "month",
     }
     )

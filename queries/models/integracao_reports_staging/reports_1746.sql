@@ -5,7 +5,7 @@
     unique_key = 'id_report_original',
     partition_by={
         "field": "data_report",
-        "data_type": "datetime",
+        "data_type": "timestamp",
         "granularity": "month",
     }
     )
@@ -62,7 +62,7 @@ logradouros AS (
 SELECT
   '1746' as id_source,
   id_chamado AS id_report_original,
-  data_inicio AS data_report,
+  TIMESTAMP(data_inicio, 'America/Sao_Paulo') AS data_report,
   o.orgaos,
   categoria,
   t.tipo_subtipo,
