@@ -68,7 +68,6 @@ def task_send_discord_messages(webhook_url: str, messages: list[str], images: li
 
 
 def get_details(details: list, type: Literal["victim", "animal"] = "victim"):
-
     """Returns a string with details about victims or animals.
 
     Args:
