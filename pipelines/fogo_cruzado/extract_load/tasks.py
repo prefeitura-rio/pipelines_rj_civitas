@@ -69,7 +69,6 @@ def get_occurrences(
     id_state: str = "b112ffbe-17b3-4ad0-8f2a-2038745d1d14",
     id_city: str = "d1bf56cc-6d85-4e6a-a5f5-0ab3f4074be3",
 ) -> List[Dict]:
-
     """
     Fetches occurrences from the Fogo Cruzado API.
 
