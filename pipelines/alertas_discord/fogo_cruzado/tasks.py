@@ -3,10 +3,12 @@
 This module contains tasks for sending Fogo Cruzado ocurrences alerts.
 """
 import asyncio
+from datetime import datetime
 from typing import List, Literal
 
 import basedosdados as bd
 import pandas as pd
+import pytz
 from prefect import task
 from prefect.engine.runner import ENDRUN
 from prefect.engine.state import Skipped
@@ -16,6 +18,7 @@ from pipelines.utils import generate_png_map, send_discord_message
 
 bd.config.billing_project_id = "rj-civitas"
 bd.config.from_file = True
+tz = pytz.timezone("America/Sao_Paulo")
 
 
 @task
@@ -132,6 +135,52 @@ def get_details(details: list, type: Literal["victim", "animal"] = "victim"):
     return "\n".join(result) if result else None
 
 
+def get_delay_time_string(df_ocorrencias: pd.DataFrame):
+    """
+    Returns a string with the time difference between the current datetime and the datetime
+    in the 'data_ocorrencia' column of the given dataframe.
+
+    Args:
+        df_ocorrencias (pd.DataFrame): The dataframe with the 'data_ocorrencia' column.
+
+    Returns:
+        str: A string with the time difference (e.g. "3 dias, 2 horas, 1 minuto e 2 segundos").
+    """
+    delta = datetime.now() - df_ocorrencias["data_ocorrencia"]
+    delta = datetime.now(tz=tz) - df_ocorrencias["data_ocorrencia"].tz_localize(tz)
+
+    days = delta.days
+    hours, remainder = divmod(delta.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    # Creating a list to store parts of the time string
+    time_parts = []
+
+    # Function to add time parts to the list
+    def add_time_part(value, singular, plural):
+        if value == 1:
+            time_parts.append(f"{value} {singular}")
+        elif value > 1:
+            time_parts.append(f"{value} {plural}")
+
+    # Adding parts for days, hours, minutes, and seconds
+    add_time_part(days, "dia", "dias")
+    add_time_part(hours, "hora", "horas")
+    add_time_part(minutes, "minuto", "minutos")
+    add_time_part(seconds, "segundo", "segundos")
+
+    # Joining parts with commas and "and" for the last element
+    if time_parts:
+        if len(time_parts) == 1:
+            time_string = time_parts[0]  # Only one element
+        else:
+            time_string = ", ".join(time_parts[:-1]) + " e " + time_parts[-1]
+    else:
+        time_string = "0 segundos"
+
+    return time_string
+
+
 @task
 def generate_message(newest_occurrences: pd.DataFrame):
     """Returns a list of texts with details about the newest occurrences formatted to discord.
@@ -157,6 +206,7 @@ def generate_message(newest_occurrences: pd.DataFrame):
         # Building message
         message = (
             f"**TIROTEIO REPORTADO**\n\n"
+            f"- **Atraso**: {get_delay_time_string(occurrence)}\n"
             f"- **Data**: {occurrence['data_ocorrencia'].strftime('%Y-%m-%d')}\n"
             f"- **Horário**: {occurrence['data_ocorrencia'].strftime('%H:%M:%S')}\n"
             f"- **Local**: {occurrence['endereco']}\n"
