@@ -3,7 +3,7 @@
 This module contains tasks for sending Fogo Cruzado ocurrences alerts.
 """
 import asyncio
-from typing import Literal
+from typing import List, Literal
 
 import basedosdados as bd
 import pandas as pd
@@ -19,7 +19,7 @@ bd.config.from_file = True
 
 
 @task
-def get_newest_occurrences(start_datetime: str = None) -> pd.DataFrame:
+def get_newest_occurrences(start_datetime: str = None, reasons: List[str] = None) -> pd.DataFrame:
     """
     Get the newest occurrences from BigQuery.
 
@@ -27,21 +27,46 @@ def get_newest_occurrences(start_datetime: str = None) -> pd.DataFrame:
     ----------
     start_datetime : str, optional
         The start datetime to filter the newest occurrences. Defaults to None.
+    reasons : List[str], optional
+        A list of the reasons to filter the newest occurrences. Defaults to None.
 
     Returns
     -------
     pd.DataFrame
         A DataFrame containing the newest occurrences from BigQuery.
     """
+    if not isinstance(reasons, List):
+        print("reasons must be a list")
+        raise ValueError("reasons must be a list")
+
     log("Querying new occurrences from BigQuery...")
-    newest_occurrences = bd.read_sql(
-        f"""SELECT
-            *
-        FROM
-            `rj-civitas.fogo_cruzado.ocorrencias`
-        WHERE timestamp_insercao > '{start_datetime}';
-    """
-    )
+
+    query = f"""SELECT
+                o.*
+            FROM
+                `rj-civitas.fogo_cruzado.ocorrencias` o
+            LEFT JOIN (
+                SELECT
+                    o.id_ocorrencia,
+                    mc AS motivos_complementares
+                FROM
+                    `rj-civitas.fogo_cruzado.ocorrencias` o,
+                    UNNEST(motivos_complementares) mc
+                WHERE
+                    lower(mc) IN ('disputa')
+            ) mc
+            ON o.id_ocorrencia = mc.id_ocorrencia
+            WHERE
+                timestamp_insercao > '{start_datetime}'"""
+    if reasons:
+        query += f"""
+                AND (
+                    lower(o.motivo_principal) IN ({', '.join(f"'{reason}'" for reason in reasons)})
+                    OR lower(mc.motivos_complementares) IN ({', '.join(
+                        f"'{reason}'" for reason in reasons)})
+                );
+        """
+    newest_occurrences = bd.read_sql(query)
 
     return newest_occurrences
 

@@ -26,8 +26,9 @@ with Flow(
 ) as alerta_fogo_cruzado:
     start_datetime = Parameter("start_datetime", default="")
     webhook_url = Parameter("webhook_url", default="")
+    reasons = Parameter("reasons", default=[])
 
-    newest_occurrences = get_newest_occurrences(start_datetime=start_datetime)
+    newest_occurrences = get_newest_occurrences(start_datetime=start_datetime, reasons=reasons)
 
     check_response = check_occurrences_qty(newest_occurrences)
 
