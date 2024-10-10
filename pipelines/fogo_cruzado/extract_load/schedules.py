@@ -40,7 +40,15 @@ fogo_cruzado_etl_minutely_clocks = [
         parameter_defaults=fogo_cruzado_minutely_parameters,
     ),
     CronClock(
-        cron="0-50 1-23 * * *",  # from 01:00 until 23:50
+        cron="* 1-22 * * *",  # from 01:00 until 22:59
+        start_date=datetime(2021, 11, 23, 14, 0, tzinfo=tz),
+        labels=[
+            constants.RJ_CIVITAS_AGENT_LABEL.value,
+        ],
+        parameter_defaults=fogo_cruzado_minutely_parameters,
+    ),
+    CronClock(
+        cron="0-50 23 * * *",  # from 23:00 until 23:50
         start_date=datetime(2021, 11, 23, 14, 0, tzinfo=tz),
         labels=[
             constants.RJ_CIVITAS_AGENT_LABEL.value,
