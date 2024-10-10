@@ -16,6 +16,7 @@ from pipelines.alertas_discord.fogo_cruzado.tasks import (
     task_generate_message,
     task_generate_png_maps,
     task_get_newest_occurrences,
+    task_get_secret_folder,
     task_send_discord_messages,
     task_set_config,
 )
@@ -26,8 +27,9 @@ with Flow(
     state_handlers=[handler_inject_bd_credentials, handler_initialize_sentry],
 ) as alerta_fogo_cruzado:
     start_datetime = Parameter("start_datetime", default="")
-    webhook_url = Parameter("webhook_url", default={})
     reasons = Parameter("reasons", default=[])
+
+    webhook_url = task_get_secret_folder(secret_path="/discord")
 
     config = task_set_config(
         start_datetime=start_datetime, webhook_url=webhook_url, reasons=reasons
