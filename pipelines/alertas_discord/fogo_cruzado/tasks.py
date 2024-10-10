@@ -389,10 +389,11 @@ def task_generate_png_maps(config: Config, zoom_start: int = 10):
         id = occurrence["id_ocorrencia"]
 
         png_map = generate_png_map(
-            config.message_manager.get_message(id).get("nearby_cameras", pd.DataFrame()),
-            id,
-            [(latitude, longitude)],
+            locations=[(latitude, longitude)],
             zoom_start=zoom_start,
+            nearby_cameras=config.message_manager.get_message(id).get(
+                "nearby_cameras", pd.DataFrame()
+            ),
         )
 
         maps.append(png_map)
