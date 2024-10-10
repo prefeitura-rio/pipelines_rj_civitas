@@ -9,9 +9,11 @@ from typing import List, Literal
 import basedosdados as bd
 import pandas as pd
 import pytz
+from infisical import InfisicalClient
 from prefect import task
 from prefect.engine.runner import ENDRUN
 from prefect.engine.state import Skipped
+from prefeitura_rio.pipelines_utils.infisical import get_secret_folder
 from prefeitura_rio.pipelines_utils.logging import log
 
 from pipelines.alertas_discord.fogo_cruzado.config import Config
@@ -164,9 +166,9 @@ def task_send_discord_messages(config: Config):
         log("Start sending messages to discord.")
         for _, message in config.message_manager.get_all_messages().items():
             if message.get("timestamp_message").date() == datetime.now().date():
-                url = config.webhook_url["DISCORD_TIROTEIOS_WEBHOOK_URL"]
+                url = config.webhook_url["TIROTEIOS_WEBHOOK_URL"]
             else:
-                url = config.webhook_url["DISCORD_TIROTEIOS_RETROATIVO_WEBHOOK_URL"]
+                url = config.webhook_url["TIROTEIOS_RETROATIVO_WEBHOOK_URL"]
 
             await send_discord_message(
                 webhook_url=url,
@@ -420,3 +422,33 @@ def task_set_config(**kwargs):
     """
     config = Config(**kwargs)
     return config
+
+
+@task
+def task_get_secret_folder(
+    secret_path: str = "/",
+    secret_name: str = None,
+    type: Literal["shared", "personal"] = "personal",
+    environment: str = None,
+    client: InfisicalClient = None,
+) -> dict:
+    """
+    Fetches secrets from Infisical. If passing only `secret_path` and
+    no `secret_name`, returns all secrets inside a folder.
+
+    Args:
+        secret_name (str, optional): _description_. Defaults to None.
+        secret_path (str, optional): _description_. Defaults to '/'.
+        environment (str, optional): _description_. Defaults to 'dev'.
+
+    Returns:
+        _type_: _description_
+    """
+    secrets = get_secret_folder(
+        secret_path=secret_path,
+        secret_name=secret_name,
+        type=type,
+        environment=environment,
+        client=client,
+    )
+    return secrets

@@ -134,7 +134,6 @@ with Flow(
             alerta_discord_parameters = [
                 {
                     "start_datetime": start_timestamp,
-                    "webhook_url": secrets,
                     "reasons": ["disputa"],
                 }
             ]
