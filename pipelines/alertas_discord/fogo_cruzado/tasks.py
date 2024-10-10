@@ -3,7 +3,7 @@
 This module contains tasks for sending Fogo Cruzado ocurrences alerts.
 """
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Literal
 
 import basedosdados as bd
@@ -14,6 +14,7 @@ from prefect.engine.runner import ENDRUN
 from prefect.engine.state import Skipped
 from prefeitura_rio.pipelines_utils.logging import log
 
+from pipelines.alertas_discord.fogo_cruzado.config import Config
 from pipelines.utils import generate_png_map, send_discord_message
 
 bd.config.billing_project_id = "rj-civitas"
@@ -21,78 +22,161 @@ bd.config.from_file = True
 tz = pytz.timezone("America/Sao_Paulo")
 
 
-@task
-def get_newest_occurrences(start_datetime: str = None, reasons: List[str] = None) -> pd.DataFrame:
+def get_nearby_cameras(occurrences: pd.DataFrame):
     """
-    Get the newest occurrences from BigQuery.
+    Get the 5 nearest cameras for each occurrence from the Fogo Cruzado table.
 
     Parameters
     ----------
-    start_datetime : str, optional
-        The start datetime to filter the newest occurrences. Defaults to None.
-    reasons : List[str], optional
-        A list of the reasons to filter the newest occurrences. Defaults to None.
+    occurrences : pd.DataFrame
+        A DataFrame containing the occurrences from the Fogo Cruzado table.
 
     Returns
     -------
     pd.DataFrame
-        A DataFrame containing the newest occurrences from BigQuery.
+        A DataFrame containing the 5 nearest cameras for each occurrence.
     """
-    if not isinstance(reasons, List):
+    if occurrences.empty:
+        return pd.DataFrame()
+
+    occurrences_ids = "','".join(occurrences["id_ocorrencia"].astype(str).tolist())
+
+    query_nearby_cameras = f"""
+        WITH occurrences AS (
+            SELECT
+                id_ocorrencia,
+                latitude,
+                longitude
+            FROM
+                `rj-civitas.fogo_cruzado.ocorrencias`
+            WHERE
+                id_ocorrencia IN ('{occurrences_ids}')
+        ),
+        distances AS (
+            SELECT
+                b.id_ocorrencia,
+                a.latitude,
+                a.longitude,
+                a.id_camera,
+                a.nome,
+                ST_DISTANCE(
+                    ST_GEOGPOINT(a.longitude, a.latitude),
+                    ST_GEOGPOINT(b.longitude, b.latitude)
+                ) AS distance_meters
+            FROM
+                `rj-cetrio.ocr_radar.cameras` a
+            CROSS JOIN
+                occurrences b
+        )
+        SELECT
+            d.*,
+            ROW_NUMBER() OVER(PARTITION BY id_ocorrencia ORDER BY distance_meters) AS rn
+        FROM
+            distances d
+        QUALIFY(rn) <= 5
+        ORDER BY
+            id_ocorrencia,
+            distance_meters
+    """
+
+    df_nearby_cameras: pd.DataFrame = bd.read_sql(query_nearby_cameras)
+
+    return df_nearby_cameras
+
+
+@task
+def task_get_newest_occurrences(config: Config) -> pd.DataFrame:
+    """
+    Gets new occurrences from BigQuery based on the given start datetime and reasons.
+
+    Args:
+        config (Config): The configuration object containing the start datetime and reasons.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the new occurrences.
+
+    Raises:
+        ValueError: If config.reasons is not a list.
+    """
+    if config.reasons and not isinstance(config.reasons, List):
         print("reasons must be a list")
         raise ValueError("reasons must be a list")
 
     log("Querying new occurrences from BigQuery...")
 
-    query = f"""SELECT
-                o.*
-            FROM
-                `rj-civitas.fogo_cruzado.ocorrencias` o
-            LEFT JOIN (
-                SELECT
-                    o.id_ocorrencia,
-                    mc AS motivos_complementares
-                FROM
-                    `rj-civitas.fogo_cruzado.ocorrencias` o,
-                    UNNEST(motivos_complementares) mc
-                WHERE
-                    lower(mc) IN ('disputa')
-            ) mc
-            ON o.id_ocorrencia = mc.id_ocorrencia
-            WHERE
-                timestamp_insercao > '{start_datetime}'"""
-    if reasons:
+    query = f"""
+        SELECT
+            o.*
+        FROM
+            `rj-civitas.fogo_cruzado.ocorrencias` o
+        LEFT JOIN
+            UNNEST(o.motivos_complementares) AS mc
+        WHERE
+            o.timestamp_insercao > '{config.start_datetime}'
+    """
+
+    if config.reasons:
+        reasons_str = ("', '".join(config.reasons)).lower()
         query += f"""
-                AND (
-                    lower(o.motivo_principal) IN ({', '.join(f"'{reason}'" for reason in reasons)})
-                    OR lower(mc.motivos_complementares) IN ({', '.join(
-                        f"'{reason}'" for reason in reasons)})
-                );
+            AND (
+                LOWER(mc) IN ('{reasons_str}')
+                OR LOWER(o.motivo_principal) IN ('{reasons_str}')
+            )
         """
+
     newest_occurrences = bd.read_sql(query)
+
+    if not newest_occurrences.empty:
+        log(f"{len(newest_occurrences)} new occurrences found")
+        config.newest_occurrences = newest_occurrences
+
+        nearby_cameras = get_nearby_cameras(newest_occurrences)
+
+        for _, occurrence in newest_occurrences.iterrows():
+            occurrence_id = occurrence["id_ocorrencia"]
+            occurrence_nearby_cameras = nearby_cameras.loc[
+                nearby_cameras["id_ocorrencia"] == occurrence_id
+            ]
+
+            # Adding nearby cameras
+            config.message_manager.add_message(
+                occurrence_id=occurrence_id,
+                nearby_cameras=occurrence_nearby_cameras,
+                timestamp_message=occurrence["data_ocorrencia"],
+            )
 
     return newest_occurrences
 
 
-@task
-def task_send_discord_messages(webhook_url: str, messages: list[str], images: list[bytes] = None):
-    async def main(url_webhook, messages, images):
-        """Send a message to a Discord webhook.
+@task(max_retries=3, retry_delay=timedelta(seconds=10))
+def task_send_discord_messages(config: Config):
+    """
+    Send messages to discord using the discord webhooks.
 
-        Args:
-            url_webhook (str): The URL of the webhook.
-            message (str): The message to send.
-            image_data (bytes): The PNG image data to embed.
-        """
+    Args:
+        config (Config): The configuration object containing the messages contents and webhook url.
+
+    Returns:
+        None
+    """
+
+    async def main():
         log("Start sending messages to discord.")
-        for message, image_data in zip(messages, images):
+        for _, message in config.message_manager.get_all_messages().items():
+            if message.get("timestamp_message").date() == datetime.now().date():
+                url = config.webhook_url["DISCORD_TIROTEIOS_WEBHOOK_URL"]
+            else:
+                url = config.webhook_url["DISCORD_TIROTEIOS_RETROATIVO_WEBHOOK_URL"]
+
             await send_discord_message(
-                webhook_url=url_webhook, message=message, image_data=image_data
+                webhook_url=url,
+                message=message.get("content"),
+                image_data=message.get("bytes_map", None),
             )
 
         log("Messages sent to discord successfully.")
 
-    asyncio.run(main(webhook_url, messages, images))
+    asyncio.run(main())
 
 
 def get_details(details: list, type: Literal["victim", "animal"] = "victim"):
@@ -181,18 +265,21 @@ def get_delay_time_string(df_ocorrencias: pd.DataFrame):
 
 
 @task
-def generate_message(newest_occurrences: pd.DataFrame):
-    """Returns a list of texts with details about the newest occurrences formatted to discord.
+def task_generate_message(config: Config) -> List[str]:
+    """
+    Generates a list of messages based on the newest occurrences.
 
     Args:
-        newest_occurrences (pd.DataFrame): A DataFrame with the newest occurrences.
+        config (Config): Object with the newest occurrences and other configuration parameters.
 
     Returns:
-        list: A list of strings with details about the newest occurrences.
+        List[str]: A list of messages, each one containing information about a single occurrence.
+
     """
+
     messages = []
     log("Structuring messages...")
-    for _, occurrence in newest_occurrences.iterrows():
+    for _, occurrence in config.newest_occurrences.iterrows():
         list_complementary_reasons = [f"  - {i}" for i in occurrence["motivos_complementares"]]
         complementary_reasons = "\n".join(list_complementary_reasons)
 
@@ -202,11 +289,12 @@ def generate_message(newest_occurrences: pd.DataFrame):
         victims_details = get_details(list_victims, type="victim")
         animal_victims_details = get_details(list_animal_victims, type="animal")
 
+        timestamp_message = occurrence["data_ocorrencia"]
         # Building message
         message = (
             f"**TIROTEIO REPORTADO**\n\n"
             f"- **Atraso**: {get_delay_time_string(occurrence)}\n"
-            f"- **Data**: {occurrence['data_ocorrencia'].strftime('%Y-%m-%d')}\n"
+            f"- **Data**: {timestamp_message.strftime('%Y-%m-%d')}\n"
             f"- **Horário**: {occurrence['data_ocorrencia'].strftime('%H:%M:%S')}\n"
             f"- **Local**: {occurrence['endereco']}\n"
             f"- **Latitute e Longitude**: {occurrence['latitude']} {occurrence['longitude']}\n\n"
@@ -242,39 +330,92 @@ def generate_message(newest_occurrences: pd.DataFrame):
         if animal_victims_details:
             message += f"- **Vítimas Animais**:\n{animal_victims_details}\n\n"
 
+        # Adding nearby cameras
+        nearby_cameras = config.message_manager.get_message(occurrence["id_ocorrencia"]).get(
+            "nearby_cameras", pd.DataFrame()
+        )
+
+        cameras_strings = []
+        if not nearby_cameras.empty:
+            cameras_strings.append("- **Câmeras mais próximas**:")
+            for j, camera in nearby_cameras.iterrows():
+                cameras_strings.append(
+                    f"  - {j + 1} - {camera['id_camera']} "
+                    + f"({camera['nome'].upper()}) - {camera['distance_meters']:.2f}m"
+                )
+
+        message += "\n".join(cameras_strings)
+
         messages.append(message)
+
+        params = [
+            {
+                "key": "content",
+                "value": message,
+            },
+            {
+                "key": "timestamp_message",
+                "value": timestamp_message,
+            },
+        ]
+
+        config.message_manager.update_multiple_messages(
+            occurrence_id=occurrence["id_ocorrencia"], updates=params
+        )
 
     log(f"Generated {len(messages)} messages.")
     return messages
 
 
 @task
-def task_generate_png_maps(occurrences: pd.DataFrame, zoom_start: int = 10):
+def task_generate_png_maps(config: Config, zoom_start: int = 10):
     """
-    Generate a list of PNG maps using Folium given a list of locations and an initial zoom.
+    Generates a list of PNG maps as Bytes based on the newest occurrences.
 
     Args:
-        occurrences (pd.DataFrame): A DataFrame with the newest occurrences.
-        zoom_start (int, optional): The initial zoom level. Defaults to 10.
+        config (Config): Object with the newest occurrences and other configuration parameters.
+        zoom_start (int, optional): The initial zoom level for the map. Defaults to 10.
 
     Returns:
-        list: A list of PNG image data.
+        List: A list of PNG maps as Bytes.
     """
+
     maps = []
     log("Generating PNG maps...")
-    for _, occurrence in occurrences.iterrows():
+
+    for _, occurrence in config.newest_occurrences.iterrows():
         latitude = occurrence["latitude"]
         longitude = occurrence["longitude"]
+        id = occurrence["id_ocorrencia"]
 
-        png_map = generate_png_map([(latitude, longitude)], zoom_start=zoom_start)
+        png_map = generate_png_map(
+            config.message_manager.get_message(id).get("nearby_cameras", pd.DataFrame()),
+            id,
+            [(latitude, longitude)],
+            zoom_start=zoom_start,
+        )
+
         maps.append(png_map)
+
+        config.message_manager.update_message(
+            occurrence_id=occurrence["id_ocorrencia"], key="bytes_map", value=png_map
+        )
 
     return maps
 
 
 @task
-def check_occurrences_qty(occurrences: pd.DataFrame):
-    if len(occurrences) == 0:
+def task_check_occurrences_qty(config: Config):
+    if config.newest_occurrences.empty:
         log("No data returned by the API, finishing the flow.")
         skip = Skipped(message="No data returned by the API, finishing the flow.")
         raise ENDRUN(state=skip)
+
+
+@task
+def task_set_config(**kwargs):
+    """
+    Set configuration parameters for the execution.
+    """
+    config = Config(**kwargs)
+    return config

@@ -12,11 +12,12 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 )
 
 from pipelines.alertas_discord.fogo_cruzado.tasks import (
-    check_occurrences_qty,
-    generate_message,
-    get_newest_occurrences,
+    task_check_occurrences_qty,
+    task_generate_message,
     task_generate_png_maps,
+    task_get_newest_occurrences,
     task_send_discord_messages,
+    task_set_config,
 )
 from pipelines.constants import constants
 
@@ -25,22 +26,24 @@ with Flow(
     state_handlers=[handler_inject_bd_credentials, handler_initialize_sentry],
 ) as alerta_fogo_cruzado:
     start_datetime = Parameter("start_datetime", default="")
-    webhook_url = Parameter("webhook_url", default="")
+    webhook_url = Parameter("webhook_url", default={})
     reasons = Parameter("reasons", default=[])
 
-    newest_occurrences = get_newest_occurrences(start_datetime=start_datetime, reasons=reasons)
+    config = task_set_config(
+        start_datetime=start_datetime, webhook_url=webhook_url, reasons=reasons
+    )
+    newest_occurrences = task_get_newest_occurrences(config)
 
-    check_response = check_occurrences_qty(newest_occurrences)
+    check_response = task_check_occurrences_qty(config)
+    check_response.set_upstream(newest_occurrences)
 
-    messages = generate_message(newest_occurrences=newest_occurrences)
+    messages = task_generate_message(config)
     messages.set_upstream(check_response)
 
-    maps = task_generate_png_maps(occurrences=newest_occurrences, zoom_start=20)
+    maps = task_generate_png_maps(config, zoom_start=10)
     maps.set_upstream(check_response)
 
-    send_to_discord = task_send_discord_messages(
-        webhook_url=webhook_url, messages=messages, images=maps
-    )
+    send_to_discord = task_send_discord_messages(config, upstream_tasks=[messages, maps])
 
 alerta_fogo_cruzado.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
 alerta_fogo_cruzado.run_config = KubernetesRun(
