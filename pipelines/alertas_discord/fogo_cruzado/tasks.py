@@ -166,9 +166,9 @@ def task_send_discord_messages(config: Config):
         log("Start sending messages to discord.")
         for _, message in config.message_manager.get_all_messages().items():
             if message.get("timestamp_message").date() == datetime.now().date():
-                url = config.webhook_url["DISCORD_TIROTEIOS_WEBHOOK_URL"]
+                url = config.webhook_url["TIROTEIOS_WEBHOOK_URL"]
             else:
-                url = config.webhook_url["DISCORD_TIROTEIOS_RETROATIVO_WEBHOOK_URL"]
+                url = config.webhook_url["TIROTEIOS_RETROATIVO_WEBHOOK_URL"]
 
             await send_discord_message(
                 webhook_url=url,
