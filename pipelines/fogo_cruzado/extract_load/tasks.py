@@ -26,6 +26,7 @@ from pytz import timezone
 
 from pipelines.fogo_cruzado.extract_load.utils import (
     get_on_redis,
+    safe_float_conversion,
     save_data_in_bq,
     save_on_redis,
 )
@@ -154,6 +155,12 @@ def fetch_occurrences(email: str, password: str, initial_date: Optional[str] = N
     token = auth(email=email, password=password)
     log(msg="Fetching data...", level="info")
     occurrences = get_occurrences(token=token, initial_date=initial_date)
+
+    # Convert latitude and longitude to float
+    for row in occurrences:
+        for key in ["latitude", "longitude"]:
+            row[key] = safe_float_conversion(row[key])
+
     log(msg="Data fetched successfully.", level="info")
 
     return occurrences
