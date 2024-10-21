@@ -5,7 +5,7 @@
     unique_key = 'id_report_original',
     partition_by={
         "field": "data_report",
-        "data_type": "datetime",
+        "data_type": "timestamp",
         "granularity": "month",
     },
     cluster_by = ["timestamp_insercao"]
@@ -75,7 +75,7 @@ lat_long_null AS (
 SELECT
   'DD' AS id_source,
   d.id_denuncia AS id_report_original,
-  d.data_denuncia AS data_report,
+  TIMESTAMP(d.data_denuncia, 'America/Sao_Paulo') AS data_report,
   o.orgaos,
   'Denúncia' AS categoria,
   a.tipo_subtipo,
