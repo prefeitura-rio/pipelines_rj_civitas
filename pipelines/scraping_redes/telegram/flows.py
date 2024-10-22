@@ -36,7 +36,7 @@ with Flow(
     )
     write_disposition = Parameter("write_disposition", default="WRITE_TRUNCATE")
 
-    redis_password = task_get_secret_folder(secret_path="/redis", secret_name="REDIS_PASSWORD")
+    redis_secrets = task_get_secret_folder(secret_path="/redis")
     telegram_secrets = task_get_secret_folder(secret_path="/telegram")
 
     # Initializing Pipeline Class
@@ -46,7 +46,7 @@ with Flow(
         table_id=table_id,
         mode=mode,
         channels_names=channels_names,
-        redis_password=redis_password,
+        redis_secrets=redis_secrets,
         telegram_secrets=telegram_secrets,
     )
 
@@ -66,5 +66,4 @@ scraping_telegram.run_config = KubernetesRun(
         constants.RJ_CIVITAS_AGENT_LABEL.value,
     ],
 )
-scraping_telegram.run()
 scraping_telegram.schedule = scraping_telegram_etl_minutely_update_schedule

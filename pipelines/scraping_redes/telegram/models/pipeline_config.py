@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from typing import List, Literal
 
-from prefeitura_rio.pipelines_utils.logging import log
-
 from pipelines.constants import constants
 from pipelines.scraping_redes.telegram.utils import base64_to_file, build_redis_name
 from pipelines.utils import get_redis_client
@@ -15,8 +13,7 @@ class Pipeline:
     mode: Literal["dev", "prod"] = None
     channels_names: List[str] = None
     redis_client = None
-    redis_password: str = None
-
+    redis_secrets: dict = {}
     telegram_secrets: dict = {}
     channels_last_dates: dict = {}
 
@@ -28,7 +25,7 @@ class Pipeline:
         table_id: str,
         mode: Literal["dev", "prod"],
         channels_names: List[str],
-        redis_password: str,
+        redis_secrets: dict,
         telegram_secrets: dict,
     ):
         """
@@ -41,7 +38,7 @@ class Pipeline:
             table_id (str): The ID of the table.
             mode (str): The mode of the pipeline (dev or prod).
             channels_names (List[str]): The list of channel names.
-            redis_password (str): The password for Redis.
+            redis_secrets (dict): The dictionary containing Redis secrets.
             telegram_secrets (dict): The dictionary containing Telegram secrets.
 
         Returns:
@@ -52,13 +49,13 @@ class Pipeline:
         cls.table_id = table_id
         cls.mode = mode
         cls.channels_names = channels_names
+        cls.redis_secrets = redis_secrets
         cls.redis_client = get_redis_client(
             host=constants.RJ_CIVITAS_REDIS_HOST.value,
             port=constants.RJ_CIVITAS_REDIS_PORT.value,
             db=constants.RJ_CIVITAS_REDIS_DB.value,
-            password=redis_password,
+            password=redis_secrets.get("REDIS_PASSWORD"),
         )
-        cls.redis_password = redis_password
         cls.telegram_secrets = telegram_secrets
 
         cls.create_session_file()
@@ -96,8 +93,6 @@ class Pipeline:
         This method is called during the initialization of the class.
         """
         redis_name = cls.set_redis_name("last_dates")
-        log(f"\n\n\t >>>>>>>> REDIS_NAME: {redis_name}\n\n")
-        log(f"\n\n\t >>>>>>>> TIPO: {type(redis_name)}\n\n")
 
         response = cls.redis_client.hgetall(redis_name)
         cls.channels_last_dates = response

@@ -2,7 +2,7 @@
 import asyncio
 import traceback
 from datetime import timedelta
-from typing import Dict, Literal
+from typing import Literal
 
 import pandas as pd
 import pytz
@@ -35,7 +35,7 @@ def task_create_pipeline(**kwargs):
         table_id=kwargs["table_id"],
         mode=kwargs["mode"],
         channels_names=kwargs["channels_names"],
-        redis_password=kwargs["redis_password"],
+        redis_secrets=kwargs["redis_secrets"],
         telegram_secrets=kwargs["telegram_secrets"],
     )
 
@@ -127,7 +127,7 @@ def task_get_secret_folder(
     type: Literal["shared", "personal"] = "personal",
     environment: str = None,
     client: InfisicalClient = None,
-) -> Dict:
+) -> dict:
     """
     Fetches secrets from Infisical. If passing only `secret_path` and
     no `secret_name`, returns all secrets inside a folder.
