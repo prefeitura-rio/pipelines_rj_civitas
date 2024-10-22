@@ -159,3 +159,22 @@ def save_on_redis(
     key = build_redis_key(dataset_id, table_id, name, mode)
     print(">>>> save on redis files ", data)
     redis_client.set(key, data)
+
+
+def safe_float_conversion(str_value):
+
+    if isinstance(str_value, float):
+        return str_value
+
+    # Check how many negative signs are present
+    negative_sign_count = str_value.count("-")
+
+    if negative_sign_count > 1:
+        # Remove all but one negative sign
+        str_value = str_value.replace("-", "", negative_sign_count - 1)
+
+    try:
+        return float(str_value)
+    except ValueError:
+        # Return None or a default value if conversion fails
+        return None

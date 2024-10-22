@@ -56,7 +56,7 @@ class Pipeline:
             db=constants.RJ_CIVITAS_REDIS_DB,
             password=redis_password,
         )
-        cls.redis_password = (redis_password,)
+        cls.redis_password = redis_password
         cls.telegram_secrets = telegram_secrets
 
         cls.create_session_file()
