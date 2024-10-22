@@ -28,7 +28,7 @@ tz = pytz.timezone("America/Sao_Paulo")
 
 @task
 def task_create_pipeline(**kwargs):
-
+    log("TIPO REDIS_SECRETS: " + type(kwargs["redis_secrets"]))
     Pipeline.initialize(
         project_id=kwargs["project_id"],
         dataset_id=kwargs["dataset_id"],

@@ -50,13 +50,14 @@ class Pipeline:
         cls.mode = mode
         cls.channels_names = channels_names
         cls.redis_secrets = redis_secrets
+        cls.telegram_secrets = telegram_secrets
+
         cls.redis_client = get_redis_client(
             host=constants.RJ_CIVITAS_REDIS_HOST.value,
             port=constants.RJ_CIVITAS_REDIS_PORT.value,
             db=constants.RJ_CIVITAS_REDIS_DB.value,
-            password=redis_secrets.get("REDIS_PASSWORD"),
+            password=cls.redis_secrets.get("REDIS_PASSWORD"),
         )
-        cls.telegram_secrets = telegram_secrets
 
         cls.create_session_file()
         cls.get_channels_last_dates()
