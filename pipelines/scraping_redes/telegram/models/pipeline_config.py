@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from typing import List, Literal
 
+from prefeitura_rio.pipelines_utils.logging import log
+
 from pipelines.constants import constants
 from pipelines.scraping_redes.telegram.utils import base64_to_file, build_redis_name
 from pipelines.utils import get_redis_client
@@ -94,6 +96,8 @@ class Pipeline:
         This method is called during the initialization of the class.
         """
         redis_name = cls.set_redis_name("last_dates")
+        log(f"\n\n\t >>>>>>>> REDIS_NAME: {redis_name}\n\n")
+        log(f"\n\n\t >>>>>>>> TIPO: {type(redis_name)}\n\n")
 
         response = cls.redis_client.hgetall(redis_name)
         cls.channels_last_dates = response
