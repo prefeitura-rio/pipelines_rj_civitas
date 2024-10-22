@@ -27,8 +27,8 @@ with Flow(
     state_handlers=[handler_initialize_sentry, handler_inject_bd_credentials],
 ) as scraping_telegram:
 
-    project_id = Parameter("project_id", default="rj-civitas-dev")
-    dataset_id = Parameter("dataset_id", default="dev")
+    project_id = Parameter("project_id", default="rj-civitas")
+    dataset_id = Parameter("dataset_id", default="scraping_redes_staging")
     table_id = Parameter("table_id", default="telegram")
     mode = Parameter("mode", default="dev")
     channels_names = Parameter(
