@@ -9,6 +9,8 @@ import geopandas as gpd
 import pandas as pd
 from folium.plugins.beautify_icon import BeautifyIcon
 
+from pipelines.scraping_redes.telegram.models.redis_hash import RedisHash
+
 
 def generate_png_map(
     locations: list[tuple[float, float]],
@@ -124,3 +126,20 @@ async def send_discord_message(
             await webhook.send(content=message, file=file)
         else:
             await webhook.send(content=message)
+
+
+def get_redis_client(
+    host: str,
+    port: int,
+    db: int,  # pylint: disable=C0103
+    password: str,
+) -> RedisHash:
+    """
+    Returns a Redis client.
+    """
+    return RedisHash(
+        host=host,
+        port=port,
+        db=db,
+        password=password,
+    )
