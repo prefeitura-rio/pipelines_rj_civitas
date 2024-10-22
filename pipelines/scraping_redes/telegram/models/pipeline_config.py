@@ -51,9 +51,9 @@ class Pipeline:
         cls.mode = mode
         cls.channels_names = channels_names
         cls.redis_client = get_redis_client(
-            host=constants.RJ_CIVITAS_REDIS_HOST,
-            port=constants.RJ_CIVITAS_REDIS_PORT,
-            db=constants.RJ_CIVITAS_REDIS_DB,
+            host=constants.RJ_CIVITAS_REDIS_HOST.value,
+            port=constants.RJ_CIVITAS_REDIS_PORT.value,
+            db=constants.RJ_CIVITAS_REDIS_DB.value,
             password=redis_password,
         )
         cls.redis_password = redis_password
@@ -121,4 +121,6 @@ class Pipeline:
         """
         base64_string: str = cls.telegram_secrets.get("TELEGRAM_SESSION")
 
-        base64_to_file(base64_string=base64_string, file_path=f"{constants.SESSION_NAME}.session")
+        base64_to_file(
+            base64_string=base64_string, file_path=f"{constants.SESSION_NAME.value}.session"
+        )

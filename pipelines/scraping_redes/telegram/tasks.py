@@ -46,7 +46,7 @@ async def fetch_new_messages_from_telegram_channels():
         api_id=Pipeline.telegram_secrets.get("API_ID"),
         api_hash=Pipeline.telegram_secrets.get("API_HASH"),
         phone_number=Pipeline.telegram_secrets.get("API_PHONE_NUMBER"),
-        session_name=constants.SESSION_NAME,
+        session_name=constants.SESSION_NAME.value,
     )
 
     log("Getting channels last dates from Redis...")
