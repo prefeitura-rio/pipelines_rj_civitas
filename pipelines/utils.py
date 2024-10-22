@@ -9,7 +9,7 @@ import geopandas as gpd
 import pandas as pd
 from folium.plugins.beautify_icon import BeautifyIcon
 
-from pipelines.scraping_redes.telegram.models.redis_hash import RedisHash
+from pipelines.models.redis_hash import RedisHash
 
 
 def generate_png_map(
