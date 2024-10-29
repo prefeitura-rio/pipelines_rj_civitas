@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 from typing import List, Literal
 
+import basedosdados as bd
+
 from pipelines.constants import constants
 from pipelines.scraping_redes.telegram.utils import base64_to_file, build_redis_name
 from pipelines.utils import get_redis_client
+
+bd.config.billing_project_id = "rj-civitas"
+bd.config.from_file = True
 
 
 class Pipeline:
@@ -48,9 +53,13 @@ class Pipeline:
         cls.dataset_id = dataset_id
         cls.table_id = table_id
         cls.mode = mode
-        cls.channels_names = channels_names
         cls.redis_secrets = redis_secrets
         cls.telegram_secrets = telegram_secrets
+
+        if channels_names:
+            cls.channels_names = channels_names
+        else:
+            cls.channels_names = cls.get_telegram_channels_names()
 
         cls.redis_client = get_redis_client(
             host=constants.RJ_CIVITAS_REDIS_HOST.value,
@@ -124,3 +133,15 @@ class Pipeline:
         base64_to_file(
             base64_string=base64_string, file_path=f"{constants.SESSION_NAME.value}.session"
         )
+
+    @classmethod
+    def get_telegram_channels_names(cls):
+        query = r"""SELECT
+REGEXP_EXTRACT(telegram, r'\/([^\/]+)$') AS telegram_users
+FROM `rj-civitas.scraping_redes.usuarios_monitorados`
+WHERE telegram IS NOT NULL;
+"""
+        channels_names = bd.read_sql(query)
+        channels_names = channels_names["telegram_users"].tolist()
+
+        return channels_names

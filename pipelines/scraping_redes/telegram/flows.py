@@ -31,10 +31,8 @@ with Flow(
     dataset_id = Parameter("dataset_id", default="scraping_redes_staging")
     table_id = Parameter("table_id", default="telegram")
     mode = Parameter("mode", default="dev")
-    channels_names = Parameter(
-        "channels_names", default=["AlertaRio24hr", "madureiranewsrj01", "antigocg2"]
-    )
-    write_disposition = Parameter("write_disposition", default="WRITE_TRUNCATE")
+    channels_names = Parameter("channels_names", default=[])
+    write_disposition = Parameter("write_disposition", default="WRITE_APPEND")
 
     redis_secrets = task_get_secret_folder(secret_path="/redis")
     telegram_secrets = task_get_secret_folder(secret_path="/telegram")
