@@ -14,14 +14,15 @@
 -- WHERE target.id = src.id
 -- )
 -- )
-
 with
     source_reports as (
         select
             ifnull(id_report, '') as id_report,
             ifnull(id_source, '') as id_source,
             ifnull(id_report_original, '') as id_report_original,
-            ifnull(data_report, cast('' as timestamp)) as data_report,
+            ifnull(
+                datetime(data_report, 'America/Sao_Paulo'), cast('' as datetime)
+            ) as data_report,
             ifnull(
                 array(select ifnull(orgao, '') from unnest(orgaos) as orgao), []
             ) as orgaos,
@@ -42,10 +43,15 @@ with
             ifnull(descricao, '') as descricao,
             ifnull(logradouro, '') as logradouro,
             ifnull(numero_logradouro, '') as numero_logradouro,
-            ifnull(latitude, cast('' as float64)) as latitude,
-            ifnull(longitude, cast('' as float64)) as longitude
+            ifnull(latitude, cast(0 as float64)) as latitude,
+            ifnull(longitude, cast(0 as float64)) as longitude
         from `rj-civitas.integracao_reports.reports`
-        WHERE data_report >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 MINUTE)
+        where
+            datetime(data_report, 'America/Sao_Paulo') >= timestamp_sub(
+                datetime(current_timestamp(), 'America/Sao_Paulo'), interval 30 minute
+            )
+            and id_source = 'DD'
+    {# and (latitude is not null or longitude is not null) #}
     ),
 
     prompt_table as (
