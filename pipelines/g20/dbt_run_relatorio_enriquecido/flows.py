@@ -16,8 +16,8 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
     handler_inject_bd_credentials,
 )
 
-from pipelines.g20.dbt_run_relatorio_enriquecido.schedules import g20_reports_schedule
 from pipelines.constants import constants
+from pipelines.g20.dbt_run_relatorio_enriquecido.schedules import g20_reports_schedule
 
 g20_reports_run_dbt_flow = deepcopy(templates__run_dbt_model__flow)
 g20_reports_run_dbt_flow.name = "CIVITAS: G20 - Relatório Enriquecido - Materializar tabelas"

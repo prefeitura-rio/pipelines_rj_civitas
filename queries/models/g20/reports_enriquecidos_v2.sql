@@ -58,59 +58,59 @@ with
         select
             *,
             concat(
-                '''Dado este texto sobre uma ocorrência, determine: 
-        1. O tópico principal e quaisquer tópicos relacionados com base nas categorias e descrição fornecidas 
-        2. O nível de abrangência apropriado (Casa, Quadra, Bairro, Região da Cidade, Cidade, Estado, País) 
+                '''Dado este texto sobre uma ocorrência, determine:
+        1. O tópico principal e quaisquer tópicos relacionados com base nas categorias e descrição fornecidas
+        2. O nível de abrangência apropriado (Casa, Quadra, Bairro, Região da Cidade, Cidade, Estado, País)
         3. O nível de urgência (Nenhuma, Baixa, Média, Alta) da ocorrência que descreve o potencial de escalada do problema caso não seja tratado. A urgencia está relacionada com o nível de risco a vida das pessoas ao redor.
-        4. Prever horários de início e fim com base na data do relatório e no desenrolar previsto do contexto. 
-        Texto: 
+        4. Prever horários de início e fim com base na data do relatório e no desenrolar previsto do contexto.
+        Texto:
         ID da Ocorrência: ''',
                 id_report,
-                ''' 
+                '''
         ID da Fonte: ''',
                 id_source,
-                ''' 
+                '''
         ID Original: ''',
                 id_report_original,
-                ''' 
+                '''
         Data do Relatório (Quando a denuncia chegou a prefeitura): ''',
                 cast(data_report as string),
-                ''' 
+                '''
         Categoria: ''',
                 categoria,
-                ''' 
+                '''
         Tipo/Subtipo: ''',
                 to_json_string(tipo_subtipo),
-                ''' 
+                '''
         Descrição: ''',
                 descricao,
-                ''' 
+                '''
         Organizações: ''',
                 to_json_string(orgaos),
-                ''' 
+                '''
         Endereço: ''',
                 logradouro,
                 ''', ''',
                 numero_logradouro,
-                ''' 
+                '''
         Localização: ''',
                 latitude,
                 ''', ''',
                 longitude,
-                ''' 
-        Retorne apenas os seguintes campos em JSON: 
-        { 
-            "id_report": "ID da ocorrência", 
-            "main_topic": "tópico principal", 
-            "related_topics": ["array de tópicos relacionados"], 
+                '''
+        Retorne apenas os seguintes campos em JSON:
+        {
+            "id_report": "ID da ocorrência",
+            "main_topic": "tópico principal",
+            "related_topics": ["array de tópicos relacionados"],
             "scope_level_explanation": "Explicacão para o nível de abrangência"
-            "scope_level": "nível de abrangência", 
+            "scope_level": "nível de abrangência",
             "urgenct_explanation": "Explicação para o nível de urgência",
-            "urgency": "nível de urgência", 
+            "urgency": "nível de urgência",
             "predicted_times_explanation": "Explicação para as datas previstas",
-            "predicted_start_time": "timestamp ISO", 
-            "predicted_end_time": "timestamp ISO", 
-        } 
+            "predicted_start_time": "timestamp ISO",
+            "predicted_end_time": "timestamp ISO",
+        }
         RETORNE APENAS O JSON, SEM EXPLICAÇÕES '''
             ) as prompt
         from source_reports
