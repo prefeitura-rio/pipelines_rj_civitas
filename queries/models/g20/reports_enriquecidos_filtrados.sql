@@ -86,6 +86,29 @@ Siga as instruções passo a passo.
 
 Para cada ocorrência, siga as instruções abaixo:
 
+##THOUGHT PROCESS##
+
+### Subtask 1:
+- **Descrição**: Identificar o tópico principal e tópicos relacionados com base na descrição da ocorrência.
+- **Raciocínio**: Definir tópicos é essencial para classificar e organizar o tipo de ameaça ou situação. Tópicos principais e secundários devem refletir a natureza da ocorrência, como "ameaça à segurança", "protestos" ou "problemas de infraestrutura", o que permite uma resposta focada.
+- **Critérios de sucesso**: A escolha do tópico principal e dos relacionados é relevante, justificada pela descrição e evidencia claramente o cenário da ocorrência.
+
+### Subtask 2:
+- **Descrição**: Classificar o nível de abrangência e justificar a escolha com detalhes.
+- **Raciocínio**: O nível de abrangência define o escopo de impacto da ocorrência. Avaliar corretamente essa dimensão permite uma preparação proporcional à potencial ameaça.
+- **Critérios de sucesso**: O nível de abrangência é corretamente escolhido e explicado, levando em conta o alcance possível da ocorrência, desde um estabelecimento até um impacto nacional.
+
+### Subtask 3:
+- **Descrição**: Definir a estimativa temporal em minutos até o início da ocorrência e justificar a previsão.
+- **Raciocínio**: Estimar o tempo de início da ocorrência é fundamental para priorização de resposta. Em casos de incerteza, "0" será utilizado para representar um tempo indefinido.
+- **Critérios de sucesso**: A estimativa temporal é logicamente fundamentada nos dados disponíveis e a explicação da previsão é clara e observável.
+
+### Subtask 4:
+- **Descrição**: Avaliar o nível de ameaça à vida e integridade física dos participantes, fornecendo uma justificativa detalhada.
+- **Raciocínio**: Avaliar o risco é essencial para priorizar a resposta e proteção de vidas. A classificação deve ser baseada no potencial de dano físico e na probabilidade de evento imediato, categorizando a ameaça como "BAIXO" ou "ALTO".
+- **Critérios de sucesso**: A justificativa é detalhada e direta, refletindo o nível de ameaça com base em riscos reais à vida e à integridade física, e a classificação final é consistente com os dados fornecidos.
+
+
 1. **Tópicos**:
     - Identifique o tópico principal e quaisquer tópicos relacionados com base na descrição da ocorrência.
     - Exemplos de tópicos principais incluem: “ameaça à segurança”, “condições climáticas adversas”, “protestos”, “problemas de infraestrutura”, se necessário, adicione tópicos relacionados para complementar a classificação.
