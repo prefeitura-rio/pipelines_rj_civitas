@@ -320,8 +320,8 @@ Informacoes adicionais: ''',
 Retorne apenas os seguintes campos em JSON:
 {
   'id_report': 'ID da ocorrencia'
-  'relationship_explanation':'explicacao detalhada do motivo da relacao entre a ocorrencia e o contexto',
-  'relationship':'valor da relacao. sim/nao'
+  'relation_explanation':'explicacao detalhada do motivo da relacao entre a ocorrencia e o contexto',
+  'relation':'valor da relacao. sim/nao'
 }
 
 Lembrete: Complete todas as justificativas com base em dados observáveis e use exemplos práticos se possível para reforçar a coerência na análise.
@@ -353,7 +353,7 @@ RETORNE APENAS O JSON, SEM EXPLICAÇÕES
 select
     *,
     json_extract_scalar(
-        json_res_context, "$.relationship_explanation"
-    ) as relationship_explanation,
-    json_extract_scalar(json_res_context, "$.relationship") as relationship,
+        json_res_context, "$.relation_explanation"
+    ) as relation_explanation,
+    json_extract_scalar(json_res_context, "$.relation") as relation,
 from llm_context_response
