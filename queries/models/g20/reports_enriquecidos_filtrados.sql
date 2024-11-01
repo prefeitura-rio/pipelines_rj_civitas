@@ -288,6 +288,45 @@ RETORNE APENAS O JSON, SEM EXPLICAÇÕES
 Você é um analista de segurança especializado no evento do G20.
 Sua função é definir se existe relação entre a ocorrencia e o contexto fornecido.
 
+##THOUGHT PROCESS##
+
+### Subtask 1:
+- **Descrição**: Extrair e identificar as principais informações sobre a ocorrência.
+- **Raciocínio**: Compreender as características da ocorrência (ID, descrição, tópico principal e abrangência) é fundamental para estabelecer comparações com o contexto. Isso permite que o analista identifique elementos únicos que podem influenciar a relação com o contexto.
+- **Critérios de sucesso**: Extração correta das informações de ID, descrição, tópico principal e abrangência da ocorrência.
+
+### Subtask 2:
+- **Descrição**: Analisar e extrair as principais informações sobre o contexto fornecido.
+- **Raciocínio**: Assim como na ocorrência, conhecer detalhadamente o contexto permite ao analista encontrar pontos de conexão com a ocorrência. Esses elementos incluem o tipo, descrição, informações adicionais e local do contexto.
+- **Critérios de sucesso**: Extração precisa dos campos de tipo, descrição, informações adicionais e local do contexto.
+
+### Subtask 3:
+- **Descrição**: Comparar fatores chave entre a ocorrência e o contexto para determinar se existe relação.
+- **Raciocínio**: Comparar os elementos centrais de ambos (tópico principal da ocorrência, tipo e local do contexto) é essencial para decidir se existe uma relação observável entre as duas partes. Esse é um passo crítico para justificar e evidenciar o vínculo entre ocorrência e contexto.
+- **Critérios de sucesso**: A análise deve identificar ao menos um fator-chave que justifique a relação entre a ocorrência e o contexto.
+
+### Subtask 4:
+- **Descrição**: Determinar e justificar a explicação detalhada da relação entre a ocorrência e o contexto.
+- **Raciocínio**: Oferecer uma explicação detalhada da relação (ou ausência dela) fornece clareza e transparência ao analista. Para justificar de forma prática, exemplos de situações similares e dados específicos da ocorrência e do contexto ajudam a solidificar a análise.
+- **Critérios de sucesso**: A explicação deve ser objetiva, coerente e se basear em dados observáveis, incluindo exemplos práticos quando aplicável.
+
+### Subtask 5:
+- **Descrição**: Listar fatores-chave que influenciam a relação.
+- **Raciocínio**: Identificar e listar os fatores específicos que indicam a relação entre ocorrência e contexto oferece uma visão estruturada dos elementos de semelhança ou dissonância. Esses fatores guiam a análise e apoiam as justificativas.
+- **Critérios de sucesso**: A lista deve incluir fatores relevantes, como semelhança temática, geográfica ou contextual.
+
+### Subtask 6:
+- **Descrição**: Calcular o nível de confiança da relação entre ocorrência e contexto em uma escala de 0 a 1.
+- **Raciocínio**: Atribuir um valor quantitativo de confiança oferece uma métrica objetiva e ajuda a padronizar a avaliação de relações. Esse valor reflete a força da semelhança entre ocorrência e contexto com base nos fatores observados.
+- **Critérios de sucesso**: Definir um valor numérico que se alinha com o nível de similaridade, de forma transparente e proporcional ao contexto e à ocorrência.
+
+### Subtask 7:
+- **Descrição**: Determinar e validar o valor final de relação como verdadeiro (true) ou falso (false).
+- **Raciocínio**: A decisão final de existência de relação é binária e serve como uma conclusão prática para que outros analistas ou sistemas tomem ações subsequentes.
+- **Critérios de sucesso**: Valor booleano final (true ou false) baseado em análise fundamentada e coerente com as evidências e critérios estabelecidos.
+
+
+
 Ocorrencia:
 
 ID da Ocorrência: ''',
