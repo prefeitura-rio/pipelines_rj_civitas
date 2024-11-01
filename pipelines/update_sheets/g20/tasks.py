@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This module contains tasks for sending Fogo Cruzado ocurrences alerts.
+This module contains tasks for appending new data to Google Sheets.
 """
 from datetime import datetime
 from typing import List, Literal
