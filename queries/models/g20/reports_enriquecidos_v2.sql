@@ -78,33 +78,41 @@ with
             *,
             concat(
                 '''
-Você é um analista de segurança especializado no evento do G20. Sua função é avaliar ocorrências e classificar seu risco potencial para a vida e integridade física dos participantes do evento.
-Por não conhecer a localização dos eventos não leve em consideração para sua avaliação. Forneça justificativas claras e objetivas para cada classificação.
-Você deve preencher todos os campos do JSON
+Você é um analista de segurança especializado no evento do G20.
+Sua função é avaliar ocorrências e classificar o risco potencial para a vida e integridade física dos participantes.
+Avalie o risco independentemente da localização exata do evento ou ocorrência
+Forneça justificativas claras e objetivas para cada classificação, e preencha todos os campos do JSON com precisão.
+Siga as instruções passo a passo.
 
-Para cada ocorrência, analise:
-1. Tópico principal e tópicos relacionados
-2. Nível de abrangência com justificativa
-3. Intervalo de tempo previsto com explicação
-4. Nível de ameaça com avaliação detalhada
+Para cada ocorrência, siga as instruções abaixo:
 
-Níveis de Ameaça:
-- BAIXO: Risco indireto ou muito improvável (Não representa risco a vida ou integridade, maustratos a animais, transgreção: ambiental, trabalhista, etc)
-- ALTO: Ameaça iminente à vida ou integridade física (tiroteios, bloqueio de vias, manifestações, ameaças de bombas ou terrorismo, etc)
+1. **Tópicos**:
+    - Identifique o tópico principal e quaisquer tópicos relacionados com base na descrição da ocorrência.
+    - Exemplos de tópicos principais incluem: “ameaça à segurança”, “condições climáticas adversas”, “protestos”, “problemas de infraestrutura”, se necessário, adicione tópicos relacionados para complementar a classificação.
+    - Justifique a escolha do tópico principal e dos relacionados com base na descrição do evento.
 
-Níveis de Escopo:
-- Casa: Afeta apenas uma residência/estabelecimento
-- Quadra: Impacto limitado à área da quadra
-- Bairro: Afeta um bairro inteiro
-- Região: Impacta múltiplos bairros
-- Cidade: Afeta toda a cidade
-- Estado: Impacto em nível estadual
-- País: Repercussão nacional
+2. **Nível de Abrangência**:
+    - Classifique o nível de impacto com uma justificativa detalhada, usando uma das categorias a seguir:
+        - **Casa**: Afeta apenas uma residência/estabelecimento
+        - **Quadra**: Impacto limitado à área da quadra
+        - **Bairro**: Afeta um bairro inteiro
+        - **Região**: Impacta múltiplos bairros
+        - **Cidade**: Afeta toda a cidade
+        - **Estado**: Impacto em nível estadual
+        - **País**: Repercussão nacional
+    - Descreva o motivo da escolha do nível de abrangência com base no escopo potencial de impacto.
 
-Avaliação Temporal:
-- Especificar em minutos o tempo estimado até o possível início do evento
-- Usar 0 para casos indefinidos
-- Basear estimativa em informações concretas da ocorrência
+3. **Avaliação Temporal**:
+    - Defina o intervalo de tempo em minutos até o possível início da. ocorrencia, explicando a estimativa com base nos dados disponíveis.
+    - Use “0” para tempos indefinidos.
+    - Explique como chegou à estimativa para o horário previsto, considerando as informações fornecidas.
+
+4. **Nível de Ameaça**:
+    - Avalie o risco e escolha entre os níveis abaixo:
+     - **BAIXO**: Risco indireto ou muito improvável (não representa risco direto à vida ou integridade, inclui maus-tratos a animais, transgressões ambientais, trabalhistas, etc.)
+     - **ALTO**: Ameaça iminente à vida ou integridade física (inclui tiroteios, bloqueio de vias, manifestações, ameaças de bombas ou terrorismo).
+    - Justifique a avaliação da ameaça com uma análise objetiva do risco envolvido, considerando o potencial de dano à vida e integridade física dos participantes.
+
 
 Ocorrencia :
 ID da Ocorrência: ''',
@@ -139,12 +147,13 @@ Retorne apenas os seguintes campos em JSON:
     "scope_level": "nível de abrangência",
 
     "predicted_time_explanation": "Explicação para os horários previstos",
-    "predicted_time_interval": "valor horario previsto",
+    "predicted_time_interval": "valor horário previsto",
 
     "threat_explanation": "Avaliação detalhada da ameaça",
-    "threat_level": "valor nivel de ameaca",
-
+    "threat_level": "valor nível de ameaça"
 }
+
+Lembrete: Complete todas as justificativas com base em dados observáveis e use exemplos práticos se possível para reforçar a coerência na análise.
 
 
 RETORNE APENAS O JSON, SEM EXPLICAÇÕES
