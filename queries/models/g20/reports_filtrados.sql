@@ -1,10 +1,4 @@
-WITH rj_geo AS (
-  SELECT
-    ST_Union(ARRAY_AGG(geometry)) AS city_geometry
-  FROM
-    `datario.dados_mestres.bairro`
-),
-occurrences AS (
+WITH occurrences AS (
   SELECT
     a.id_report,
     a.id_source,
@@ -40,7 +34,7 @@ occurrences AS (
     a.data_report AS data_report_tz,
     PARSE_DATETIME('%d/%m/%Y %H:%M:%S', b.datahora_inicio) AS data_inicio_tz
 FROM
-  {{ source('g20', 'reports_enriquecidos') }} a
+  {{ ref('reports_enriquecidos_v2') }} a
 CROSS JOIN
   (
     SELECT
@@ -51,13 +45,19 @@ CROSS JOIN
 WHERE
   a.data_report >= PARSE_DATETIME('%d/%m/%Y %H:%M:%S', b.datahora_inicio)
   AND a.data_report <= PARSE_DATETIME('%d/%m/%Y %H:%M:%S', b.datahora_fim)
-  AND LOWER(a.threat_level) != 'nenhuma'
-  AND ST_INTERSECTS(
+  AND LOWER(a.threat_level) != 'alto'
+  AND IF (
+    (a.latitude = 0.0 OR a.latitude IS NULL)
+    OR (a.longitude = 0.0 OR a.longitude IS NULL)
+    OR (b.geometria IS NULL),
+    True,
+  ST_INTERSECTS(
     ST_BUFFER(
-      COALESCE(ST_GEOGFROMTEXT(b.geometria), (SELECT city_geometry FROM rj_geo)), -- CIDADE INTEIRA, CASO geometria IS NULL
+      ST_GEOGFROMTEXT(b.geometria),
       COALESCE(b.raio_de_busca, 5000) -- RAIO PADRAO DE 5km
     ),
-    ST_GEOGPOINT(a.longitude, a.latitude)
+        ST_GEOGPOINT(a.longitude, a.latitude)
+    )
   )
 )
 SELECT
