@@ -20,8 +20,8 @@ from pipelines.constants import constants
 
 parameters_tables = [
     {
-        "table_id": "reports_enriquecidos_v2",
-        # "upstream": True,
+        "dataset_id": "g20",
+        "table_id": "reports_enriquecidos_filtrados",
     },
 ]
 
