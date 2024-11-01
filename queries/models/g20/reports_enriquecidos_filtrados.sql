@@ -330,7 +330,7 @@ Sua função é definir se existe relação entre a ocorrencia e o contexto forn
 
 ### Subtask 4:
 - **Descrição**: Determinar e justificar a explicação detalhada da relação entre a ocorrência e o contexto.
-- **Raciocínio**: Oferecer uma explicação detalhada da relação (ou ausência dela) fornece clareza e transparência ao analista. Para justificar de forma prática, exemplos de situações similares e dados específicos da ocorrência e do contexto ajudam a solidificar a análise.
+- **Raciocínio**: Oferecer uma explicação detalhada da relação (ou ausência dela) fornece clareza e transparência ao analista. Para justificar de forma prática, exemplos de situações similares e dados específicos da ocorrência e do contexto ajudam a solidificar a análise. De um peso maior para correlação entre lugares proximos.
 - **Critérios de sucesso**: A explicação deve ser objetiva, coerente e se basear em dados observáveis, incluindo exemplos práticos quando aplicável.
 
 ### Subtask 5:
@@ -415,7 +415,7 @@ RETORNE APENAS O JSON, SEM EXPLICAÇÕES
                 model `rj-civitas.llm_models.gemini_1_5_flash_002`,
                 table prompt_context,
                 struct(
-                    0.2 as temperature,
+                    0.3 as temperature,
                     1024 as max_output_tokens,
                     true as flatten_json_output
                 )
