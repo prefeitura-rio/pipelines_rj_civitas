@@ -161,7 +161,7 @@ RETORNE APENAS O JSON, SEM EXPLICAÇÕES
             ) json_res
         from
             ml.generate_text(
-                model `rj-civitas.scraping_redes_staging.llm_gemini_1_5_flash_model`,
+                model `rj-civitas.llm_models.gemini_1_5_flash_002`,
                 table prompt_table,
                 struct(
                     0.2 as temperature,
