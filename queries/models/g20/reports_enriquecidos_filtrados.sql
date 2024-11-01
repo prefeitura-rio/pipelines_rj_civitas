@@ -31,11 +31,11 @@ with
             ifnull(longitude, cast(0 as float64)) as longitude
         from `rj-civitas.integracao_reports.reports` tablesample system(10 percent)
         where
-            datetime(data_report, 'America/Sao_Paulo') >= timestamp_sub(
-                datetime(current_timestamp(), 'America/Sao_Paulo'), interval 30 minute
-            )
-            and id_source = 'DD'
-    -- id_report in (
+            -- datetime(data_report, 'America/Sao_Paulo') >= timestamp_sub(
+            --     datetime(current_timestamp(), 'America/Sao_Paulo'), interval 30 minute
+            -- )
+            -- and id_source = 'DD'
+    id_report in (
     -- "DD2666784",  -- Desmatamento
     -- "DD2666783",  -- Coleta de lixo fora do horário
     -- "DD2163864",  -- Poluição do ar
@@ -57,19 +57,19 @@ with
     -- "DD2666699",  -- Tráfico de Drogas
     -- "DD2666560",  -- Guarda/comércio ilícito de armas de fogo
     -- "DD2666615",  -- Obstrução de vias públicas
-    -- "DD2666517",  -- Abuso de autoridade por policiais militares
-    -- "DD2666714",  -- Corrupção Policial
-    -- "DD2666723",  -- Tráfico de drogas e crimes relacionados
-    -- "DD2666724",  -- Tráfico de drogas
-    -- "DD2666566",  -- Roubo/Furto
-    -- "DD2666657",  -- Crimes contra o patrimônio
-    -- "DD2666730",  -- Tiroteio entre quadrilhas
-    -- "DD2666672",  -- Crimes Violentos
-    -- "DD2666686",  -- maus tratos contra animais
-    -- "DD2666581",  -- Crimes contra o meio ambiente
-    -- "DD2666769",  -- maus tratos contra animais
-    -- "DD2666645"  -- Lixo acumulado
-    -- )
+    "DD2666517",  -- Abuso de autoridade por policiais militares
+    "DD2666714",  -- Corrupção Policial
+    "DD2666723",  -- Tráfico de drogas e crimes relacionados
+    "DD2666724",  -- Tráfico de drogas
+    "DD2666566",  -- Roubo/Furto
+    "DD2666657",  -- Crimes contra o patrimônio
+    "DD2666730",  -- Tiroteio entre quadrilhas
+    "DD2666672",  -- Crimes Violentos
+    "DD2666686",  -- maus tratos contra animais
+    "DD2666581",  -- Crimes contra o meio ambiente
+    "DD2666769",  -- maus tratos contra animais
+    "DD2666645"  -- Lixo acumulado
+    )
     -- LIMIT 10
     ),
 
@@ -219,8 +219,61 @@ RETORNE APENAS O JSON, SEM EXPLICAÇÕES
             prompt,
             ml_generate_text_llm_result
         from llm_response
-        order by data_report desc
+    ),
+
+    occurrences as (
+        select
+            a.id_report,
+            a.id_source,
+            a.id_report_original,
+            a.data_report,
+            a.orgaos as orgaos_report,
+            a.categoria as categoria_report,
+            a.tipo_subtipo as tipo_subtipo_report,
+            a.descricao as descricao_report,
+            a.latitude as latitude_report,
+            a.longitude as longitude_report,
+            a.scope_level as scope_level_report,
+            a.scope_level_explanation as scope_level_explanation_report,
+            a.threat_level as threat_level_report,
+            a.threat_explanation as threat_explanation_report,
+            a.predicted_time_interval as predicted_time_interval_report,
+            datetime_add(
+                a.data_report, interval cast(a.predicted_time_interval as int64) minute
+            ) as predicted_end_time_report,
+            a.predicted_time_explanation as predicted_time_explanation_report,
+            b.id as id_contexto,
+            b.tipo as tipo_contexto,
+            b.datahora_inicio as datahora_inicio_contexto,
+            b.datahora_fim as datahora_fim_contexto,
+            b.nome as nome_contexto,
+            b.descricao as descricao_contexto,
+            b.informacoes_adicionais as informacoes_adicionais_contexto,
+            b.endereco as endereco_contexto,
+            b.local as local_contexto,
+            b.geometria as geometria_contexto,
+            b.raio_de_busca as raio_de_busca_contexto,
+            a.data_report as data_report_tz,
+            parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio) as data_inicio_tz
+        from src a
+        cross join (select * from `rj-civitas-dev.g20.contextos`) b
+        where
+            a.data_report >= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio)
+            and a.data_report <= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_fim)
+            -- and lower(a.threat_level) = 'alto'
+            and if(
+                (a.latitude = 0.0 or a.latitude is null)
+                or (a.longitude = 0.0 or a.longitude is null)
+                or (b.geometria is null),
+                true,
+                st_intersects(
+                    st_buffer(
+                        st_geogfromtext(b.geometria), coalesce(b.raio_de_busca, 5000)  -- RAIO PADRAO DE 5km
+                    ),
+                    st_geogpoint(a.longitude, a.latitude)
+                )
+            )
     )
 
 select *
-from src
+from occurrences
