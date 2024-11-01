@@ -32,44 +32,44 @@ with
         from `rj-civitas.integracao_reports.reports` tablesample system(10 percent)
         where
             -- datetime(data_report, 'America/Sao_Paulo') >= timestamp_sub(
-            --     datetime(current_timestamp(), 'America/Sao_Paulo'), interval 30 minute
+            -- datetime(current_timestamp(), 'America/Sao_Paulo'), interval 30 minute
             -- )
             -- and id_source = 'DD'
-    id_report in (
-    -- "DD2666784",  -- Desmatamento
-    -- "DD2666783",  -- Coleta de lixo fora do horário
-    -- "DD2163864",  -- Poluição do ar
-    -- "DD2163891",  -- Invasão de propriedade e construção irregular
-    -- "DD2163866",  -- Violência Doméstica
-    -- "DD2163899",  -- Violência contra idosos
-    -- "DD2163865",  -- Tiroteio entre quadrilhas
-    -- "DD2163867",  -- maus tratos contra animais
-    -- "DD2163898",  -- Segurança Pública
-    -- "DD2163897",  -- Segurança Pública
-    -- "DD2163881",  -- Tráfico de drogas e posse ilegal de armas de fogo
-    -- "DD2163893",  -- Violações de leis trabalhistas
-    -- "DD2163858",  -- Perturbação do sossego público
-    -- "DD2163902",  -- Uso ilegal de energia elétrica
-    -- "DD2163885",  -- Uso ilegal de energia elétrica
-    -- "DD2666751",  -- Crimes contra a pessoa e armas de fogo
-    -- "DD2666614",  -- Construção Irregular e Posse Ilegal de Armas
-    -- "DD2666640",  -- Extorsão e Ações de Milícias
-    -- "DD2666699",  -- Tráfico de Drogas
-    -- "DD2666560",  -- Guarda/comércio ilícito de armas de fogo
-    -- "DD2666615",  -- Obstrução de vias públicas
-    "DD2666517",  -- Abuso de autoridade por policiais militares
-    "DD2666714",  -- Corrupção Policial
-    "DD2666723",  -- Tráfico de drogas e crimes relacionados
-    "DD2666724",  -- Tráfico de drogas
-    "DD2666566",  -- Roubo/Furto
-    "DD2666657",  -- Crimes contra o patrimônio
-    "DD2666730",  -- Tiroteio entre quadrilhas
-    "DD2666672",  -- Crimes Violentos
-    "DD2666686",  -- maus tratos contra animais
-    "DD2666581",  -- Crimes contra o meio ambiente
-    "DD2666769",  -- maus tratos contra animais
-    "DD2666645"  -- Lixo acumulado
-    )
+            id_report in (
+                -- "DD2666784",  -- Desmatamento
+                -- "DD2666783",  -- Coleta de lixo fora do horário
+                -- "DD2163864",  -- Poluição do ar
+                -- "DD2163891",  -- Invasão de propriedade e construção irregular
+                -- "DD2163866",  -- Violência Doméstica
+                -- "DD2163899",  -- Violência contra idosos
+                -- "DD2163865",  -- Tiroteio entre quadrilhas
+                -- "DD2163867",  -- maus tratos contra animais
+                -- "DD2163898",  -- Segurança Pública
+                -- "DD2163897",  -- Segurança Pública
+                -- "DD2163881",  -- Tráfico de drogas e posse ilegal de armas de fogo
+                -- "DD2163893",  -- Violações de leis trabalhistas
+                -- "DD2163858",  -- Perturbação do sossego público
+                -- "DD2163902",  -- Uso ilegal de energia elétrica
+                -- "DD2163885",  -- Uso ilegal de energia elétrica
+                -- "DD2666751",  -- Crimes contra a pessoa e armas de fogo
+                -- "DD2666614",  -- Construção Irregular e Posse Ilegal de Armas
+                -- "DD2666640",  -- Extorsão e Ações de Milícias
+                -- "DD2666699",  -- Tráfico de Drogas
+                -- "DD2666560",  -- Guarda/comércio ilícito de armas de fogo
+                -- "DD2666615",  -- Obstrução de vias públicas
+                -- "DD2666517",  -- Abuso de autoridade por policiais militares
+                -- "DD2666714",  -- Corrupção Policial
+                -- "DD2666723",  -- Tráfico de drogas e crimes relacionados
+                -- "DD2666724",  -- Tráfico de drogas
+                "DD2666566",  -- Roubo/Furto
+                -- "DD2666657",  -- Crimes contra o patrimônio
+                -- "DD2666730",  -- Tiroteio entre quadrilhas
+                "DD2666672",  -- Crimes Violentos
+                -- "DD2666686",  -- maus tratos contra animais
+                -- "DD2666581",  -- Crimes contra o meio ambiente
+                "DD2666769",  -- maus tratos contra animais
+                "DD2666645"  -- Lixo acumulado
+            )
     -- LIMIT 10
     ),
 
@@ -180,7 +180,7 @@ RETORNE APENAS O JSON, SEM EXPLICAÇÕES
             )
     ),
 
-    src as (
+    enriched_occurrences as (
         select
             farm_fingerprint(concat(id_report, prompt)) as id,
             id_report,
@@ -221,7 +221,7 @@ RETORNE APENAS O JSON, SEM EXPLICAÇÕES
         from llm_response
     ),
 
-    occurrences as (
+    filtered_occurrences as (
         select
             a.id_report,
             a.id_source,
@@ -233,6 +233,7 @@ RETORNE APENAS O JSON, SEM EXPLICAÇÕES
             a.descricao as descricao_report,
             a.latitude as latitude_report,
             a.longitude as longitude_report,
+            a.main_topic as main_topic_report,
             a.scope_level as scope_level_report,
             a.scope_level_explanation as scope_level_explanation_report,
             a.threat_level as threat_level_report,
@@ -255,7 +256,7 @@ RETORNE APENAS O JSON, SEM EXPLICAÇÕES
             b.raio_de_busca as raio_de_busca_contexto,
             a.data_report as data_report_tz,
             parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio) as data_inicio_tz
-        from src a
+        from enriched_occurrences a
         cross join (select * from `rj-civitas-dev.g20.contextos`) b
         where
             a.data_report >= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio)
@@ -273,7 +274,86 @@ RETORNE APENAS O JSON, SEM EXPLICAÇÕES
                     st_geogpoint(a.longitude, a.latitude)
                 )
             )
-    )
+        limit 10
+    ),
 
-select *
-from occurrences
+    prompt_context as (
+        select
+            *,
+            concat(
+                '''
+Você é um analista de segurança especializado no evento do G20.
+Sua função é definir se existe relação entre a ocorrencia e o contexto fornecido.
+
+Ocorrencia:
+
+ID da Ocorrência: ''',
+                id_report,
+                '''
+
+Descricao: ''',
+                descricao_report,
+                '''
+Topico principal: ''',
+                main_topic_report,
+                '''
+
+Abrangencia: ''',
+                scope_level_report,
+                '''
+
+Contexto:
+
+Tipo: ''',
+                tipo_contexto,
+                '''
+
+Descricao: ''',
+                descricao_contexto,
+                '''
+
+Informacoes adicionais: ''',
+                informacoes_adicionais_contexto,
+                '''
+
+
+Retorne apenas os seguintes campos em JSON:
+{
+  'id_report': 'ID da ocorrencia'
+  'relationship_explanation':'explicacao detalhada do motivo da relacao entre a ocorrencia e o contexto',
+  'relationship':'valor da relacao. sim/nao'
+}
+
+Lembrete: Complete todas as justificativas com base em dados observáveis e use exemplos práticos se possível para reforçar a coerência na análise.
+
+
+RETORNE APENAS O JSON, SEM EXPLICAÇÕES
+'''
+            ) as prompt
+        from filtered_occurrences
+    ),
+
+    llm_context_response as (
+        select
+            *,
+            regexp_replace(
+                ml_generate_text_llm_result, r"^```json\n|\n```$", ""
+            ) json_res_context
+        from
+            ml.generate_text(
+                model `rj-civitas.llm_models.gemini_1_5_flash_002`,
+                table prompt_context,
+                struct(
+                    0.2 as temperature,
+                    1024 as max_output_tokens,
+                    true as flatten_json_output
+                )
+            )
+    )
+select
+    *,
+    json_extract_scalar(
+        json_res_context, "$.relationship_explanation"
+    ) as relationship_explanation,
+    json_extract_scalar(json_res_context, "$.relationship") as relationship,
+from llm_context_response
