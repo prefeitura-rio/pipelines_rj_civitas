@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Send a discord alert whenever a new occurrence is detected in the Fogo Cruzado.
+Append new data to google sheets
 """
 from prefect import Parameter
 from prefect.run_configs import KubernetesRun
