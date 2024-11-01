@@ -80,3 +80,5 @@ sources:
     schema: g20
     tables:
       - name: contextos
+      - name: reports_enriquecidos
+        identifier: reports_enriquecidos_v2
