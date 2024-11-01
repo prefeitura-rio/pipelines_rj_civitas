@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-DBT-related flows...
+G20 - Alerts flow
 """
 from prefect import Flow, Parameter
 from prefect.run_configs import KubernetesRun
