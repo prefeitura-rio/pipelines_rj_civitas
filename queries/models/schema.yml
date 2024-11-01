@@ -52,6 +52,7 @@ sources:
     schema: dados_mestres
     tables:
       - name: logradouro
+      - name: bairro
 
   - name: integracao_reports
     database: rj-civitas
@@ -73,3 +74,9 @@ sources:
     schema: fogo_cruzado
     tables:
       - name: ocorrencias
+
+  - name: g20
+    database: rj-civitas
+    schema: g20
+    tables:
+      - name: contextos
