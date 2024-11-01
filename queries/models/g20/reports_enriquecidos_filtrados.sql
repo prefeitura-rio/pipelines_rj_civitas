@@ -29,7 +29,7 @@ with
             ifnull(numero_logradouro, '') as numero_logradouro,
             ifnull(latitude, cast(0 as float64)) as latitude,
             ifnull(longitude, cast(0 as float64)) as longitude
-        from `rj-civitas.integracao_reports.reports` tablesample system(10 percent)
+        from `rj-civitas.integracao_reports.reports` -- tablesample system(10 percent)
         where
             -- datetime(data_report, 'America/Sao_Paulo') >= timestamp_sub(
             -- datetime(current_timestamp(), 'America/Sao_Paulo'), interval 30 minute
@@ -61,14 +61,14 @@ with
                 -- "DD2666714",  -- Corrupção Policial
                 -- "DD2666723",  -- Tráfico de drogas e crimes relacionados
                 -- "DD2666724",  -- Tráfico de drogas
-                "DD2666566",  -- Roubo/Furto
+                -- "DD2666566",  -- Roubo/Furto
                 -- "DD2666657",  -- Crimes contra o patrimônio
                 -- "DD2666730",  -- Tiroteio entre quadrilhas
-                "DD2666672",  -- Crimes Violentos
+                "DD2666672"  -- Crimes Violentos
                 -- "DD2666686",  -- maus tratos contra animais
                 -- "DD2666581",  -- Crimes contra o meio ambiente
-                "DD2666769",  -- maus tratos contra animais
-                "DD2666645"  -- Lixo acumulado
+                -- "DD2666769",  -- maus tratos contra animais
+                -- "DD2666645"  -- Lixo acumulado
             )
     -- LIMIT 10
     ),
@@ -222,46 +222,46 @@ RETORNE APENAS O JSON, SEM EXPLICAÇÕES
     ),
 
     filtered_occurrences as (
-        select
-            a.id_report,
-            a.id_source,
-            a.id_report_original,
-            a.data_report,
-            a.orgaos as orgaos_report,
-            a.categoria as categoria_report,
-            a.tipo_subtipo as tipo_subtipo_report,
-            a.descricao as descricao_report,
-            a.latitude as latitude_report,
-            a.longitude as longitude_report,
-            a.main_topic as main_topic_report,
-            a.scope_level as scope_level_report,
-            a.scope_level_explanation as scope_level_explanation_report,
-            a.threat_level as threat_level_report,
-            a.threat_explanation as threat_explanation_report,
-            a.predicted_time_interval as predicted_time_interval_report,
-            datetime_add(
-                a.data_report, interval cast(a.predicted_time_interval as int64) minute
-            ) as predicted_end_time_report,
-            a.predicted_time_explanation as predicted_time_explanation_report,
-            b.id as id_contexto,
-            b.tipo as tipo_contexto,
-            b.datahora_inicio as datahora_inicio_contexto,
-            b.datahora_fim as datahora_fim_contexto,
-            b.nome as nome_contexto,
-            b.descricao as descricao_contexto,
-            b.informacoes_adicionais as informacoes_adicionais_contexto,
-            b.endereco as endereco_contexto,
-            b.local as local_contexto,
-            b.geometria as geometria_contexto,
-            b.raio_de_busca as raio_de_busca_contexto,
-            a.data_report as data_report_tz,
-            parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio) as data_inicio_tz
-        from enriched_occurrences a
+    SELECT
+        a.id_report,
+        a.id_source,
+        a.id_report_original,
+        a.data_report,
+        a.orgaos as orgaos_report,
+        a.categoria as categoria_report,
+        a.tipo_subtipo as tipo_subtipo_report,
+        a.descricao as descricao_report,
+        a.latitude as latitude_report,
+        a.longitude as longitude_report,
+        a.main_topic as main_topic_report,
+        a.scope_level as scope_level_report,
+        a.scope_level_explanation as scope_level_explanation_report,
+        a.threat_level as threat_level_report,
+        a.threat_explanation as threat_explanation_report,
+        a.predicted_time_interval as predicted_time_interval_report,
+        datetime_add(
+            a.data_report, interval cast(a.predicted_time_interval as int64) minute
+        ) as predicted_end_time_report,
+        a.predicted_time_explanation as predicted_time_explanation_report,
+        IFNULL(b.id, '') AS id_contexto,
+        IFNULL(b.tipo, '') AS tipo_contexto,
+        IFNULL(b.datahora_inicio, '') AS datahora_inicio_contexto,
+        IFNULL(b.datahora_fim, '') AS datahora_fim_contexto,
+        IFNULL(b.nome, '') AS nome_contexto,
+        IFNULL(b.descricao, '') AS descricao_contexto,
+        IFNULL(b.informacoes_adicionais, '') AS informacoes_adicionais_contexto,
+        IFNULL(b.endereco, '') AS endereco_contexto,
+        IFNULL(b.local, '') AS local_contexto,
+        IFNULL(b.geometria, '') AS geometria_contexto,
+        IFNULL(b.raio_de_busca, CAST(5000 AS INT64)) AS raio_de_busca_contexto,
+        IFNULL(a.data_report, CAST('' AS DATETIME)) AS data_report_tz,
+        IFNULL(PARSE_DATETIME('%d/%m/%Y %H:%M:%S', b.datahora_inicio), CAST('' AS DATETIME)) AS data_inicio_tz
+    FROM enriched_occurrences a
         cross join (select * from `rj-civitas-dev.g20.contextos`) b
         where
             a.data_report >= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio)
             and a.data_report <= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_fim)
-            -- and lower(a.threat_level) = 'alto'
+            and lower(a.threat_level) = 'alto'
             and if(
                 (a.latitude = 0.0 or a.latitude is null)
                 or (a.longitude = 0.0 or a.longitude is null)
@@ -274,8 +274,8 @@ RETORNE APENAS O JSON, SEM EXPLICAÇÕES
                     st_geogpoint(a.longitude, a.latitude)
                 )
             )
-        limit 10
     ),
+
 
     prompt_context as (
         select
@@ -294,6 +294,7 @@ ID da Ocorrência: ''',
 Descricao: ''',
                 descricao_report,
                 '''
+
 Topico principal: ''',
                 main_topic_report,
                 '''
@@ -315,12 +316,17 @@ Descricao: ''',
 Informacoes adicionais: ''',
                 informacoes_adicionais_contexto,
                 '''
+Local: ''',
+                local_contexto,
+                '''
 
 
 Retorne apenas os seguintes campos em JSON:
 {
-  'id_report': 'ID da ocorrencia'
+  'id_report': 'ID da ocorrencia',
   'relation_explanation':'explicacao detalhada do motivo da relacao entre a ocorrencia e o contexto',
+  'relation_key_factors' ['lista de fatores que indica a relação entre o contexto e a ocorrencia'],
+  'relation_confidence': 'nivel de semelhança entre o contexto e a ocorrencia. Valor entre 0 e 1',
   'relation':'valor da relacao. sim/nao'
 }
 
@@ -352,6 +358,11 @@ RETORNE APENAS O JSON, SEM EXPLICAÇÕES
     )
 select
     *,
+    array(
+        select replace(topic, '"', '')
+        from unnest(json_extract_array(json_res_context, "$.relation_key_factors")) as topic
+    ) as relation_key_factors,
+    json_extract_scalar(json_res_context, "$.relation_confidence") as relation_confidence,
     json_extract_scalar(
         json_res_context, "$.relation_explanation"
     ) as relation_explanation,
