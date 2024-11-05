@@ -141,8 +141,8 @@ def generate_content(model: GenerativeModel, prompt: str) -> str:
     for candidate in response.candidates:
         for part in candidate.content.parts:
             response_text += part.text
-
-    return response_text
+        finish_reason = str(candidate.finish_reason)
+    return (response_text, finish_reason)
 
 
 def safe_generate_content(

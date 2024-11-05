@@ -205,6 +205,7 @@ def task_update_dados_enriquecidos_table(
 
             antes = datetime.now()
             final_responses = []
+            finish_reasons = []
             prompts = [(model_name, row["prompt"]) for _, row in data.iterrows()]
 
             with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -215,7 +216,8 @@ def task_update_dados_enriquecidos_table(
 
                 for future in concurrent.futures.as_completed(futures):
                     response = future.result()
-                    final_responses.append(response)
+                    final_responses.append(response[0])
+                    finish_reasons.append(response[1])
 
             # load_data_from_dataframe(data, dataset_id, table_id)
             # ml_generate_text(data, final_responses, prompts)
@@ -226,7 +228,8 @@ def task_update_dados_enriquecidos_table(
             # final_responses
 
             dados_dict = []
-            for json_string in final_responses:
+            finish_reasons_list = []
+            for json_string, finish_reason in zip(final_responses, finish_reasons):
                 try:
                     if "```json" in json_string:
                         # Remover a marcação e extrair a parte JSON
@@ -234,15 +237,18 @@ def task_update_dados_enriquecidos_table(
 
                         # Converte a string JSON em um dicionário
                         dados_dict.append(json.loads(json_part))
+                        finish_reasons_list.append(finish_reason)
                     else:
-                        log(f" JSON STRING BUGADA >>>>>>>>: {json_string}")
+                        # log(f" JSON STRING BUGADA >>>>>>>>: {json_string}")
                         dados_dict.append(json.loads(json_string))
+                        finish_reasons_list.append(finish_reason)
 
                 except (IndexError, json.JSONDecodeError) as e:
                     log(f"Error processing json string: {json_string}\nError: {e}")
 
             # log(dados_dict[0])
             enriched_data = pd.DataFrame(dados_dict)
+            enriched_data["finish_reason"] = finish_reasons_list
 
             final_df = pd.merge(data, enriched_data, on="id_report", how="left")
 
