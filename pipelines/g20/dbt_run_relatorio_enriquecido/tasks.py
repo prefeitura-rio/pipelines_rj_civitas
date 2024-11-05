@@ -86,7 +86,7 @@ def task_get_occurrences(
     log(f"Query: {query}")
     dataframe = bd.read_sql(query)
 
-    return dataframe
+    return dataframe.reset_index()
 
 
 @task
