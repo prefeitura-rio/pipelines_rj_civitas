@@ -137,7 +137,9 @@ def task_update_dados_enriquecidos_table(
             responses = model.model_predict_batch(model_input=batch)
 
             batch_df = dataframe.merge(pd.DataFrame(responses), on="index")
-            load_data_from_dataframe(batch_df, dataset_id, table_id)
+            load_data_from_dataframe(
+                dataframe=batch_df, project_id=project_id, dataset_id=dataset_id, table_id=table_id
+            )
 
     else:
         log(f"No new data to load to {dataset_id}.{table_id}")
