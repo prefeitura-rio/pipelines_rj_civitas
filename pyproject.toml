@@ -21,6 +21,7 @@ discord = "^2.3.2"
 selenium = ">=4.21.0"
 webdriver-manager = ">=4.0.1"
 google-cloud-resource-manager = "^1.13.0"
+vertexai = "^1.71.1"
 
 [tool.poetry.group.dev]
 optional = true
