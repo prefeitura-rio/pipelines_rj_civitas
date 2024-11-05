@@ -132,7 +132,7 @@ def task_update_dados_enriquecidos_table(
                 yield input_list[i : i + batch_size]  # noqa
 
         for batch_index, batch in enumerate(chunks(model_input, batch_size)):
-            log(f"Processing batch {batch_index + 1}/{(len(model_input) // batch_size)}")
+            log(f"Processing batch {batch_index + 1}/{(len(model_input) // batch_size + 1)}")
 
             responses = model.model_predict_batch(model_input=batch)
 
