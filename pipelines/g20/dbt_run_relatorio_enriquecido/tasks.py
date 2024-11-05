@@ -5,7 +5,7 @@ This module contains tasks for appending new data to Google Sheets.
 import asyncio
 
 # import time
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Literal
 
 import basedosdados as bd
@@ -90,6 +90,11 @@ def task_get_occurrences(
 
 
 @task
+def task_get_date_execution() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+@task
 def task_update_dados_enriquecidos_table(
     dataframe: pd.DataFrame,
     dataset_id: str,
@@ -102,6 +107,7 @@ def task_update_dados_enriquecidos_table(
     project_id: str = "rj-civitas",
     location: str = "us-central1",
     batch_size: int = 10,
+    date_execution: datetime = None,
 ) -> None:
 
     if len(dataframe) > 0:
@@ -137,6 +143,8 @@ def task_update_dados_enriquecidos_table(
             responses = model.model_predict_batch(model_input=batch)
 
             batch_df = dataframe.merge(pd.DataFrame(responses), on="index")
+            batch_df = batch_df.drop(columns=["index"])
+            batch_df["date_execution"] = pd.Timestamp(date_execution)
             load_data_from_dataframe(
                 dataframe=batch_df, project_id=project_id, dataset_id=dataset_id, table_id=table_id
             )

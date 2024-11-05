@@ -16,6 +16,7 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 from pipelines.constants import constants
 from pipelines.g20.dbt_run_relatorio_enriquecido.schedules import g20_reports_schedule
 from pipelines.g20.dbt_run_relatorio_enriquecido.tasks import (
+    task_get_date_execution,
     task_get_occurrences,
     task_update_dados_enriquecidos_table,
 )
@@ -77,6 +78,10 @@ with Flow(
     #     stream_logs=unmapped(True),
     #     raise_final_state=unmapped(True),
     # )
+
+    date_execution = task_get_date_execution()
+    date_execution.set_upstream(batch_size)
+
     occurrences = task_get_occurrences(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -87,6 +92,7 @@ with Flow(
         start_datetime=start_datetime,
         end_datetime=end_datetime,
     )
+    occurrences.set_upstream(date_execution)
 
     reports_enriquecidos = task_update_dados_enriquecidos_table(
         dataframe=occurrences,
@@ -100,6 +106,7 @@ with Flow(
         project_id=project_id,
         location=location,
         batch_size=batch_size,
+        date_execution=date_execution,
     )
 
     reports_enriquecidos.set_upstream(occurrences)
