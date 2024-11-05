@@ -78,19 +78,8 @@ def query_data_from_sql_file(model_dataset_id: str, model_table_id: str) -> pd.D
 
 
 def check_if_table_exists(dataset_id: str, table_id: str) -> bool:
-    client = bigquery.Client()
-    table_ref = client.dataset(dataset_id=dataset_id).table(table_id=table_id)
-    try:
-        client.get_table(table_ref)
-        log(f"Table {dataset_id}.{table_id} exists.")
-        log(client.project)
-        return True
-    except exceptions.NotFound:
-        log(f"Table {dataset_id}.{table_id} does not exist.")
-        return False
-    except Exception as e:
-        log(f"Unexpected error checking table {dataset_id}.{table_id}: {str(e)}")
-        raise e
+    tb = bd.Table(dataset_id=dataset_id, table_id=table_id)
+    return tb.table_exists(mode="prod")
 
 
 def load_data_from_dataframe(

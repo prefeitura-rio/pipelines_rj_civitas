@@ -3,11 +3,9 @@
 This module contains tasks for appending new data to Google Sheets.
 """
 import asyncio
-import concurrent.futures
-import json
 
 # import time
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import List, Literal
 
 import basedosdados as bd
@@ -21,11 +19,11 @@ from prefeitura_rio.pipelines_utils.infisical import get_secret_folder
 from prefeitura_rio.pipelines_utils.io import get_root_path
 from prefeitura_rio.pipelines_utils.logging import log
 
+from pipelines.g20.dbt_run_relatorio_enriquecido.model import EnrichResponseModel, Model
 from pipelines.g20.dbt_run_relatorio_enriquecido.utils import (  # ml_generate_text,; query_data_from_sql_file,
     check_if_table_exists,
     get_delay_time_string,
     load_data_from_dataframe,
-    safe_generate_content,
 )
 from pipelines.utils import send_discord_message
 
@@ -38,223 +36,108 @@ tz = pytz.timezone("America/Sao_Paulo")
 # rj-civitas.integracao_reports.reports
 @task
 def task_get_occurrences(
-    dataset_id: str, table_id: str, minutes_interval: int = 30
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    query_enriquecimento: str,
+    prompt_enriquecimento: str,
+    start_datetime: str = None,
+    end_datetime: str = None,
+    minutes_interval: int = 30,
 ) -> pd.DataFrame:
     try:
         minutes_interval = int(minutes_interval)
     except Exception as e:
         raise ValueError(f"{e} - minutes_interval must be an integer")
 
-    query = rf"""select
-            ifnull(id_report, '') as id_report,
-            ifnull(id_source, '') as id_source,
-            ifnull(id_report_original, '') as id_report_original,
-            ifnull(
-                datetime(data_report, 'America/Sao_Paulo'), cast('' as datetime)
-            ) as data_report,
-            ifnull(
-                array(select ifnull(orgao, '') from unnest(orgaos) as orgao), []
-            ) as orgaos,
-            ifnull(categoria, '') as categoria,
-            array(
-                select
-                    struct(
-                        ifnull(item.tipo, '') as tipo,
-                        ifnull(
-                            array(
-                                select ifnull(sub, '') from unnest(item.subtipo) as sub
-                            ),
-                            []
-                        ) as subtipo
-                    )
-                from unnest(tipo_subtipo) as item
-            ) as tipo_subtipo,
-            ifnull(descricao, '') as descricao,
-            ifnull(logradouro, '') as logradouro,
-            ifnull(numero_logradouro, '') as numero_logradouro,
-            ifnull(latitude, cast(0 as float64)) as latitude,
-            ifnull(longitude, cast(0 as float64)) as longitude
-        from `rj-civitas.{dataset_id}.{table_id}` tablesample system(10 percent)
-        where
-            datetime(data_report, 'America/Sao_Paulo') >= timestamp_sub(
+    if start_datetime is None or end_datetime is None:
+        date_filter = f"""
+                datetime(data_report, 'America/Sao_Paulo') >= timestamp_sub(
                 datetime(current_timestamp(), 'America/Sao_Paulo'), interval {minutes_interval} minute
-            )
-            and id_source = 'DD'"""
+                )
+        """
+    else:
+        date_filter = f"""
+                datetime(data_report, 'America/Sao_Paulo')  BETWEEN {start_datetime} AND {end_datetime}
+        """
 
-    df = bd.read_sql(query)
+    table_exists = check_if_table_exists(dataset_id=dataset_id, table_id=table_id)
 
-    return df
+    if table_exists:
+        select_replacer = f"""
+        select p.*
+        from prompt_id p
+        left join `{project_id}.{dataset_id}.{table_id}` e on p.id = e.id
+        where e.id_report is null
+        """
+    else:
+        select_replacer = """
+        select
+            *
+        from prompt_id
+            """
 
+    query = (
+        query_enriquecimento.replace("__prompt_replacer__", prompt_enriquecimento)
+        .replace("__date_filter_replacer__", date_filter)
+        .replace("__final_select_replacer__", select_replacer)
+    )
 
-@task
-def task_check_if_table_exists(dataset_id: str, table_id: str) -> bool:
-    return check_if_table_exists(dataset_id, table_id)
+    log(f"Query: {query}")
+    dataframe = bd.read_sql(query)
+
+    return dataframe
 
 
 @task
 def task_update_dados_enriquecidos_table(
-    df: pd.DataFrame, dataset_id: str, table_id: str, model_name: str = "gemini-1.5-flash"
+    dataframe: pd.DataFrame,
+    dataset_id: str,
+    table_id: str,
+    model_name: str = "gemini-1.5-flash",
+    max_output_tokens: int = 1024,
+    temperature: float = 0.2,
+    top_k: int = 32,
+    top_p: int = 1,
+    project_id: str = "rj-civitas",
+    location: str = "us-central1",
+    batch_size: int = 10,
 ) -> None:
-    target_table_exists = check_if_table_exists(
-        dataset_id=dataset_id,
-        table_id=table_id,
-    )
 
-    log(f">>>>>>>>>>>>>> {target_table_exists}")
+    if len(dataframe) > 0:
+        response_schema = EnrichResponseModel.schema()
+        model_input = [
+            {
+                "prompt_text": prompt,
+                "response_schema": response_schema,
+                "model_name": model_name,
+                "max_output_tokens": max_output_tokens,
+                "temperature": temperature,
+                "top_k": top_k,
+                "top_p": top_p,
+                "index": index,
+            }
+            for prompt, index in zip(
+                dataframe["prompt_enriquecimento"].tolist(), dataframe["index"].tolist()
+            )
+        ]
+        model = Model()
+        model.vertex_init(project_id=project_id, location=location)
 
-    if len(df) > 0:
-        log(f"Creating {len(df)} prompts...")
-        df["prompt"] = df.apply(
-            lambda row: """
-            Você é um analista de segurança especializado no evento do G20.
-            Sua função é avaliar ocorrências e classificar o risco potencial para a vida e integridade
-            física dos participantes.
-            Avalie o risco independentemente da localização exata do evento ou ocorrência.
-            Forneça justificativas claras e objetivas para cada classificação, e preencha todos os campos
-            do JSON com precisão.
-            Siga as instruções passo a passo.
+        def chunks(input_list: list, batch_size: int):
+            for i in range(0, len(input_list), batch_size):
+                yield input_list[i : i + batch_size]  # noqa
 
-            Para cada ocorrência, siga as instruções abaixo:
+        for batch_index, batch in enumerate(chunks(model_input, batch_size)):
+            log(f"Processing batch {batch_index + 1}/{(len(model_input) // batch_size)}")
 
-            1. **Tópicos**:
-                - Identifique o tópico principal e quaisquer tópicos relacionados com base na descrição da ocorrência.
-                - Exemplos de tópicos principais incluem: “ameaça à segurança”, “condições climáticas adversas”,
-                “protestos”, “problemas de infraestrutura”, se necessário, adicione tópicos relacionados
-                para complementar a classificação.
-                - Justifique a escolha do tópico principal e dos relacionados com base na descrição do evento.
+            responses = model.model_predict_batch(model_input=batch)
 
-            2. **Nível de Abrangência**:
-                - Classifique o nível de impacto com uma justificativa detalhada, usando uma das
-                categorias a seguir:
-                    - **Casa**: Afeta apenas uma residência/estabelecimento
-                    - **Quadra**: Impacto limitado à área da quadra
-                    - **Bairro**: Afeta um bairro inteiro
-                    - **Região**: Impacta múltiplos bairros
-                    - **Cidade**: Afeta toda a cidade
-                    - **Estado**: Impacto em nível estadual
-                    - **País**: Repercussão nacional
-                - Descreva o motivo da escolha do nível de abrangência com base no escopo potencial de impacto.
+            batch_df = dataframe.merge(pd.DataFrame(responses), on="index")
+            load_data_from_dataframe(batch_df, dataset_id, table_id)
 
-            3. **Avaliação Temporal**:
-                - Defina o intervalo de tempo em minutos até o possível início da ocorrência,
-                explicando a estimativa com base nos dados disponíveis.
-                - Use “0” para tempos indefinidos.
-                - Explique como chegou à estimativa para o horário previsto, considerando as informações
-                fornecidas.
-
-            4. **Nível de Ameaça**:
-                - Avalie o risco e escolha entre os níveis abaixo:
-                    - **BAIXO**: Risco indireto ou muito improvável (não representa risco direto à
-                    vida ou integridade, inclui maus-tratos a animais, transgressões ambientais,
-                    trabalhistas, etc.)
-                    - **ALTO**: Ameaça iminente à vida ou integridade física (inclui tiroteios,
-                    bloqueio de vias, manifestações, ameaças de bombas ou terrorismo).
-                - Justifique a avaliação da ameaça com uma análise objetiva do risco envolvido,
-                considerando o potencial de dano à vida e integridade física dos participantes.
-
-            Ocorrencia :
-            ID da Ocorrência: {id_report}
-
-            Data do Relatório (Quando a denúncia chegou à prefeitura): cast({data_report} as string)
-            Categoria: {categoria}
-            Tipo/Subtipo: to_json_string({tipo_subtipo})
-
-            Organizações: to_json_string({orgaos})
-            Descrição: {descricao}
-
-            Retorne apenas os seguintes campos em JSON nomeados exatamente como abaixo:
-            {{
-                "id_report": "{id_report}",
-                "main_topic": "tópico principal",
-                "related_topics": ["array de tópicos relacionados"],
-                "scope_level_explanation": "Explicação para o nível de abrangência",
-                "scope_level": "nível de abrangência",
-                "predicted_time_explanation": "Explicação para os horários previstos",
-                "predicted_time_interval": "valor horário previsto",
-                "threat_explanation": "Avaliação detalhada da ameaça",
-                "threat_level": "valor nível de ameaça"
-            }}
-            **Instrução adicional**: Ao retornar os dados em JSON, **escape** corretamente todos os
-            caracteres especiais, como aspas duplas (`"`), barras invertidas (`\\`), traços (`-`),
-            e outros caracteres que podem afetar a sintaxe do JSON.
-            **Não altere** a acentuação ou os caracteres normais da língua portuguesa.
-            """.format(
-                id_report=row["id_report"],
-                data_report=row["data_report"],
-                categoria=row["categoria"],
-                tipo_subtipo=row["tipo_subtipo"],
-                orgaos=row["orgaos"],
-                descricao=row["descricao"],
-            ),
-            axis=1,
-        )
-
-        if target_table_exists:
-            query = f"""SELECT id_report, prompt FROM `rj-civitas.{dataset_id}.{table_id}`"""
-            old_ids = bd.read_sql(query)
-
-            data = df.loc[
-                (~df["id_report"].isin(old_ids["id_report"]))
-                & (~df["prompt"].isin(old_ids["prompt"]))
-            ]
-        else:
-            data = df
-
-        if len(data) > 0:
-            log(f"Loading {len(data)} rows to {dataset_id}.{table_id}")
-
-            antes = datetime.now()
-            final_responses = []
-            finish_reasons = []
-            prompts = [(model_name, row["prompt"]) for _, row in data.iterrows()]
-
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                futures = [
-                    executor.submit(safe_generate_content, model, prompt)
-                    for model, prompt in prompts
-                ]
-
-                for future in concurrent.futures.as_completed(futures):
-                    response = future.result()
-                    final_responses.append(response[0])
-                    finish_reasons.append(response[1])
-
-            # load_data_from_dataframe(data, dataset_id, table_id)
-            # ml_generate_text(data, final_responses, prompts)
-            depois = datetime.now()
-
-            log(f">>>>>>>>>> Tempo total: {depois - antes}\n")
-            # log(final_responses[0])
-            # final_responses
-
-            dados_dict = []
-            finish_reasons_list = []
-            for json_string, finish_reason in zip(final_responses, finish_reasons):
-                try:
-                    if "```json" in json_string:
-                        # Remover a marcação e extrair a parte JSON
-                        json_part = json_string.split("```json")[1].split("```")[0].strip()
-
-                        # Converte a string JSON em um dicionário
-                        dados_dict.append(json.loads(json_part))
-                        finish_reasons_list.append(finish_reason)
-                    else:
-                        # log(f" JSON STRING BUGADA >>>>>>>>: {json_string}")
-                        dados_dict.append(json.loads(json_string))
-                        finish_reasons_list.append(finish_reason)
-
-                except (IndexError, json.JSONDecodeError) as e:
-                    log(f"Error processing json string: {json_string}\nError: {e}")
-
-            # log(dados_dict[0])
-            enriched_data = pd.DataFrame(dados_dict)
-            enriched_data["finish_reason"] = finish_reasons_list
-
-            final_df = pd.merge(data, enriched_data, on="id_report", how="left")
-
-            load_data_from_dataframe(final_df, dataset_id, table_id)
-        else:
-            log(f"No new data to load to {dataset_id}.{table_id}")
+    else:
+        log(f"No new data to load to {dataset_id}.{table_id}")
 
 
 @task

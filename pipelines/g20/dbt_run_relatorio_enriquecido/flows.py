@@ -35,8 +35,22 @@ with Flow(
 
     project_id = Parameter("project_id", default="rj-civitas")
     dataset_id = Parameter("dataset_id", default="integracao_reports")
-    table_id = Parameter("table_id", default="agenda")
-    minutes_interval = Parameter("minutes_interval", default=120)
+    table_id_enriquecido = Parameter("table_id_enriquecido", default="reports_enriquecidos")
+    prompt_enriquecimento = Parameter("prompt_enriquecimento", default="")
+    query_enriquecimento = Parameter("query_enriquecimento", default="")
+    start_datetime = Parameter("start_datetime", default=None)
+    end_datetime = Parameter("end_datetime", default=None)
+    minutes_interval = Parameter("minutes_interval", default=30)
+
+    table_id_correlacao = Parameter("table_id", default="reports_contexto_enriquecidos")
+
+    model_name = Parameter("model_name", default="gemini-1.5-flash-001")
+    max_output_tokens = Parameter("max_output_tokens", default=1024)
+    temperature = Parameter("temperature", default=0.2)
+    top_k = Parameter("top_k", default=32)
+    top_p = Parameter("top_p", default=1)
+    location = Parameter("location", default="us-central1")
+    batch_size = Parameter("batch_size", default=10)
 
     # secrets: dict = task_get_secret_folder(secret_path="/discord")
 
@@ -65,13 +79,28 @@ with Flow(
     #     raise_final_state=unmapped(True),
     # )
     occurrences = task_get_occurrences(
-        dataset_id=dataset_id, table_id="reports", minutes_interval=minutes_interval
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=table_id_enriquecido,
+        query_enriquecimento=query_enriquecimento,
+        prompt_enriquecimento=prompt_enriquecimento,
+        minutes_interval=minutes_interval,
+        start_datetime=start_datetime,
+        end_datetime=end_datetime,
     )
 
     reports_enriquecidos = task_update_dados_enriquecidos_table(
-        df=occurrences,
+        dataframe=occurrences,
         dataset_id=dataset_id,
-        table_id="reports_enriquecidos",
+        table_id=table_id_enriquecido,
+        model_name=model_name,
+        max_output_tokens=max_output_tokens,
+        temperature=temperature,
+        top_k=top_k,
+        top_p=top_p,
+        project_id=project_id,
+        location=location,
+        batch_size=batch_size,
     )
 
     reports_enriquecidos.set_upstream(occurrences)
