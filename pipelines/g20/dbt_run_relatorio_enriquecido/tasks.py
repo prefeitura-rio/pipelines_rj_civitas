@@ -105,6 +105,9 @@ def task_update_dados_enriquecidos_table(
 ) -> None:
 
     if len(dataframe) > 0:
+
+        log(f"Start enhancement of {len(dataframe)} occurrences")
+
         response_schema = EnrichResponseModel.schema()
         model_input = [
             {

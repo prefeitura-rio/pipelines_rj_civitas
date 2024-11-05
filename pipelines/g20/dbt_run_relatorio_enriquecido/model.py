@@ -6,7 +6,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List
 
 import vertexai
-from prefeitura_rio.pipelines_utils.logging import log
 from pydantic import BaseModel, Field
 from vertexai.preview import generative_models
 from vertexai.preview.generative_models import GenerationConfig, GenerativeModel
@@ -78,7 +77,7 @@ class Model:
                         top_k=model_data.get("top_k", 32),
                         top_p=model_data.get("top_p", 1),
                     )
-                    log(f"Predicted {index}/{total} in {time.time() - start_time:.2f} seconds")
+                    print(f"Predicted {index}/{total} in {time.time() - start_time:.2f} seconds")
 
                     response["index"] = model_data["index"]
                     response["error_name"] = None
@@ -88,9 +87,8 @@ class Model:
                 except Exception as e:
                     error_name = str(type(e).__name__)
                     error_message = str(traceback.format_exc(chain=False))
-                    log(
-                        f"Retrying {index}/{total}, retries left {retry - attempt - 1}. Error: {error_name}: {error_message}",
-                        level="error",
+                    print(
+                        f"Retrying {index}/{total}, retries left {retry - attempt - 1}. Error: {error_name}: {error_message}"
                     )
 
                 response = {}
