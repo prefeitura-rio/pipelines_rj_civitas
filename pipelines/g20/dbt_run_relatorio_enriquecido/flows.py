@@ -14,8 +14,7 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 )
 
 from pipelines.constants import constants
-
-# from pipelines.g20.dbt_run_relatorio_enriquecido.schedules import g20_reports_schedule
+from pipelines.g20.dbt_run_relatorio_enriquecido.schedules import g20_reports_schedule
 from pipelines.g20.dbt_run_relatorio_enriquecido.tasks import (
     task_get_occurrences,
     task_update_dados_enriquecidos_table,
@@ -125,4 +124,4 @@ g20_alerts.run_config = KubernetesRun(
     ],
 )
 
-# g20_alerts.schedule = g20_reports_schedule
+g20_alerts.schedule = g20_reports_schedule
