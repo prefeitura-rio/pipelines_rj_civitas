@@ -90,8 +90,8 @@ def task_get_occurrences(
 
 
 @task
-def task_get_date_execution() -> datetime:
-    return datetime.now(timezone.utc)
+def task_get_date_execution() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
 @task
@@ -107,7 +107,7 @@ def task_update_dados_enriquecidos_table(
     project_id: str = "rj-civitas",
     location: str = "us-central1",
     batch_size: int = 10,
-    date_execution: datetime = None,
+    date_execution: str = None,
 ) -> None:
 
     if len(dataframe) > 0:

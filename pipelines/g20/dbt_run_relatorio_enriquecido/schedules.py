@@ -132,7 +132,7 @@ with
             ifnull(id_source, '') as id_source,
             ifnull(id_report_original, '') as id_report_original,
             ifnull(
-                datetime(data_report, 'America/Sao_Paulo'), cast('' as datetime)
+                data_report, cast('' as datetime)
             ) as data_report,
             ifnull(
                 array(select ifnull(orgao, '') from unnest(orgaos) as orgao), []
