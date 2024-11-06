@@ -124,7 +124,8 @@ with Flow(
         reports_relacao.set_upstream(relations)
 
     with case(generate_alerts, True):
-        secrets: dict = task_get_secret_folder(secret_path="/discord")
+        secrets = task_get_secret_folder(secret_path="/discord")
+        secrets.set_upstream(reports_relacao)
 
         new_alerts = task_get_new_alerts(
             project_id=project_id,
@@ -132,47 +133,14 @@ with Flow(
             table_id=table_id_relacao,
             date_execution=date_execution,
         )
+        new_alerts.set_upstream(secrets)
 
         messages = task_build_messages_text(df=new_alerts)
+        messages.set_upstream(new_alerts)
 
         discord_messages = task_send_discord_messages(url_webhook=secrets["G20"], messages=messages)
+        discord_messages.set_upstream(messages)
 
-    # # Get TEMPLATE flow name
-    # materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
-    # materialization_labels = task_get_current_flow_run_labels()
-    # current_flow_project_name = get_current_flow_project_name()
-
-    # dump_prod_tables_to_materialize_parameters = [
-    #     {"dataset_id": dataset_id, "table_id": table_id, "dbt_alias": False}
-    # ]
-
-    # dump_prod_materialization_flow_runs = create_flow_run.map(
-    #     flow_name=unmapped(materialization_flow_name),
-    #     project_name=unmapped(current_flow_project_name),
-    #     parameters=dump_prod_tables_to_materialize_parameters,
-    #     labels=unmapped(materialization_labels),
-    # )
-
-    # dump_prod_materialization_flow_runs.set_upstream(secrets)
-
-    # dump_prod_wait_for_flow_run = wait_for_flow_run.map(
-    #     flow_run_id=dump_prod_materialization_flow_runs,
-    #     stream_states=unmapped(True),
-    #     stream_logs=unmapped(True),
-    #     raise_final_state=unmapped(True),
-    # )
-
-    # reports_enriquecidos_exists = task_check_if_table_exists(dataset_id=dataset_id, table_id='reports_enriquecidos')
-    # data = task_query_data_from_sql_file(model_dataset_id=dataset_id, model_table_id='reports_enriquecidos_v2', minutes_ago=10)
-
-    # messages = task_build_messages_text(df=data)
-    # messages.set_upstream(data)
-
-    # check_response = task_skip_flow_run(messages)
-    # check_response.set_upstream(messages)
-
-    # messages_discord = task_send_discord_messages(url_webhook=secrets["G20"], messages=messages)
-    # messages_discord.set_upstream(check_response)
 
 g20_alerts.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
 g20_alerts.run_config = KubernetesRun(

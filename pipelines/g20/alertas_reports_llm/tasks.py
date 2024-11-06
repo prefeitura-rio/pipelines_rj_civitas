@@ -192,6 +192,7 @@ def skip_flow_run(
         ENDRUN: Raises a Skipped state to terminate flow execution
     """
     skip = Skipped(message=message)
+    log(message)
     raise ENDRUN(state=skip)
 
 
@@ -207,10 +208,11 @@ def task_get_new_alerts(
     FROM `{project_id}.{dataset_id}.{table_id}`
     WHERE date_execution = '{date_execution}'
     """
+    log(f"Searching for new alerts with date_execution: {date_execution}")
     df = bd.read_sql(query)
 
     if len(df) == 0:
-        skip_flow_run(df)
+        skip_flow_run("There is no new alerts to be sent to Discord.")
     else:
         return df
 
@@ -219,8 +221,8 @@ def task_get_new_alerts(
 def task_build_messages_text(
     df: pd.DataFrame,
 ) -> List:
-    log("Building messages text...")
-    filtered_df = df.loc[df["relation"].str.lower() == "true"]
+    log("Building messages text for new alerts...")
+    filtered_df = df.loc[df["relation"]]  # Column with Boolean type
 
     selected_df = filtered_df[
         [
