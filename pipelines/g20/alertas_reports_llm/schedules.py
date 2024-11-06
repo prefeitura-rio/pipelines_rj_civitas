@@ -327,7 +327,7 @@ with
         from source_data a
         cross join (select * from `rj-civitas-dev.g20.contextos`) b
         where
-            and cast(a.data_report as datetime)
+            cast(a.data_report as datetime)
             >= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio)
             and cast(a.data_report as datetime)
             <= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_fim)
