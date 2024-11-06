@@ -137,12 +137,123 @@ def get_default_value_for_field(field: bigquery.SchemaField, length: int):
     return defaults.get(field.field_type, [None for _ in range(length)])
 
 
+def get_bq_table_schema(source: str = None) -> list[bigquery.SchemaField]:
+
+    relacao = [
+        bigquery.SchemaField(name="id_relacao", field_type="STRING", mode="REQUIRED"),
+        bigquery.SchemaField(name="id_report", field_type="STRING", mode="REQUIRED"),
+        bigquery.SchemaField(name="id_source", field_type="STRING", mode="REQUIRED"),
+        bigquery.SchemaField(name="id_enriquecimento", field_type="STRING", mode="REQUIRED"),
+        bigquery.SchemaField(name="id_report_original", field_type="STRING", mode="REQUIRED"),
+        bigquery.SchemaField(name="data_report", field_type="TIMESTAMP", mode="REQUIRED"),
+        bigquery.SchemaField(name="orgaos_report", field_type="STRING", mode="REPEATED"),
+        bigquery.SchemaField(name="categoria_report", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(
+            name="tipo_subtipo_report",
+            field_type="STRUCT",
+            mode="REPEATED",
+            fields=[
+                bigquery.SchemaField(name="subtipo", field_type="STRING", mode="REPEATED"),
+                bigquery.SchemaField(name="tipo", field_type="STRING", mode="NULLABLE"),
+            ],
+        ),
+        bigquery.SchemaField(name="descricao_report", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="latitude_report", field_type="FLOAT64", mode="NULLABLE"),
+        bigquery.SchemaField(name="longitude_report", field_type="FLOAT64", mode="NULLABLE"),
+        bigquery.SchemaField(name="main_topic_report", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="scope_level_report", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(
+            name="scope_level_explanation_report", field_type="STRING", mode="NULLABLE"
+        ),
+        bigquery.SchemaField(name="threat_level_report", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(
+            name="threat_explanation_report", field_type="STRING", mode="NULLABLE"
+        ),
+        bigquery.SchemaField(
+            name="predicted_time_interval_report", field_type="STRING", mode="NULLABLE"
+        ),
+        bigquery.SchemaField(
+            name="predicted_end_time_report", field_type="TIMESTAMP", mode="NULLABLE"
+        ),
+        bigquery.SchemaField(
+            name="predicted_time_explanation_report", field_type="STRING", mode="NULLABLE"
+        ),
+        bigquery.SchemaField(name="date_execution", field_type="TIMESTAMP", mode="NULLABLE"),
+        bigquery.SchemaField(name="id_contexto", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="tipo_contexto", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="datahora_inicio_contexto", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="datahora_fim_contexto", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="nome_contexto", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="descricao_contexto", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(
+            name="informacoes_adicionais_contexto", field_type="STRING", mode="NULLABLE"
+        ),
+        bigquery.SchemaField(name="endereco_contexto", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="local_contexto", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="geometria_contexto", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="raio_de_busca_contexto", field_type="INT64", mode="NULLABLE"),
+        bigquery.SchemaField(name="data_report_tz", field_type="TIMESTAMP", mode="NULLABLE"),
+        bigquery.SchemaField(name="data_inicio_tz", field_type="TIMESTAMP", mode="NULLABLE"),
+        bigquery.SchemaField(name="prompt_relacao", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="relation_explanation", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="relation_key_factors", field_type="STRING", mode="REPEATED"),
+        bigquery.SchemaField(name="relation_confidence", field_type="FLOAT64", mode="NULLABLE"),
+        bigquery.SchemaField(name="relation", field_type="BOOL", mode="NULLABLE"),
+        bigquery.SchemaField(name="finish_reason", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="error_name", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="error_message", field_type="STRING", mode="NULLABLE"),
+    ]
+    enriquecimento = [
+        bigquery.SchemaField(name="id_enriquecimento", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="id_report", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="id_source", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="id_report_original", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="data_report", field_type="TIMESTAMP", mode="NULLABLE"),
+        bigquery.SchemaField(name="orgaos", field_type="STRING", mode="REPEATED"),
+        bigquery.SchemaField(name="categoria", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(
+            name="tipo_subtipo_report",
+            field_type="STRUCT",
+            mode="REPEATED",
+            fields=[
+                bigquery.SchemaField(name="subtipo", field_type="STRING", mode="REPEATED"),
+                bigquery.SchemaField(name="tipo", field_type="STRING", mode="NULLABLE"),
+            ],
+        ),
+        bigquery.SchemaField(name="subtipo", field_type="STRING", mode="REPEATED"),
+        bigquery.SchemaField(name="tipo", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="descricao", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="logradouro", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="numero_logradouro", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="latitude", field_type="FLOAT", mode="NULLABLE"),
+        bigquery.SchemaField(name="longitude", field_type="FLOAT", mode="NULLABLE"),
+        bigquery.SchemaField(name="prompt_enriquecimento", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="main_topic", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="related_topics", field_type="STRING", mode="REPEATED"),
+        bigquery.SchemaField(name="scope_level_explanation", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="scope_level", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(
+            name="predicted_time_explanation", field_type="STRING", mode="NULLABLE"
+        ),
+        bigquery.SchemaField(name="predicted_time_interval", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="threat_explanation", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="threat_level", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="finish_reason", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="error_name", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="error_message", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="date_execution", field_type="TIMESTAMP", mode="NULLABLE"),
+    ]
+
+    schema = relacao if "relacao" in source else enriquecimento
+
+    return schema
+
+
 @task
 def task_get_llm_reponse_and_update_table(
     dataframe: pd.DataFrame,
     dataset_id: str,
     table_id: str,
-    schema: list[bigquery.SchemaField] = [],
     prompt_column: str = None,
     model_name: str = "gemini-1.5-flash",
     max_output_tokens: int = 1024,
@@ -164,6 +275,8 @@ def task_get_llm_reponse_and_update_table(
             response_schema = RelationResponseModel.schema()
         else:
             raise ValueError("prompt_column must be 'prompt_enriquecimento' or 'prompt_relacao'")
+
+        schema = get_bq_table_schema(source=prompt_column)
 
         model_input = [
             {
