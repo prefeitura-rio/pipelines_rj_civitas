@@ -2,4 +2,4 @@
 """
 """
 
-from pipelines.g20.dbt_run_relatorio_enriquecido.flows import *  # noqa
+from pipelines.g20.reports_llm.flows import *  # noqa
