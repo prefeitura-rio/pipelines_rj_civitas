@@ -194,6 +194,9 @@ def task_get_llm_reponse_and_update_table(
             batch_df = batch_df.drop(columns=["index"])
             batch_df["date_execution"] = pd.Timestamp(date_execution)
 
+            batch_df["error_name"] = batch_df["error_name"].astype(str)
+            batch_df["error_message"] = batch_df["error_message"].astype(str)
+
             schema_columns = {field.name: field for field in schema}
             missing_columns = set(schema_columns.keys()) - set(batch_df.columns)
 
