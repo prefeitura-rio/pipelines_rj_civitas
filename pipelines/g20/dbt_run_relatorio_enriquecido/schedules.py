@@ -207,7 +207,7 @@ with
         select
             cast(
                 farm_fingerprint(concat(id_report, prompt_enriquecimento)) as string
-            ) as id,
+            ) as id_enriquecimento,
             *
         from prompt_table
     )
@@ -215,13 +215,192 @@ with
 __final_select_replacer__
 """
 
-parameters_tables = [
-    {
-        "query_enriquecimento": query_enriquecimento,
-        "prompt_enriquecimento": prompt_enriquecimento,
-        "batch_size": 10,
-    },
-]
+
+prompt_relacao = (
+    prompt_contexto
+) = """
+Você é um analista de segurança especializado no evento do G20.
+Sua função é definir se existe relação entre a ocorrencia e o contexto fornecido.
+
+##THOUGHT PROCESS##
+
+### Subtask 1:
+- **Descrição**: Extrair e identificar as principais informações sobre a ocorrência.
+- **Raciocínio**: Compreender as características da ocorrência (ID, descrição, tópico principal e abrangência) é fundamental para estabelecer comparações com o contexto. Isso permite que o analista identifique elementos únicos que podem influenciar a relação com o contexto.
+- **Critérios de sucesso**: Extração correta das informações de ID, descrição, tópico principal e abrangência da ocorrência.
+
+### Subtask 2:
+- **Descrição**: Analisar e extrair as principais informações sobre o contexto fornecido.
+- **Raciocínio**: Assim como na ocorrência, conhecer detalhadamente o contexto permite ao analista encontrar pontos de conexão com a ocorrência. Esses elementos incluem o tipo, descrição, informações adicionais e local do contexto.
+- **Critérios de sucesso**: Extração precisa dos campos de tipo, descrição, informações adicionais e local do contexto.
+
+### Subtask 3:
+- **Descrição**: Comparar fatores chave entre a ocorrência e o contexto para determinar se existe relação.
+- **Raciocínio**: Comparar os elementos centrais de ambos (tópico principal da ocorrência, tipo e local do contexto) é essencial para decidir se existe uma relação observável entre as duas partes. Esse é um passo crítico para justificar e evidenciar o vínculo entre ocorrência e contexto.
+- **Critérios de sucesso**: A análise deve identificar ao menos um fator-chave que justifique a relação entre a ocorrência e o contexto.
+
+### Subtask 4:
+- **Descrição**: Determinar e justificar a explicação detalhada da relação entre a ocorrência e o contexto.
+- **Raciocínio**: Oferecer uma explicação detalhada da relação (ou ausência dela) fornece clareza e transparência ao analista. Para justificar de forma prática, exemplos de situações similares e dados específicos da ocorrência e
+do contexto ajudam a solidificar a análise. De um peso maior para correlação entre lugares proximos.
+- **Critérios de sucesso**: A explicação deve ser objetiva, coerente e se basear em dados observáveis, incluindo exemplos práticos quando aplicável.
+
+### Subtask 5:
+- **Descrição**: Listar fatores-chave que influenciam a relação.
+- **Raciocínio**: Identificar e listar os fatores específicos que indicam a relação entre ocorrência e contexto oferece uma visão estruturada dos elementos de semelhança ou dissonância. Esses fatores guiam a análise e apoiam as justificativas.
+- **Critérios de sucesso**: A lista deve incluir fatores relevantes, como semelhança temática, geográfica ou contextual.
+
+### Subtask 6:
+- **Descrição**: Calcular o nível de confiança da relação entre ocorrência e contexto em uma escala de 0 a 1.
+- **Raciocínio**: Atribuir um valor quantitativo de confiança oferece uma métrica objetiva e ajuda a padronizar a avaliação de relações. Esse valor reflete a força da semelhança entre ocorrência e contexto com base nos fatores observados.
+- **Critérios de sucesso**: Definir um valor numérico que se alinha com o nível de similaridade, de forma transparente e proporcional ao contexto e à ocorrência.
+
+### Subtask 7:
+- **Descrição**: Determinar e validar o valor final de relação como verdadeiro (true) ou falso (false).
+- **Raciocínio**: A decisão final de existência de relação é binária e serve como uma conclusão prática para que outros analistas ou sistemas tomem ações subsequentes.
+- **Critérios de sucesso**: Valor booleano final (true ou false) baseado em análise fundamentada e coerente com as evidências e critérios estabelecidos.
+
+
+
+Ocorrencia:
+
+Descricao: ''',
+                descricao_report,
+                '''
+
+Topico principal: ''',
+                main_topic_report,
+                '''
+
+Abrangencia: ''',
+                scope_level_report,
+                '''
+
+Contexto:
+
+Tipo: ''',
+                tipo_contexto,
+                '''
+
+Descricao: ''',
+                descricao_contexto,
+                '''
+
+Informacoes adicionais: ''',
+                informacoes_adicionais_contexto,
+                '''
+Local: ''',
+                local_contexto,
+                '''
+
+
+Retorne apenas os seguintes campos em JSON:
+{
+  'relation_explanation':'explicacao detalhada do motivo da relacao entre a ocorrencia e o contexto',
+  'relation_key_factors' ['lista de fatores que indica a relação entre o contexto e a ocorrencia'],
+  'relation_confidence': 'nivel de semelhança entre o contexto e a ocorrencia. Valor entre 0 e 1',
+  'relation':'valor da relacao. true/false'
+}
+
+Lembrete: Complete todas as justificativas com base em dados observáveis e use exemplos práticos se possível para reforçar a coerência na análise.
+
+
+RETORNE APENAS O JSON, SEM EXPLICAÇÕES
+"""
+
+
+query_relacao = """
+with
+    source_data as (
+        select
+            *
+        from `rj-civitas.integracao_reports.reports_enriquecidos`
+    ),
+
+    filtered_occurrences as (
+        select
+            a.id_report,
+            a.id_source,
+            a.id as id_enriquecimento,
+            a.id_report_original,
+            a.data_report,
+            a.orgaos as orgaos_report,
+            a.categoria as categoria_report,
+            a.tipo_subtipo as tipo_subtipo_report,
+            a.descricao as descricao_report,
+            a.latitude as latitude_report,
+            a.longitude as longitude_report,
+            a.main_topic as main_topic_report,
+            a.scope_level as scope_level_report,
+            a.scope_level_explanation as scope_level_explanation_report,
+            a.threat_level as threat_level_report,
+            a.threat_explanation as threat_explanation_report,
+            a.predicted_time_interval as predicted_time_interval_report,
+            datetime_add(
+                a.data_report, interval cast(a.predicted_time_interval as int64) minute
+            ) as predicted_end_time_report,
+            a.predicted_time_explanation as predicted_time_explanation_report,
+            ifnull(
+                cast(a.date_execution as datetime), cast('' as datetime)
+            ) as date_execution,
+            ifnull(b.id, '') as id_contexto,
+            ifnull(b.tipo, '') as tipo_contexto,
+            ifnull(b.datahora_inicio, '') as datahora_inicio_contexto,
+            ifnull(b.datahora_fim, '') as datahora_fim_contexto,
+            ifnull(b.nome, '') as nome_contexto,
+            ifnull(b.descricao, '') as descricao_contexto,
+            ifnull(b.informacoes_adicionais, '') as informacoes_adicionais_contexto,
+            ifnull(b.endereco, '') as endereco_contexto,
+            ifnull(b.local, '') as local_contexto,
+            ifnull(b.geometria, '') as geometria_contexto,
+            ifnull(b.raio_de_busca, cast(5000 as int64)) as raio_de_busca_contexto,
+            ifnull(
+                cast(a.data_report as datetime), cast('' as datetime)
+            ) as data_report_tz,
+            ifnull(
+                parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio),
+                cast('' as datetime)
+            ) as data_inicio_tz
+        from source_data a
+        cross join (select * from `rj-civitas-dev.g20.contextos`) b
+        where
+            cast(a.data_report as datetime)
+            >= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio)
+            and cast(a.data_report as datetime)
+            <= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_fim)
+            and lower(a.threat_level) = 'alto'
+            and if(
+                (a.latitude = 0.0 or a.latitude is null)
+                or (a.longitude = 0.0 or a.longitude is null)
+                or (b.geometria is null),
+                true,
+                st_intersects(
+                    st_buffer(
+                        st_geogfromtext(b.geometria), coalesce(b.raio_de_busca, 5000)  -- RAIO PADRAO DE 5km
+                    ),
+                    st_geogpoint(a.longitude, a.latitude)
+                )
+            )
+    ),
+
+    prompt_table as (
+        select *, concat('''__prompt_replacer__''') as prompt_relacao
+        from filtered_occurrences
+        where __date_filter_replacer__
+    ),
+
+    prompt_id as (
+        select
+            cast(
+                farm_fingerprint(concat(id_report, prompt_relacao)) as string
+            ) as id_relacao,
+            *
+        from prompt_table
+    )
+
+    __final_select_replacer__
+"""
+
 
 g20_report_clocks = [
     IntervalClock(
@@ -231,11 +410,12 @@ g20_report_clocks = [
             constants.RJ_CIVITAS_AGENT_LABEL.value,
         ],
         parameter_defaults={
-            "query_enriquecimento": parameters["query_enriquecimento"],
-            "prompt_enriquecimento": parameters["prompt_enriquecimento"],
-            "batch_size": parameters["batch_size"],
+            "query_enriquecimento": query_enriquecimento,
+            "prompt_enriquecimento": prompt_enriquecimento,
+            "query_relacao": query_relacao,
+            "prompt_relacao": prompt_relacao,
+            "batch_size": 10,
         },
     )
-    for count, parameters in enumerate(parameters_tables)
 ]
 g20_reports_schedule = Schedule(clocks=untuple(g20_report_clocks))

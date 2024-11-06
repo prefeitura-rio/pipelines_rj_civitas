@@ -5,7 +5,7 @@ This module contains tasks for appending new data to Google Sheets.
 import asyncio
 
 # import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import List, Literal
 
 import basedosdados as bd
@@ -19,7 +19,11 @@ from prefeitura_rio.pipelines_utils.infisical import get_secret_folder
 from prefeitura_rio.pipelines_utils.io import get_root_path
 from prefeitura_rio.pipelines_utils.logging import log
 
-from pipelines.g20.dbt_run_relatorio_enriquecido.model import EnrichResponseModel, Model
+from pipelines.g20.dbt_run_relatorio_enriquecido.model import (
+    EnrichResponseModel,
+    Model,
+    RelationResponseModel,
+)
 from pipelines.g20.dbt_run_relatorio_enriquecido.utils import (  # ml_generate_text,; query_data_from_sql_file,
     check_if_table_exists,
     get_delay_time_string,
@@ -32,73 +36,92 @@ bd.config.from_file = True
 tz = pytz.timezone("America/Sao_Paulo")
 
 
-# use bd.read_sql to get the table integrations from
-# rj-civitas.integracao_reports.reports
 @task
-def task_get_occurrences(
+def task_get_date_execution() -> str:
+    return datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M:%S")
+
+
+@task
+def task_get_data(
     project_id: str,
     dataset_id: str,
+    source: str,
     table_id: str,
-    query_enriquecimento: str,
-    prompt_enriquecimento: str,
+    query_template: str,
+    prompt: str,
     start_datetime: str = None,
     end_datetime: str = None,
     minutes_interval: int = 30,
+    date_execution: str = None,
 ) -> pd.DataFrame:
-    try:
-        minutes_interval = int(minutes_interval)
-    except Exception as e:
-        raise ValueError(f"{e} - minutes_interval must be an integer")
+    if source not in ["enriquecimento", "relacao"]:
+        raise ValueError("source deve ser 'enriquecimento' ou 'relacao'")
 
-    if start_datetime is None or end_datetime is None:
-        date_filter = f"""
-                datetime(data_report, 'America/Sao_Paulo') >= timestamp_sub(
+    if source == "enriquecimento":
+        try:
+            minutes_interval = int(minutes_interval)
+        except Exception as e:
+            raise ValueError(f"{e} - minutes_interval must be an integer")
+
+        date_filter = (
+            f"""
+                datetime(data_report) >= timestamp_sub(
                 datetime(current_timestamp(), 'America/Sao_Paulo'), interval {minutes_interval} minute
                 )
         """
-    else:
-        date_filter = f"""
-                datetime(data_report, 'America/Sao_Paulo')  BETWEEN {start_datetime} AND {end_datetime}
+            if start_datetime is None or end_datetime is None
+            else f"""
+                datetime(data_report)  BETWEEN '{start_datetime}' AND '{end_datetime}'
         """
+        )
+    else:
+        date_filter = (
+            f"""
+                date_execution = '{date_execution}'
+        """
+            if start_datetime is None or end_datetime is None
+            else f"""
+                datetime(data_report) BETWEEN '{start_datetime}' AND '{end_datetime}'
+        """
+        )
 
     table_exists = check_if_table_exists(dataset_id=dataset_id, table_id=table_id)
 
-    if table_exists:
-        select_replacer = f"""
-        select p.*
+    id_column = "id_enriquecimento" if source == "enriquecimento" else "id_relacao"
+    select_replacer = (
+        f"""
+        select
+            p.*
         from prompt_id p
-        left join `{project_id}.{dataset_id}.{table_id}` e on p.id = e.id
+        left join `{project_id}.{dataset_id}.{table_id}` e on p.{id_column} = e.{id_column}
         where e.id_report is null
-        """
-    else:
-        select_replacer = """
+    """
+        if table_exists
+        else """
         select
             *
         from prompt_id
-            """
+    """
+    )
 
     query = (
-        query_enriquecimento.replace("__prompt_replacer__", prompt_enriquecimento)
+        query_template.replace("__prompt_replacer__", prompt)
         .replace("__date_filter_replacer__", date_filter)
         .replace("__final_select_replacer__", select_replacer)
     )
 
-    log(f"Query: {query}")
+    log(f"Query {source.capitalize()}:\n\n{query}")
     dataframe = bd.read_sql(query)
 
     return dataframe.reset_index()
 
 
 @task
-def task_get_date_execution() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-
-
-@task
-def task_update_dados_enriquecidos_table(
+def task_get_llm_reponse_and_update_table(
     dataframe: pd.DataFrame,
     dataset_id: str,
     table_id: str,
+    prompt_column: str = None,
     model_name: str = "gemini-1.5-flash",
     max_output_tokens: int = 1024,
     temperature: float = 0.2,
@@ -112,9 +135,14 @@ def task_update_dados_enriquecidos_table(
 
     if len(dataframe) > 0:
 
-        log(f"Start enhancement of {len(dataframe)} occurrences")
+        log(f"Start generate llm response for {prompt_column} with {len(dataframe)} rows")
+        if prompt_column == "prompt_enriquecimento":
+            response_schema = EnrichResponseModel.schema()
+        elif prompt_column == "prompt_relacao":
+            response_schema = RelationResponseModel.schema()
+        else:
+            raise ValueError("prompt_column must be 'prompt_enriquecimento' or 'prompt_relacao'")
 
-        response_schema = EnrichResponseModel.schema()
         model_input = [
             {
                 "prompt_text": prompt,
@@ -126,9 +154,7 @@ def task_update_dados_enriquecidos_table(
                 "top_p": top_p,
                 "index": index,
             }
-            for prompt, index in zip(
-                dataframe["prompt_enriquecimento"].tolist(), dataframe["index"].tolist()
-            )
+            for prompt, index in zip(dataframe[prompt_column].tolist(), dataframe["index"].tolist())
         ]
         model = Model()
         model.vertex_init(project_id=project_id, location=location)

@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List
 
 import vertexai
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from vertexai.preview import generative_models
 from vertexai.preview.generative_models import GenerationConfig, GenerativeModel
 
@@ -19,16 +19,21 @@ SAFETY_CONFIG = {
 
 
 class EnrichResponseModel(BaseModel):
-    main_topic: str = Field(..., description="The main topic of the report")
-    related_topics: List[str] = Field(..., description="Related topics to the main topic")
-    scope_level_explanation: str = Field(..., description="Explanation of the scope level")
-    scope_level: str = Field(..., description="The scope level")
-    predicted_time_explanation: str = Field(
-        ..., description="Explanation of the predicted time interval"
-    )
-    predicted_time_interval: str = Field(..., description="Predicted time interval")
-    threat_explanation: str = Field(..., description="Explanation of the threat level")
-    threat_level: str = Field(..., description="The threat level")
+    main_topic: str
+    related_topics: List[str]
+    scope_level_explanation: str
+    scope_level: str
+    predicted_time_explanation: str
+    predicted_time_interval: str
+    threat_explanation: str
+    threat_level: str
+
+
+class RelationResponseModel(BaseModel):
+    relation_explanation: str
+    relation_key_factors: List[str]
+    relation_confidence: float
+    relation: bool
 
 
 class Model:

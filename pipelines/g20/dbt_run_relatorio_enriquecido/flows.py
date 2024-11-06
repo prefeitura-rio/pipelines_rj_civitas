@@ -16,9 +16,9 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 from pipelines.constants import constants
 from pipelines.g20.dbt_run_relatorio_enriquecido.schedules import g20_reports_schedule
 from pipelines.g20.dbt_run_relatorio_enriquecido.tasks import (
+    task_get_data,
     task_get_date_execution,
-    task_get_occurrences,
-    task_update_dados_enriquecidos_table,
+    task_get_llm_reponse_and_update_table,
 )
 
 # from prefeitura_rio.core import settings
@@ -35,14 +35,19 @@ with Flow(
 
     project_id = Parameter("project_id", default="rj-civitas")
     dataset_id = Parameter("dataset_id", default="integracao_reports")
+
     table_id_enriquecido = Parameter("table_id_enriquecido", default="reports_enriquecidos")
     prompt_enriquecimento = Parameter("prompt_enriquecimento", default="")
     query_enriquecimento = Parameter("query_enriquecimento", default="")
-    start_datetime = Parameter("start_datetime", default=None)
-    end_datetime = Parameter("end_datetime", default=None)
-    minutes_interval = Parameter("minutes_interval", default=30)
+    start_datetime_enriquecimento = Parameter("start_datetime_enriquecimento", default=None)
+    end_datetime_enriquecimento = Parameter("end_datetime_enriquecimento", default=None)
+    minutes_interval_enriquecimento = Parameter("minutes_interval_enriquecimento", default=30)
 
-    table_id_correlacao = Parameter("table_id", default="reports_contexto_enriquecidos")
+    table_id_relacao = Parameter("table_id", default="reports_contexto_enriquecidos")
+    prompt_relacao = Parameter("prompt_relacao", default="")
+    query_relacao = Parameter("query_relacao", default="")
+    start_datetime_relacao = Parameter("start_datetime_relacao", default=None)
+    end_datetime_relacao = Parameter("end_datetime_relacao", default=None)
 
     model_name = Parameter("model_name", default="gemini-1.5-flash-001")
     max_output_tokens = Parameter("max_output_tokens", default=1024)
@@ -82,19 +87,20 @@ with Flow(
     date_execution = task_get_date_execution()
     date_execution.set_upstream(batch_size)
 
-    occurrences = task_get_occurrences(
+    occurrences = task_get_data(
+        source="enriquecimento",
         project_id=project_id,
         dataset_id=dataset_id,
         table_id=table_id_enriquecido,
-        query_enriquecimento=query_enriquecimento,
-        prompt_enriquecimento=prompt_enriquecimento,
-        minutes_interval=minutes_interval,
-        start_datetime=start_datetime,
-        end_datetime=end_datetime,
+        query_template=query_enriquecimento,
+        prompt=prompt_enriquecimento,
+        minutes_interval_enriquecimento=minutes_interval_enriquecimento,
+        start_datetime=start_datetime_enriquecimento,
+        end_datetime=end_datetime_enriquecimento,
     )
     occurrences.set_upstream(date_execution)
 
-    reports_enriquecidos = task_update_dados_enriquecidos_table(
+    reports_enriquecidos = task_get_llm_reponse_and_update_table(
         dataframe=occurrences,
         dataset_id=dataset_id,
         table_id=table_id_enriquecido,
@@ -107,9 +113,40 @@ with Flow(
         location=location,
         batch_size=batch_size,
         date_execution=date_execution,
+        prompt_column="prompt_enriquecimento",
     )
 
     reports_enriquecidos.set_upstream(occurrences)
+
+    relations = task_get_data(
+        source="relacao",
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=table_id_relacao,
+        query_template=query_relacao,
+        prompt=prompt_relacao,
+        start_datetime=start_datetime_relacao,
+        end_datetime=end_datetime_relacao,
+        date_execution=date_execution,
+    )
+    relations.set_upstream(reports_enriquecidos)
+
+    reports_relacao = task_get_llm_reponse_and_update_table(
+        dataframe=relations,
+        dataset_id=dataset_id,
+        table_id=table_id_relacao,
+        model_name=model_name,
+        max_output_tokens=max_output_tokens,
+        temperature=temperature,
+        top_k=top_k,
+        top_p=top_p,
+        project_id=project_id,
+        location=location,
+        batch_size=batch_size,
+        date_execution=date_execution,
+        prompt_column="prompt_relacao",
+    )
+    reports_relacao.set_upstream(relations)
 
     # reports_enriquecidos_exists = task_check_if_table_exists(dataset_id=dataset_id, table_id='reports_enriquecidos')
     # data = task_query_data_from_sql_file(model_dataset_id=dataset_id, model_table_id='reports_enriquecidos_v2', minutes_ago=10)
