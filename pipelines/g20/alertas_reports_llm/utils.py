@@ -19,7 +19,7 @@ from vertexai.generative_models import GenerativeModel  # GenerationConfig,
 tz = pytz.timezone("America/Sao_Paulo")
 
 
-def get_delay_time_string(df_ocorrencias: pd.DataFrame, datetime_column: str):
+def get_delay_time_string(df_ocorrencias: pd.DataFrame, datetime_column_name: str):
     """
     Returns a string with the time difference between the current datetime and the datetime
     in the 'data_ocorrencia' column of the given dataframe.
@@ -30,8 +30,8 @@ def get_delay_time_string(df_ocorrencias: pd.DataFrame, datetime_column: str):
     Returns:
         str: A string with the time difference (e.g. "3 dias, 2 horas, 1 minuto e 2 segundos").
     """
-    occurrence_datetime = df_ocorrencias[datetime_column]
-    delta = datetime.now(tz=tz) - occurrence_datetime.tz_localize(tz)
+    occurrence_timestamp = df_ocorrencias[datetime_column_name]
+    delta = datetime.now(tz=tz) - occurrence_timestamp
 
     days = delta.days
     hours, remainder = divmod(delta.seconds, 3600)
