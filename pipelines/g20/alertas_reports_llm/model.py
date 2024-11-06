@@ -63,7 +63,12 @@ class Model:
             ),
             safety_settings=SAFETY_CONFIG,
         )
-        return json.loads(response.text)
+
+        for candidate in response.candidates:
+            finish_reason = str(candidate.finish_reason)
+        reponse_dict = json.loads(response.text)
+        reponse_dict["finish_reason"] = finish_reason
+        return reponse_dict
 
     def model_predict_batch(self, model_input: List[dict], retry: int = 5, max_workers: int = 10):
         def process_prompt(model_data, index, total, retry):
