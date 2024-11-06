@@ -16,7 +16,6 @@ from prefect import task
 from prefect.engine.runner import ENDRUN
 from prefect.engine.state import Skipped
 from prefeitura_rio.pipelines_utils.infisical import get_secret_folder
-from prefeitura_rio.pipelines_utils.io import get_root_path
 from prefeitura_rio.pipelines_utils.logging import log
 
 from pipelines.g20.alertas_reports_llm.model import (
@@ -179,52 +178,47 @@ def task_get_llm_reponse_and_update_table(
         log(f"No new data to load to {dataset_id}.{table_id}")
 
 
-@task
-def task_query_data_from_sql_file(
-    model_dataset_id: str, model_table_id: str, minutes_ago: int = 30
-) -> pd.DataFrame:
-    log(f"Querying data from {model_dataset_id}.{model_table_id}")
-
-    try:
-        minutes_ago = int(minutes_ago)
-    except Exception as e:
-        raise ValueError(f"{e} - minutes_ago must be an integer")
-
-    root_path = get_root_path()
-    model_path = root_path / f"queries/models/{model_dataset_id}/{model_table_id}.sql"
-    query = model_path.read_text(encoding="utf-8")
-    final_query = query.replace("interval 30 minute", f"interval {minutes_ago} minute")
-    # query = f"""SELECT * FROM {dataset_id}.{table_id}"""
-
-    df = bd.read_sql(final_query)
-
-    return df
-
-
 # @task
-# def filter_new_data(df: pd.DataFrame, dataset_id: str, table_id: str) -> pd.DataFrame:
-#     query = f"""SELECT id FROM {dataset_id}.{table_id}"""
-#     path = root_path / f"queries/models/{dataset_id}/{table_id}.sql"
-#     query = model_path.read_text(encoding="utf-8")
-#     # query = f"""SELECT * FROM {dataset_id}.{table_id}"""
+def skip_flow_run(
+    message: str,
+) -> None:
+    """
+    Skips the flow run by raising a Skipped state with the provided message.
 
-#     df = bd.read_sql(query)
+    Args:
+        message: Message to include in the Skipped state
 
-#     return df
-# query = f""""""
-
-
-@task
-def task_skip_flow_run(data):
-    if len(data) == 0:
-        message = "There is no data to be sent to Discord."
-        log(message)
-        skip = Skipped(message=message)
-        raise ENDRUN(state=skip)
+    Raises:
+        ENDRUN: Raises a Skipped state to terminate flow execution
+    """
+    skip = Skipped(message=message)
+    raise ENDRUN(state=skip)
 
 
 @task
-def task_build_messages_text(df: pd.DataFrame) -> List:
+def task_get_new_alerts(
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    date_execution: str,
+) -> pd.DataFrame:
+    query = f"""
+    SELECT *
+    FROM `{project_id}.{dataset_id}.{table_id}`
+    WHERE date_execution = '{date_execution}'
+    """
+    df = bd.read_sql(query)
+
+    if len(df) == 0:
+        skip_flow_run(df)
+    else:
+        return df
+
+
+@task
+def task_build_messages_text(
+    df: pd.DataFrame,
+) -> List:
     log("Building messages text...")
     filtered_df = df.loc[df["relation"].str.lower() == "true"]
 
@@ -267,7 +261,7 @@ def task_build_messages_text(df: pd.DataFrame) -> List:
 
 
 @task(max_retries=3, retry_delay=timedelta(seconds=10))
-def task_send_discord_messages(url_webhook: str, messages: List[str], image_data=None):
+def task_send_discord_messages(url_webhook: str, messages: List[str], image_data=None) -> None:
     """
     Send a list of messages to Discord using the given webhook URL.
 

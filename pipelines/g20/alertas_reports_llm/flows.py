@@ -13,9 +13,13 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 from pipelines.constants import constants
 from pipelines.g20.alertas_reports_llm.schedules import g20_reports_schedule
 from pipelines.g20.alertas_reports_llm.tasks import (
+    task_build_messages_text,
     task_get_data,
     task_get_date_execution,
     task_get_llm_reponse_and_update_table,
+    task_get_new_alerts,
+    task_get_secret_folder,
+    task_send_discord_messages,
 )
 
 with Flow(
@@ -48,6 +52,8 @@ with Flow(
     top_p = Parameter("top_p", default=1)
     location = Parameter("location", default="us-central1")
     batch_size = Parameter("batch_size", default=10)
+
+    generate_alerts = Parameter("generate_alerts", default=True)
 
     date_execution = task_get_date_execution()
     date_execution.set_upstream(batch_size)
@@ -117,7 +123,19 @@ with Flow(
         )
         reports_relacao.set_upstream(relations)
 
-    # secrets: dict = task_get_secret_folder(secret_path="/discord")
+    with case(generate_alerts, True):
+        secrets: dict = task_get_secret_folder(secret_path="/discord")
+
+        new_alerts = task_get_new_alerts(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=table_id_relacao,
+            date_execution=date_execution,
+        )
+
+        messages = task_build_messages_text(df=new_alerts)
+
+        discord_messages = task_send_discord_messages(url_webhook=secrets["G20"], messages=messages)
 
     # # Get TEMPLATE flow name
     # materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
