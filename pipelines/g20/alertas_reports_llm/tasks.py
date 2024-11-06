@@ -406,9 +406,16 @@ def task_build_messages_text(
         fonte_report = df_report["id_source"].unique()[0]
         data_report_str = data_report.strftime("%Y-%m-%d %H:%M:%S")
         descricao_report = df_report["descricao_report"].unique()[0]
+        descricao_report = "Não Informado" if descricao_report == "" else descricao_report
 
         contextos_list = df_report[
-            ["nome_contexto", "relation_confidence", "relation_key_factors", "id_relacao"]
+            [
+                "nome_contexto",
+                "relation_confidence",
+                "relation_key_factors",
+                "id_relacao",
+                "relation_explanation",
+            ]
         ].to_dict("records")
 
         msg += f"""
@@ -424,19 +431,21 @@ def task_build_messages_text(
 ----
 """
 
-        for contexto in contextos_list:
+        for index, contexto in enumerate(contextos_list):
             nome_contexto = contexto["nome_contexto"].strip()
             nome_contexto = "Não Informado" if nome_contexto == "" else nome_contexto
             msg += f"""
-**{nome_contexto}**
-- **ID Relação:** {contexto['id_relacao']}
+**{index+1}. {nome_contexto}**
 - **Confiança:** {contexto['relation_confidence']}
 - **Fatores da Relação:**
 """
             for fator in contexto["relation_key_factors"]:
                 msg += f"""  - {fix_bad_formatting(fator)}\n"""
+            # msg+=f"- **Descrição Relação:** {fix_bad_formatting(contexto['relation_explanation'])}\n"
+            msg += f"- **ID Relação:** {contexto['id_relacao']}\n"
 
         messages.append(msg)
+
     return messages
 
 

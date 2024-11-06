@@ -24,7 +24,7 @@ def fix_bad_formatting(text: str) -> str:
     return re.sub(r"\n+", "", text)
 
 
-def get_delay_time_string(df_ocorrencias: pd.DataFrame, datetime_column_name: str):
+def get_delay_time_string(occurrence_timestamp):
     """
     Returns a string with the time difference between the current datetime and the datetime
     in the 'data_ocorrencia' column of the given dataframe.
@@ -35,7 +35,7 @@ def get_delay_time_string(df_ocorrencias: pd.DataFrame, datetime_column_name: st
     Returns:
         str: A string with the time difference (e.g. "3 dias, 2 horas, 1 minuto e 2 segundos").
     """
-    occurrence_timestamp = df_ocorrencias[datetime_column_name]
+
     delta = datetime.now(tz=tz) - occurrence_timestamp
 
     days = delta.days
