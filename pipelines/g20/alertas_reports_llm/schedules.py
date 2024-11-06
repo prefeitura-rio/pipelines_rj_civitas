@@ -179,9 +179,7 @@ __final_select_replacer__
 """
 
 
-prompt_relacao = (
-    prompt_contexto
-) = """
+prompt_relacao = """
 Você é um analista de segurança especializado no evento do G20.
 Sua função é definir se existe relação entre a ocorrencia e o contexto fornecido.
 

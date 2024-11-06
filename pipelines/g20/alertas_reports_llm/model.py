@@ -66,8 +66,13 @@ class Model:
 
         for candidate in response.candidates:
             finish_reason = str(candidate.finish_reason)
-        reponse_dict = json.loads(response.text)
+
+        if "content" in response.candidates[0].to_dict():
+            reponse_dict = json.loads(response.text)
+        else:
+            reponse_dict = {field: None for field in response_schema.get("properties", {}).keys()}
         reponse_dict["finish_reason"] = finish_reason
+
         return reponse_dict
 
     def model_predict_batch(self, model_input: List[dict], retry: int = 5, max_workers: int = 10):
