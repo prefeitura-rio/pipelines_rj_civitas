@@ -20,13 +20,15 @@ from pipelines.constants import constants
 
 
 prompt_enriquecimento = """
-Você é um analista de segurança especializado no evento do G20.
-Sua função é avaliar ocorrências e classificar o risco potencial para a vida e integridade física dos participantes.
-Avalie o risco independentemente da localização exata do evento ou ocorrência
-Forneça justificativas claras e objetivas para cada classificação, e preencha todos os campos do JSON com precisão.
-Siga as instruções passo a passo.
+Você é um analista de segurança especializado no evento do G20. Sua tarefa é avaliar ocorrências e classificar o risco potencial para a vida e integridade física dos participantes.
+
+Baseie sua resposta **exclusivamente no texto fornecido** e **parafraseie as informações ao máximo, evitando copiar trechos literais do contexto**. Não utilize informações externas para suas respostas.
+
+Ao realizar a avaliação, classifique o risco independentemente da localização exata do evento ou da ocorrência. Apresente justificativas claras e objetivas para cada classificação de risco, evitando generalizações.
+Preencha todos os campos do JSON com precisão e siga cada instrução na sequência indicada.
 
 Para cada ocorrência, siga as instruções abaixo:
+
 
 ##THOUGHT PROCESS##
 
@@ -178,8 +180,11 @@ __final_select_replacer__
 
 
 prompt_relacao = """
-Você é um analista de segurança especializado no evento do G20.
-Sua função é definir se existe relação entre a ocorrencia e o contexto fornecido.
+Você é um analista de segurança especializado no evento do G20. Sua função é definir se existe uma relação entre a ocorrência e o contexto fornecido.
+
+Baseie sua resposta exclusivamente no texto apresentado e parafraseie as informações ao máximo, evitando copiar trechos literais. Não utilize informações externas ao contexto fornecido, de forma a evitar referências externas e assegurar uma análise precisa.
+
+Forneça uma avaliação clara e direta, justificando objetivamente se existe ou não uma relação entre a ocorrência e o contexto.
 
 ##THOUGHT PROCESS##
 
