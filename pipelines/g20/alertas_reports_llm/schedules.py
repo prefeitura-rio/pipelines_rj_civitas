@@ -293,6 +293,8 @@ with
             a.categoria as categoria_report,
             a.tipo_subtipo as tipo_subtipo_report,
             a.descricao as descricao_report,
+            a.logradouro as logradouro_report,
+            a.numero_logradouro as numero_logradouro_report,
             a.latitude as latitude_report,
             a.longitude as longitude_report,
             a.main_topic as main_topic_report,

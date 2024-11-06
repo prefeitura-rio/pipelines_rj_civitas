@@ -158,6 +158,8 @@ def get_bq_table_schema(source: str = None) -> list[bigquery.SchemaField]:
             ],
         ),
         bigquery.SchemaField(name="descricao_report", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="logradouro_report", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="numero_logradouro_report", field_type="STRING", mode="NULLABLE"),
         bigquery.SchemaField(name="latitude_report", field_type="FLOAT64", mode="NULLABLE"),
         bigquery.SchemaField(name="longitude_report", field_type="FLOAT64", mode="NULLABLE"),
         bigquery.SchemaField(name="main_topic_report", field_type="STRING", mode="NULLABLE"),
@@ -391,6 +393,11 @@ def task_build_messages_text(
             "latitude_report",
             "longitude_report",
             "geometria_contexto",
+            "datahora_inicio_contexto",
+            "datahora_fim_contexto",
+            "logradouro_report",
+            "numero_logradouro_report",
+            "endereco_contexto",
         ]
     ]
 
@@ -404,9 +411,13 @@ def task_build_messages_text(
         data_report = df_report["data_report"].unique()[0]
         atraso_report = get_delay_time_string(occurrence_timestamp=data_report)
         fonte_report = df_report["id_source"].unique()[0]
-        data_report_str = data_report.strftime("%Y-%m-%d %H:%M:%S")
+        data_report_str = data_report.strftime("%d/%m/%Y %H:%M:%S")
         descricao_report = df_report["descricao_report"].unique()[0]
         descricao_report = "Não Informado" if descricao_report == "" else descricao_report
+        logradouro_report = df_report["logradouro_report"].unique()[0]
+        numero_logradouro_report = df_report["numero_logradouro_report"].unique()[0]
+
+        endereco_report = f"{logradouro_report}, {numero_logradouro_report}"
 
         contextos_list = df_report[
             [
@@ -415,18 +426,22 @@ def task_build_messages_text(
                 "relation_key_factors",
                 "id_relacao",
                 "relation_explanation",
+                "datahora_inicio_contexto",
+                "datahora_fim_contexto",
+                "endereco_contexto",
             ]
         ].to_dict("records")
 
         msg += f"""
 **Contextos:** {contextos}
 
-- **Atraso Ocorrência:** {atraso_report}
-- **Fonte Ocorrência:** {fonte_report}
-- **ID Ocorrência:** {id_report_original}
-- **Data Ocorrência:** {data_report_str}
+- **Atraso:** {atraso_report}
+- **Fonte:** {fonte_report}
+- **ID:** {id_report_original}
+- **Data:** {data_report_str}
+- **Endereço:** {endereco_report}
 
-- **Descrição Ocorrência:** {descricao_report}
+- **Descrição:** {descricao_report}
 
 ----
 """
@@ -434,15 +449,21 @@ def task_build_messages_text(
         for index, contexto in enumerate(contextos_list):
             nome_contexto = contexto["nome_contexto"].strip()
             nome_contexto = "Não Informado" if nome_contexto == "" else nome_contexto
+
+            endereco_contexto = contexto["endereco_contexto"]
+            endereco_contexto = "Não Informado" if endereco_contexto == "" else endereco_contexto
+
             msg += f"""
 **{index+1}. {nome_contexto}**
+- **Data Início:** {contexto['datahora_inicio_contexto']}
+- **Data Fim:** {contexto['datahora_fim_contexto']}
 - **Confiança:** {contexto['relation_confidence']}
-- **Fatores da Relação:**
+- **Fatores:**
 """
             for fator in contexto["relation_key_factors"]:
                 msg += f"""  - {fix_bad_formatting(fator)}\n"""
             # msg+=f"- **Descrição Relação:** {fix_bad_formatting(contexto['relation_explanation'])}\n"
-            msg += f"- **ID Relação:** {contexto['id_relacao']}\n"
+            msg += f"- **ID:** {contexto['id_relacao']}\n"
 
         messages.append(msg)
 
