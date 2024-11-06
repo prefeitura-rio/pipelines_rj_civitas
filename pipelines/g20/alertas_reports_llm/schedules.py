@@ -284,7 +284,7 @@ with
         select
             a.id_report,
             a.id_source,
-            a.id as id_enriquecimento,
+            a.id_enriquecimento,
             a.id_report_original,
             a.data_report,
             a.orgaos as orgaos_report,
