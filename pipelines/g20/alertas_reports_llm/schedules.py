@@ -278,6 +278,8 @@ with
         select
             *
         from `rj-civitas.integracao_reports.reports_enriquecidos`
+        where __date_filter_replacer__
+
     ),
 
     filtered_occurrences as (
@@ -349,7 +351,6 @@ with
     prompt_table as (
         select *, concat('''__prompt_replacer__''') as prompt_relacao
         from filtered_occurrences
-        where __date_filter_replacer__
     ),
 
     prompt_id as (
