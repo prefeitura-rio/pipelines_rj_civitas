@@ -333,15 +333,15 @@ with
             <= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_fim)
             and lower(a.threat_level) = 'alto'
             and if(
-                (a.latitude = 0.0 or a.latitude is null)
-                or (a.longitude = 0.0 or a.longitude is null)
+                (cast(a.latitude AS float64) = 0.0 or a.latitude is null)
+                or (cast(a.longitude AS float64) = 0.0 or a.longitude is null)
                 or (b.geometria is null),
                 true,
                 st_intersects(
                     st_buffer(
                         st_geogfromtext(b.geometria), coalesce(b.raio_de_busca, 5000)  -- RAIO PADRAO DE 5km
                     ),
-                    st_geogpoint(a.longitude, a.latitude)
+                    st_geogpoint(cast(a.longitude AS float64), cast(a.latitude AS float64))
                 )
             )
     ),
