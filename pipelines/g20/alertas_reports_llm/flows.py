@@ -57,7 +57,7 @@ with Flow(
         table_id=table_id_enriquecido,
         query_template=query_enriquecimento,
         prompt=prompt_enriquecimento,
-        minutes_interval_enriquecimento=minutes_interval_enriquecimento,
+        minutes_interval=minutes_interval_enriquecimento,
         start_datetime=start_datetime_enriquecimento,
         end_datetime=end_datetime_enriquecimento,
     )
