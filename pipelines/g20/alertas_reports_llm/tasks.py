@@ -171,6 +171,10 @@ def task_get_llm_reponse_and_update_table(
             batch_df = dataframe.merge(pd.DataFrame(responses), on="index")
             batch_df = batch_df.drop(columns=["index"])
             batch_df["date_execution"] = pd.Timestamp(date_execution)
+
+            batch_df["error_name"] = batch_df["error_name"].astype(str)
+            batch_df["error_message"] = batch_df["error_message"].astype(str)
+
             load_data_from_dataframe(
                 dataframe=batch_df, project_id=project_id, dataset_id=dataset_id, table_id=table_id
             )
