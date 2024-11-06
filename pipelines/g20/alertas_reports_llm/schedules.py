@@ -159,43 +159,6 @@ with
         from `rj-civitas.integracao_reports.reports`  -- tablesample system(10 percent)
         where
             __date_filter_replacer__
-            -- and id_source = 'DD'
-            -- and id_report in (
-                -- "DD2666784",  -- Desmatamento
-                -- "DD2666783",  -- Coleta de lixo fora do horário
-                -- "DD2163864",  -- Poluição do ar
-                -- "DD2163891",  -- Invasão de propriedade e construção irregular
-                -- "DD2163866",  -- Violência Doméstica
-                -- "DD2163899",  -- Violência contra idosos
-                -- "DD2163865",  -- Tiroteio entre quadrilhas
-                -- "DD2163867",  -- maus tratos contra animais
-                -- "DD2163898",  -- Segurança Pública
-                -- "DD2163897",  -- Segurança Pública
-                -- "DD2163881",  -- Tráfico de drogas e posse ilegal de armas de fogo
-                -- "DD2163893",  -- Violações de leis trabalhistas
-                -- "DD2163858",  -- Perturbação do sossego público
-                -- "DD2163902",  -- Uso ilegal de energia elétrica
-                -- "DD2163885",  -- Uso ilegal de energia elétrica
-                -- "DD2666751",  -- Crimes contra a pessoa e armas de fogo
-                -- "DD2666614",  -- Construção Irregular e Posse Ilegal de Armas
-                -- "DD2666640",  -- Extorsão e Ações de Milícias
-                -- "DD2666699",  -- Tráfico de Drogas
-                -- "DD2666560",  -- Guarda/comércio ilícito de armas de fogo
-                -- "DD2666615",  -- Obstrução de vias públicas
-                -- "DD2666517",  -- Abuso de autoridade por policiais militares
-                -- "DD2666714",  -- Corrupção Policial
-                -- "DD2666723",  -- Tráfico de drogas e crimes relacionados
-                -- "DD2666724",  -- Tráfico de drogas
-                -- "DD2666566",  -- Roubo/Furto
-                -- "DD2666657",  -- Crimes contra o patrimônio
-                -- "DD2666730",  -- Tiroteio entre quadrilhas
-                -- "DD2666672",  -- Crimes Violentos
-                -- "DD2666686"  -- maus tratos contra animais
-                -- "DD2666581",  -- Crimes contra o meio ambiente
-                -- "DD2666769",  -- maus tratos contra animais
-                -- "DD2666645"  -- Lixo acumulado
-            -- )
-    -- LIMIT 10
     ),
 
     prompt_table as (
