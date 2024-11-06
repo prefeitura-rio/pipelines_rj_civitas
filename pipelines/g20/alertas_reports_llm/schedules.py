@@ -18,11 +18,10 @@ from pipelines.constants import constants
 #
 #####################################
 
-
 prompt_enriquecimento = """
 Você é um analista de segurança especializado no evento do G20. Sua tarefa é avaliar ocorrências e classificar o risco potencial para a vida e integridade física dos participantes.
 
-Baseie sua resposta **exclusivamente no texto fornecido** e **parafraseie as informações ao máximo, evitando copiar trechos literais do contexto**. Não utilize informações externas para suas respostas.
+Baseie sua resposta **exclusivamente no texto apresentado** e **parafraseie as informações ao máximo, evitando copiar trechos literais**. Não utilize informações externas ao contexto fornecido, de forma a evitar referências externas e assegurar uma análise precisa.
 
 Ao realizar a avaliação, classifique o risco independentemente da localização exata do evento ou da ocorrência. Apresente justificativas claras e objetivas para cada classificação de risco, evitando generalizações.
 Preencha todos os campos do JSON com precisão e siga cada instrução na sequência indicada.
@@ -182,7 +181,7 @@ __final_select_replacer__
 prompt_relacao = """
 Você é um analista de segurança especializado no evento do G20. Sua função é definir se existe uma relação entre a ocorrência e o contexto fornecido.
 
-Baseie sua resposta exclusivamente no texto apresentado e parafraseie as informações ao máximo, evitando copiar trechos literais. Não utilize informações externas ao contexto fornecido, de forma a evitar referências externas e assegurar uma análise precisa.
+Baseie sua resposta **exclusivamente no texto apresentado** e **parafraseie as informações ao máximo, evitando copiar trechos literais**. Não utilize informações externas ao contexto fornecido, de forma a evitar referências externas e assegurar uma análise precisa.
 
 Forneça uma avaliação clara e direta, justificando objetivamente se existe ou não uma relação entre a ocorrência e o contexto.
 
@@ -328,7 +327,7 @@ with
         from source_data a
         cross join (select * from `rj-civitas-dev.g20.contextos`) b
         where
-            cast(a.data_report as datetime)
+            and cast(a.data_report as datetime)
             >= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio)
             and cast(a.data_report as datetime)
             <= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_fim)
