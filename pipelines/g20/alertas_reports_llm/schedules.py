@@ -300,7 +300,7 @@ with
             a.threat_explanation as threat_explanation_report,
             a.predicted_time_interval as predicted_time_interval_report,
             datetime_add(
-                a.data_report, interval cast(a.predicted_time_interval as int64) minute
+                a.data_report, interval safe_cast(a.predicted_time_interval as int64) minute
             ) as predicted_end_time_report,
             a.predicted_time_explanation as predicted_time_explanation_report,
             ifnull(
