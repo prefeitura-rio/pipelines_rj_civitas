@@ -11,6 +11,7 @@ from typing import List, Literal
 import basedosdados as bd
 import pandas as pd
 import pytz
+from google.cloud import bigquery
 from infisical import InfisicalClient
 from prefect import task
 from prefect.engine.runner import ENDRUN
@@ -116,11 +117,32 @@ def task_get_data(
     return dataframe.reset_index()
 
 
+def get_default_value_for_field(field: bigquery.SchemaField, length: int):
+    if field.mode == "REPEATED":
+        return [[] for _ in range(length)]
+
+    defaults = {
+        "STRING": ["" for _ in range(length)],
+        "INTEGER": [0 for _ in range(length)],
+        "INT64": [0 for _ in range(length)],
+        "FLOAT": [0.0 for _ in range(length)],
+        "FLOAT64": [0.0 for _ in range(length)],
+        "BOOLEAN": [False for _ in range(length)],
+        "BOOL": [False for _ in range(length)],
+        "TIMESTAMP": [None for _ in range(length)],
+        "DATETIME": [None for _ in range(length)],
+        "DATE": [None for _ in range(length)],
+        "STRUCT": [None for _ in range(length)],
+    }
+    return defaults.get(field.field_type, [None for _ in range(length)])
+
+
 @task
 def task_get_llm_reponse_and_update_table(
     dataframe: pd.DataFrame,
     dataset_id: str,
     table_id: str,
+    schema: list[bigquery.SchemaField] = [],
     prompt_column: str = None,
     model_name: str = "gemini-1.5-flash",
     max_output_tokens: int = 1024,
@@ -171,8 +193,21 @@ def task_get_llm_reponse_and_update_table(
             batch_df = dataframe.merge(pd.DataFrame(responses), on="index")
             batch_df = batch_df.drop(columns=["index"])
             batch_df["date_execution"] = pd.Timestamp(date_execution)
+
+            schema_columns = {field.name: field for field in schema}
+            missing_columns = set(schema_columns.keys()) - set(batch_df.columns)
+
+            for col_name in missing_columns:
+                field = schema_columns[col_name]
+                default_value = get_default_value_for_field(field, len(batch_df))
+                batch_df[col_name] = default_value
+
             load_data_from_dataframe(
-                dataframe=batch_df, project_id=project_id, dataset_id=dataset_id, table_id=table_id
+                dataframe=batch_df,
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=table_id,
+                schema=schema,
             )
 
     else:

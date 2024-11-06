@@ -31,6 +31,7 @@ with Flow(
     dataset_id = Parameter("dataset_id", default="integracao_reports")
 
     table_id_enriquecido = Parameter("table_id_enriquecido", default="reports_enriquecidos")
+    schema_table_enriquecimento = Parameter("schema_table_enriquecimento", default=[])
     prompt_enriquecimento = Parameter("prompt_enriquecimento", default="")
     query_enriquecimento = Parameter("query_enriquecimento", default="")
     start_datetime_enriquecimento = Parameter("start_datetime_enriquecimento", default=None)
@@ -39,6 +40,7 @@ with Flow(
     get_llm_ocorrencias = Parameter("get_llm_ocorrencias", default=True)
 
     table_id_relacao = Parameter("table_id", default="reports_contexto_enriquecidos")
+    schema_table_relacao = Parameter("schema_table_relacao", default=[])
     prompt_relacao = Parameter("prompt_relacao", default="")
     query_relacao = Parameter("query_relacao", default="")
     start_datetime_relacao = Parameter("start_datetime_relacao", default=None)
@@ -77,6 +79,7 @@ with Flow(
             dataframe=occurrences,
             dataset_id=dataset_id,
             table_id=table_id_enriquecido,
+            schema=schema_table_enriquecimento,
             model_name=model_name,
             max_output_tokens=max_output_tokens,
             temperature=temperature,
@@ -110,6 +113,7 @@ with Flow(
             dataframe=relations,
             dataset_id=dataset_id,
             table_id=table_id_relacao,
+            schema=schema_table_relacao,
             model_name=model_name,
             max_output_tokens=max_output_tokens,
             temperature=temperature,

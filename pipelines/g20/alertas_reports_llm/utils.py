@@ -93,6 +93,7 @@ def load_data_from_dataframe(
     table_id: str,
     project_id: str = None,
     write_disposition: str = "WRITE_APPEND",
+    schema: list[bigquery.SchemaField] = [],
 ) -> None:
     client = bigquery.Client()
     destination_table = ""
@@ -100,7 +101,7 @@ def load_data_from_dataframe(
     destination_table += f"{dataset_id}.{table_id}"
 
     job_config = bigquery.LoadJobConfig(
-        # schema=schema,
+        schema=schema or None,
         # Optionally, set the write disposition. BigQuery appends loaded rows
         # to an existing table by default, but with WRITE_TRUNCATE write
         # disposition it replaces the table with the loaded data.

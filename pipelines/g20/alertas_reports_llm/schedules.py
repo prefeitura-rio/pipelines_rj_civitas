@@ -6,6 +6,7 @@ Schedules for the database dump pipeline
 from datetime import datetime, timedelta
 
 import pytz
+from google.cloud import bigquery
 from prefect.schedules import Schedule
 from prefect.schedules.clocks import IntervalClock
 from prefeitura_rio.pipelines_utils.io import untuple_clocks as untuple
@@ -365,6 +366,67 @@ with
     __final_select_replacer__
 """
 
+schema_relacao = [
+    bigquery.SchemaField(name="id_relacao", field_type="STRING", mode="REQUIRED"),
+    bigquery.SchemaField(name="id_report", field_type="STRING", mode="REQUIRED"),
+    bigquery.SchemaField(name="id_source", field_type="STRING", mode="REQUIRED"),
+    bigquery.SchemaField(name="id_enriquecimento", field_type="STRING", mode="REQUIRED"),
+    bigquery.SchemaField(name="id_report_original", field_type="STRING", mode="REQUIRED"),
+    bigquery.SchemaField(name="data_report", field_type="TIMESTAMP", mode="REQUIRED"),
+    bigquery.SchemaField(name="orgaos_report", field_type="STRING", mode="REPEATED"),
+    bigquery.SchemaField(name="categoria_report", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(
+        name="tipo_subtipo_report",
+        field_type="STRUCT",
+        mode="REPEATED",
+        fields=[
+            bigquery.SchemaField(name="subtipo", field_type="STRING", mode="REPEATED"),
+            bigquery.SchemaField(name="tipo", field_type="STRING", mode="NULLABLE"),
+        ],
+    ),
+    bigquery.SchemaField(name="descricao_report", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(name="latitude_report", field_type="FLOAT64", mode="NULLABLE"),
+    bigquery.SchemaField(name="longitude_report", field_type="FLOAT64", mode="NULLABLE"),
+    bigquery.SchemaField(name="main_topic_report", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(name="scope_level_report", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(
+        name="scope_level_explanation_report", field_type="STRING", mode="NULLABLE"
+    ),
+    bigquery.SchemaField(name="threat_level_report", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(name="threat_explanation_report", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(
+        name="predicted_time_interval_report", field_type="STRING", mode="NULLABLE"
+    ),
+    bigquery.SchemaField(name="predicted_end_time_report", field_type="TIMESTAMP", mode="NULLABLE"),
+    bigquery.SchemaField(
+        name="predicted_time_explanation_report", field_type="STRING", mode="NULLABLE"
+    ),
+    bigquery.SchemaField(name="date_execution", field_type="TIMESTAMP", mode="NULLABLE"),
+    bigquery.SchemaField(name="id_contexto", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(name="tipo_contexto", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(name="datahora_inicio_contexto", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(name="datahora_fim_contexto", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(name="nome_contexto", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(name="descricao_contexto", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(
+        name="informacoes_adicionais_contexto", field_type="STRING", mode="NULLABLE"
+    ),
+    bigquery.SchemaField(name="endereco_contexto", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(name="local_contexto", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(name="geometria_contexto", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(name="raio_de_busca_contexto", field_type="INT64", mode="NULLABLE"),
+    bigquery.SchemaField(name="data_report_tz", field_type="TIMESTAMP", mode="NULLABLE"),
+    bigquery.SchemaField(name="data_inicio_tz", field_type="TIMESTAMP", mode="NULLABLE"),
+    bigquery.SchemaField(name="prompt_relacao", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(name="relation_explanation", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(name="relation_key_factors", field_type="STRING", mode="REPEATED"),
+    bigquery.SchemaField(name="relation_confidence", field_type="FLOAT64", mode="NULLABLE"),
+    bigquery.SchemaField(name="relation", field_type="BOOL", mode="NULLABLE"),
+    bigquery.SchemaField(name="finish_reason", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(name="error_name", field_type="STRING", mode="NULLABLE"),
+    bigquery.SchemaField(name="error_message", field_type="STRING", mode="NULLABLE"),
+]
+
 
 g20_report_clocks = [
     IntervalClock(
@@ -374,6 +436,7 @@ g20_report_clocks = [
             constants.RJ_CIVITAS_AGENT_LABEL.value,
         ],
         parameter_defaults={
+            "schema_table_relacao": schema_relacao,
             "query_enriquecimento": query_enriquecimento,
             "prompt_enriquecimento": prompt_enriquecimento,
             "query_relacao": query_relacao,
