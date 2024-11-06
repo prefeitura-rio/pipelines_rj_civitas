@@ -103,8 +103,6 @@ Descrição: ''',
 
 Retorne apenas os seguintes campos em JSON:
 {
-    "id_report": "ID da ocorrência",
-
     "main_topic": "tópico principal",
     "related_topics": ["array de tópicos relacionados"],
 
