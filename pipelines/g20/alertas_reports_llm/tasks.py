@@ -371,10 +371,10 @@ def task_get_new_alerts(
 
 @task
 def task_build_messages_text(
-    df: pd.DataFrame,
+    dataframe: pd.DataFrame,
 ) -> List:
     log("Building messages text for new alerts...")
-    filtered_df = df.loc[df["relation"]]  # Column with Boolean type
+    filtered_df = dataframe.loc[dataframe["relation"]]  # Column with Boolean type
 
     selected_df = filtered_df[
         [
@@ -387,32 +387,56 @@ def task_build_messages_text(
             "relation_explanation",
             "relation_key_factors",
             "relation_confidence",
+            "id_relacao",
+            "latitude_report",
+            "longitude_report",
+            "geometria_contexto",
         ]
     ]
 
     messages = []
+    for id_report_original in selected_df["id_report_original"].unique():
+        msg = ""
 
-    for _, occurrence in selected_df.iterrows():
+        df_report = selected_df[selected_df["id_report_original"] == id_report_original]
 
-        relation_key_factors = [
-            f"  - {fix_bad_formatting(factor)}  " for factor in occurrence["relation_key_factors"]
-        ]
-        relation_key_factors_str = "\n".join(relation_key_factors)
-        message = (
-            f"**RELATÓRIO G20**\n\n"
-            f"- **Contexto**: {occurrence['nome_contexto']}\n"
-            f"- **Atraso**: {get_delay_time_string(occurrence, 'data_report')}\n"
-            f"- **Fonte**: {occurrence['id_source']}\n"
-            f"- **ID**: {occurrence['id_report_original']}\n"
-            f"- **Data**: {occurrence['data_report']}\n\n"
-            f"- **Descrição**: {occurrence['descricao_report']}\n"
-            f"- **Motivo da Relação**: {fix_bad_formatting(occurrence['relation_explanation'])}\n"
-            f"- **Confiança**: {occurrence['relation_confidence']}\n"
-            f"- **Fatores da Relação**: \n{relation_key_factors_str}\n"
-        )
+        contextos = ", ".join(df_report["nome_contexto"])
+        data_report = df_report["data_report"].unique()[0]
+        atraso_report = get_delay_time_string(occurrence_timestamp=data_report)
+        fonte_report = df_report["id_source"].unique()[0]
+        data_report_str = data_report.strftime("%Y-%m-%d %H:%M:%S")
+        descricao_report = df_report["descricao_report"].unique()[0]
 
-        messages.append(message)
+        contextos_list = df_report[
+            ["nome_contexto", "relation_confidence", "relation_key_factors", "id_relacao"]
+        ].to_dict("records")
 
+        msg += f"""
+**Contextos:** {contextos}
+
+- **Atraso Ocorrência:** {atraso_report}
+- **Fonte Ocorrência:** {fonte_report}
+- **ID Ocorrência:** {id_report_original}
+- **Data Ocorrência:** {data_report_str}
+
+- **Descrição Ocorrência:** {descricao_report}
+
+----
+"""
+
+        for contexto in contextos_list:
+            nome_contexto = contexto["nome_contexto"].strip()
+            nome_contexto = "Não Informado" if nome_contexto == "" else nome_contexto
+            msg += f"""
+**{nome_contexto}**
+- **ID Relação:** {contexto['id_relacao']}
+- **Confiança:** {contexto['relation_confidence']}
+- **Fatores da Relação:**
+"""
+            for fator in contexto["relation_key_factors"]:
+                msg += f"""  - {fix_bad_formatting(fator)}\n"""
+
+        messages.append(msg)
     return messages
 
 

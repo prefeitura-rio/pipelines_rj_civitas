@@ -21,7 +21,7 @@ tz = pytz.timezone("America/Sao_Paulo")
 
 
 def fix_bad_formatting(text: str) -> str:
-    return re.sub(r"\n{2,}", "", text)
+    return re.sub(r"\n+", "", text)
 
 
 def get_delay_time_string(df_ocorrencias: pd.DataFrame, datetime_column_name: str):
