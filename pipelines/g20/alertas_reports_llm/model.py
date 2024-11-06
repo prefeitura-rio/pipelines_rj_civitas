@@ -105,6 +105,7 @@ class Model:
                     print(
                         f"Retrying {index}/{total}, retries left {retry - attempt - 1}. Error: {error_name}: {error_message}"
                     )
+                    time.sleep(60)
 
                 response = {}
                 response["index"] = model_data["index"]
