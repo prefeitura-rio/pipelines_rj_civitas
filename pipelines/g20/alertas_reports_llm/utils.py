@@ -106,7 +106,11 @@ def load_data_from_dataframe(
         # ),
         # clustering_fields=["timestamp_insercao"],
     )
-    dataframe = dataframe.astype(str)
+
+    # convert all numeric columns to string
+    dataframe[dataframe.select_dtypes(include=["number"]).columns] = dataframe.select_dtypes(
+        include=["number"]
+    ).astype(str)
     client.load_table_from_dataframe(
         dataframe, destination=destination_table, num_retries=3, job_config=job_config
     )
