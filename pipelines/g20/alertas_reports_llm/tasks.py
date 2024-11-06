@@ -19,12 +19,12 @@ from prefeitura_rio.pipelines_utils.infisical import get_secret_folder
 from prefeitura_rio.pipelines_utils.io import get_root_path
 from prefeitura_rio.pipelines_utils.logging import log
 
-from pipelines.g20.dbt_run_relatorio_enriquecido.model import (
+from pipelines.g20.alertas_reports_llm.model import (
     EnrichResponseModel,
     Model,
     RelationResponseModel,
 )
-from pipelines.g20.dbt_run_relatorio_enriquecido.utils import (  # ml_generate_text,; query_data_from_sql_file,
+from pipelines.g20.alertas_reports_llm.utils import (  # ml_generate_text,; query_data_from_sql_file,
     check_if_table_exists,
     get_delay_time_string,
     load_data_from_dataframe,
