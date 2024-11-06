@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # import json
 # import concurrent.futures
+import re
 import time
 from datetime import datetime
 
@@ -17,6 +18,10 @@ from prefeitura_rio.pipelines_utils.logging import log
 from vertexai.generative_models import GenerativeModel  # GenerationConfig,
 
 tz = pytz.timezone("America/Sao_Paulo")
+
+
+def fix_bad_formatting(text: str) -> str:
+    return re.sub(r"\n{2,}", "", text)
 
 
 def get_delay_time_string(df_ocorrencias: pd.DataFrame, datetime_column_name: str):

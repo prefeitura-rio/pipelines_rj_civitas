@@ -25,6 +25,7 @@ from pipelines.g20.alertas_reports_llm.model import (
 )
 from pipelines.g20.alertas_reports_llm.utils import (  # ml_generate_text,; query_data_from_sql_file,
     check_if_table_exists,
+    fix_bad_formatting,
     get_delay_time_string,
     load_data_from_dataframe,
 )
@@ -242,7 +243,9 @@ def task_build_messages_text(
 
     for _, occurrence in selected_df.iterrows():
 
-        relation_key_factors = [f"  - {factor}  " for factor in occurrence["relation_key_factors"]]
+        relation_key_factors = [
+            f"  - {fix_bad_formatting(factor)}  " for factor in occurrence["relation_key_factors"]
+        ]
         relation_key_factors_str = "\n".join(relation_key_factors)
         message = (
             f"**RELATÓRIO G20**\n\n"
@@ -252,7 +255,7 @@ def task_build_messages_text(
             f"- **ID**: {occurrence['id_report_original']}\n"
             f"- **Data**: {occurrence['data_report']}\n\n"
             f"- **Descrição**: {occurrence['descricao_report']}\n"
-            f"- **Motivo da Relação**: {occurrence['relation_explanation']}\n"
+            f"- **Motivo da Relação**: {fix_bad_formatting(occurrence['relation_explanation'])}\n"
             f"- **Confiança**: {occurrence['relation_confidence']}\n"
             f"- **Fatores da Relação**: \n{relation_key_factors_str}\n"
         )
