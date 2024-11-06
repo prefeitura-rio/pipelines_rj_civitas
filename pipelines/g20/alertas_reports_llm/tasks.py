@@ -81,7 +81,7 @@ def task_get_data(
         """
             if start_datetime is None or end_datetime is None
             else f"""
-                datetime(data_report) BETWEEN '{start_datetime}' AND '{end_datetime}'
+                datetime(date_execution) BETWEEN '{start_datetime}' AND '{end_datetime}'
         """
         )
 
