@@ -38,7 +38,7 @@ with Flow(
     minutes_interval_enriquecimento = Parameter("minutes_interval_enriquecimento", default=30)
     get_llm_ocorrencias = Parameter("get_llm_ocorrencias", default=True)
 
-    table_id_relacao = Parameter("table_id", default="reports_contexto_enriquecidos")
+    table_id_relacao = Parameter("table_id_relacao", default="reports_contexto_enriquecidos")
     prompt_relacao = Parameter("prompt_relacao", default="")
     query_relacao = Parameter("query_relacao", default="")
     start_datetime_relacao = Parameter("start_datetime_relacao", default=None)
