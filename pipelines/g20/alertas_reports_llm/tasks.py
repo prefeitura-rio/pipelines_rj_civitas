@@ -78,7 +78,7 @@ def task_get_data(
     else:
         date_filter = (
             f"""
-                date_execution = '{date_execution}'
+                datetime(date_execution) = '{date_execution}'
         """
             if start_datetime is None or end_datetime is None
             else f"""
