@@ -435,7 +435,8 @@ def task_build_messages_text(
         id_report = df_report["id_report"].unique()[0]
         latitude_report = df_report["latitude_report"].unique()[0]
         longitude_report = df_report["longitude_report"].unique()[0]
-        title_report = df_report["title_report"].unique()[0]
+        title_report = fix_bad_formatting(df_report["title_report"].unique()[0])
+        title_report = "Não Informado" if title_report.strip() == "" else title_report.strip()
 
         endereco_report = f"{logradouro_report}, {numero_logradouro_report}"
 
@@ -449,6 +450,7 @@ def task_build_messages_text(
                 "datahora_inicio_contexto",
                 "datahora_fim_contexto",
                 "endereco_contexto",
+                "relation_title",
             ]
         ].to_dict("records")
 
@@ -472,8 +474,13 @@ def task_build_messages_text(
             nome_contexto = contexto["nome_contexto"].strip()
             nome_contexto = "Não Informado" if nome_contexto == "" else nome_contexto
 
-            endereco_contexto = contexto["endereco_contexto"]
+            endereco_contexto = contexto["endereco_contexto"].strip()
             endereco_contexto = "Não Informado" if endereco_contexto == "" else endereco_contexto
+
+            # relation_title = fix_bad_formatting(contexto["relation_title"])
+            # relation_title = (
+            #     "Não Informado" if relation_title.strip() == "" else relation_title.strip()
+            # )
 
             msg += f"""
 **{index+1}. {nome_contexto}**
