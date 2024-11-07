@@ -30,7 +30,7 @@ from pipelines.g20.alertas_reports_llm.utils import (  # ml_generate_text,; quer
     get_delay_time_string,
     load_data_from_dataframe,
 )
-from pipelines.utils import send_discord_message
+from pipelines.utils import generate_png_map, get_nearby_cameras, send_discord_message
 
 bd.config.billing_project_id = "rj-civitas"
 bd.config.from_file = True
@@ -361,6 +361,7 @@ def task_get_new_alerts(
     SELECT *
     FROM `{project_id}.{dataset_id}.{table_id}`
     WHERE date_execution = '{date_execution}'
+    AND relation = TRUE
     """
     log(f"Searching for new alerts with date_execution: {date_execution}")
     df = bd.read_sql(query)
@@ -374,13 +375,16 @@ def task_get_new_alerts(
 @task
 def task_build_messages_text(
     dataframe: pd.DataFrame,
+    project_id: str = None,
+    dataset_id: str = None,
+    table_id: str = None,
 ) -> List:
     log("Building messages text for new alerts...")
     filtered_df = dataframe.loc[dataframe["relation"]]  # Column with Boolean type
-
     selected_df = filtered_df[
         [
             "id_report_original",
+            "id_report",
             "id_source",
             "data_report",
             "descricao_report",
@@ -401,6 +405,16 @@ def task_build_messages_text(
         ]
     ]
 
+    df_nearby_cameras: pd.DataFrame = get_nearby_cameras(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=table_id,
+        id_column="id_report",
+        latitude_column="latitude_report",
+        longitude_column="longitude_report",
+        ids=selected_df["id_report"].unique().tolist(),
+    )
+
     messages = []
     for id_report_original in selected_df["id_report_original"].unique():
         msg = ""
@@ -416,6 +430,9 @@ def task_build_messages_text(
         descricao_report = "Não Informado" if descricao_report == "" else descricao_report
         logradouro_report = df_report["logradouro_report"].unique()[0]
         numero_logradouro_report = df_report["numero_logradouro_report"].unique()[0]
+        id_report = df_report["id_report"].unique()[0]
+        latitude_report = df_report["latitude_report"].unique()[0]
+        longitude_report = df_report["longitude_report"].unique()[0]
 
         endereco_report = f"{logradouro_report}, {numero_logradouro_report}"
 
@@ -467,13 +484,46 @@ def task_build_messages_text(
             # msg+=f"- **Descrição Relação:** {fix_bad_formatting(contexto['relation_explanation'])}\n"
             msg += f"- **ID:** {contexto['id_relacao']}\n"
 
-        messages.append(msg)
+        # plot map if there is latitude and longitude
+        if latitude_report and longitude_report:
+            map = generate_png_map(
+                locations=[(latitude_report, longitude_report)],
+                nearby_cameras=df_nearby_cameras.loc[
+                    df_nearby_cameras["id_ocorrencia"] == id_report
+                ],
+            )
+        else:
+            map = None
 
+        # plot cameras if the map is valid and there is nearby cameras
+        if map:
+            cameras_strings = []
+            actual_report_cameras: pd.DataFrame = df_nearby_cameras.loc[
+                df_nearby_cameras["id_ocorrencia"] == id_report
+            ]
+
+            if not actual_report_cameras.empty:
+                cameras_strings.append("- **Câmeras mais próximas**:")
+                for j, camera in actual_report_cameras.iterrows():
+                    cameras_strings.append(
+                        f"  - {j + 1} - {camera['id_camera']} "
+                        + f"({camera['nome'].upper()}) - {camera['distance_meters']:.2f}m"
+                    )
+
+            msg += "\n".join(cameras_strings)
+
+        messages.append(
+            {
+                "message": msg,
+                "image_data": map,
+            }
+        )
+    log(f"Messages built and ready to be sent: {len(messages)}")
     return messages
 
 
 @task(max_retries=3, retry_delay=timedelta(seconds=10))
-def task_send_discord_messages(url_webhook: str, messages: List[str], image_data=None) -> None:
+def task_send_discord_messages(url_webhook: str, messages_contents: list[dict[str, bytes]]) -> None:
     """
     Send a list of messages to Discord using the given webhook URL.
 
@@ -486,21 +536,21 @@ def task_send_discord_messages(url_webhook: str, messages: List[str], image_data
     """
 
     async def main():
-        if not messages:
+        if not messages_contents:
             log("No messages to send.")
             return None
 
         log("Start sending messages to discord.")
-        for message in messages:
-            iteracoes_msg = len(message) // 2000
+        for content in messages_contents:
+            iteracoes_msg = len(content["message"]) // 2000
 
             for i in range(iteracoes_msg + 1):
                 start_index = i * 2000
                 end_index = (i + 1) * 2000
                 await send_discord_message(
                     webhook_url=url_webhook,
-                    message=message[start_index:end_index],
-                    image_data=image_data,
+                    message=content["message"][start_index:end_index],
+                    image_data=content["image_data"],
                 )
 
         log("Messages sent to discord successfully.")

@@ -135,10 +135,17 @@ with Flow(
         )
         new_alerts.set_upstream(secrets)
 
-        messages = task_build_messages_text(dataframe=new_alerts)
+        messages = task_build_messages_text(
+            dataframe=new_alerts,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=table_id_relacao,
+        )
         messages.set_upstream(new_alerts)
 
-        discord_messages = task_send_discord_messages(url_webhook=secrets["G20"], messages=messages)
+        discord_messages = task_send_discord_messages(
+            url_webhook=secrets["G20"], messages_contents=messages
+        )
         discord_messages.set_upstream(messages)
 
 
