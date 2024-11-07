@@ -39,7 +39,7 @@ def generate_png_map(
             map
         )
 
-    if not nearby_cameras.empty:
+    if len(nearby_cameras) > 0:
         camera_locations = []
         cameras_markers: List[folium.Marker] = plot_nearby_cameras(nearby_cameras)
 
