@@ -433,6 +433,8 @@ def task_build_messages_text(
         ].to_dict("records")
 
         msg += f"""
+## Alerta G20
+
 **Contextos:** {contextos}
 
 - **Atraso:** {atraso_report}
