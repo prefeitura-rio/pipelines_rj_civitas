@@ -201,6 +201,7 @@ def get_bq_table_schema(source: str = None) -> list[bigquery.SchemaField]:
         bigquery.SchemaField(name="latitude_report", field_type="FLOAT64", mode="NULLABLE"),
         bigquery.SchemaField(name="longitude_report", field_type="FLOAT64", mode="NULLABLE"),
         bigquery.SchemaField(name="main_topic_report", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="related_topics_report", field_type="STRING", mode="REPEATED"),
         bigquery.SchemaField(name="scope_level_report", field_type="STRING", mode="NULLABLE"),
         bigquery.SchemaField(
             name="scope_level_explanation_report", field_type="STRING", mode="NULLABLE"

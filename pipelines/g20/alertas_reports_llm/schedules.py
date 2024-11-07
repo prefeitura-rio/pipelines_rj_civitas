@@ -52,9 +52,9 @@ Para cada ocorrência, siga as instruções abaixo:
 - **Critérios de sucesso**: A justificativa é detalhada e direta, refletindo o nível de ameaça com base em riscos reais à vida e à integridade física, e a classificação final é consistente com os dados fornecidos.
 
 ### Subtask 5:
-- **Descrição**: Criar um título resumido para a ocorrencia baseado nos campos preenchidos anteriormente.
-- **Raciocínio**: Um título informativo e objetivo ajuda a identificar rapidamente o conteúdo da ocorrencia e sua importância. O título deve refletir os principais aspectos da relação entre a ocorrência e o contexto.
-- **Critérios de sucesso**: O título deve ter até 50 caracteres e transmitir de forma clara e concisa a natureza da relação entre a ocorrência e o contexto, destacando os elementos principais.
+- **Descrição**: Criar um título resumido a ocorrencia baseado nos campos preenchidos anteriormente.
+- **Raciocínio**: Um título informativo e objetivo que ajude a identificar rapidamente o conteúdo da ocorrencia.
+- **Critérios de sucesso**: O título deve ter até 50 caracteres e transmitir de forma clara e concisa a descrição da ocorrência, destacando os elementos principais.
 
 
 1. **Tópicos**:
@@ -88,8 +88,12 @@ Para cada ocorrência, siga as instruções abaixo:
 
 Ocorrencia :
 
-Data do Relatório (Quando a denúncia chegou à prefeitura): ''',
+Data da Ocorrência (Quando chegou à prefeitura): ''',
                 cast(data_report as string),
+                '''
+
+Endereço Ocorrência: ''',
+                logradouro, ', ', numero_logradouro,
                 '''
 
 Categoria: ''',
@@ -238,40 +242,94 @@ do contexto ajudam a solidificar a análise. De um peso maior para correlação 
 
 ### Subtask 8:
 - **Descrição**: Criar um título resumido para o alerta baseado nos campos preenchidos anteriormente.
-- **Raciocínio**: Um título informativo e objetivo ajuda a identificar rapidamente o conteúdo do alerta e sua importância. O título deve refletir os principais aspectos da relação entre a ocorrência e o contexto.
+- **Raciocínio**: Um título informativo e objetivo que ajude a identificar rapidamente o conteúdo do alerta e sua importância. O título deve refletir os principais aspectos da relação entre a ocorrência e o contexto.
 - **Critérios de sucesso**: O título deve ter até 50 caracteres e transmitir de forma clara e concisa a natureza da relação entre a ocorrência e o contexto, destacando os elementos principais.
 
 Ocorrencia:
 
-Descricao: ''',
+Data da Ocorrência (Quando chegou à prefeitura): ''',
+                cast(data_report as string),
+                '''
+
+Endereço Ocorrência: ''',
+                logradouro_report, ', ', numero_logradouro_report,
+                '''
+
+Categoria Ocorrência: ''',
+                categoria_report,
+                '''
+
+Tipo/Subtipo Ocorrência: ''',
+                to_json_string(tipo_subtipo_report),
+                '''
+
+Organizações Ocorrência: ''',
+                to_json_string(orgaos_report),
+                '''
+
+Descrição Ocorrência: ''',
                 descricao_report,
                 '''
 
-Topico principal: ''',
-                main_topic_report,
+Topico principal Ocorrência: ''',
+                to_json_string(main_topic_report),
                 '''
 
-Abrangencia: ''',
+Topico relacionados Ocorrência: ''',
+                to_json_string(related_topics_report),
+                '''
+
+Nível ameaça Ocorrência: ''',
+                threat_level_report,
+                '''
+
+Explicacao nível ameaça Ocorrência: ''',
+                threat_explanation_report,
+                '''
+
+Abrangencia Ocorrência: ''',
                 scope_level_report,
                 '''
 
+Explicacao Abrangencia Ocorrência: ''',
+                scope_level_explanation_report,
+                '''
+
+
+
+
 Contexto:
 
-Tipo: ''',
+Nome Contexto: ''',
+                nome_contexto,
+                '''
+
+Data Inicio Contexto: ''',
+                cast(datahora_inicio_contexto as string),
+                '''
+
+Data Fim Contexto: ''',
+                cast(datahora_fim_contexto as string),
+                '''
+
+Tipo Contexto: ''',
                 tipo_contexto,
                 '''
 
-Descricao: ''',
+Descricao Contexto: ''',
                 descricao_contexto,
                 '''
 
-Informacoes adicionais: ''',
+Informacoes adicionais Contexto: ''',
                 informacoes_adicionais_contexto,
                 '''
-Local: ''',
+Local Contexto: ''',
                 local_contexto,
                 '''
 
+Endereço Contexto: ''',
+                endereco_contexto,
+                '''
 
 Retorne apenas os seguintes campos em JSON:
 {
@@ -315,6 +373,7 @@ with
             a.latitude as latitude_report,
             a.longitude as longitude_report,
             a.main_topic as main_topic_report,
+            a.related_topics as related_topics_report,
             a.scope_level as scope_level_report,
             a.scope_level_explanation as scope_level_explanation_report,
             a.threat_level as threat_level_report,
