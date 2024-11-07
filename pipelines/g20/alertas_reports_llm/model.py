@@ -28,6 +28,7 @@ class EnrichResponseModel(BaseModel):
     predicted_time_interval: str
     threat_explanation: str
     threat_level: str
+    title_report: str
 
 
 class RelationResponseModel(BaseModel):
@@ -35,6 +36,7 @@ class RelationResponseModel(BaseModel):
     relation_key_factors: List[str]
     relation_confidence: float
     relation: bool
+    relation_title: str
 
 
 class Model:
