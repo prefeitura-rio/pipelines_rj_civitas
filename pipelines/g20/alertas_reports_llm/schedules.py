@@ -115,6 +115,8 @@ Retorne apenas os seguintes campos em JSON:
 
     "threat_explanation": "Avaliação detalhada da ameaça",
     "threat_level": "valor nível de ameaça"
+
+    "title_report": ""
 }
 
 Lembrete: Complete todas as justificativas com base em dados observáveis e use exemplos práticos se possível para reforçar a coerência na análise.
@@ -223,7 +225,15 @@ do contexto ajudam a solidificar a análise. De um peso maior para correlação 
 - **Raciocínio**: A decisão final de existência de relação é binária e serve como uma conclusão prática para que outros analistas ou sistemas tomem ações subsequentes.
 - **Critérios de sucesso**: Valor booleano final (true ou false) baseado em análise fundamentada e coerente com as evidências e critérios estabelecidos.
 
+### Subtask 8:
+- **Descrição**: Determinar e validar o valor final de relação como verdadeiro (true) ou falso (false).
+- **Raciocínio**: A decisão final de existência de relação é binária e serve como uma conclusão prática para que outros analistas ou sistemas tomem ações subsequentes.
+- **Critérios de sucesso**: Valor booleano final (true ou false) baseado em análise fundamentada e coerente com as evidências e critérios estabelecidos.
 
+### Subtask 8:
+- **Descrição**: Criar um título resumido para o alerta baseado nos campos preenchidos anteriormente.
+- **Raciocínio**: Um título informativo e objetivo ajuda a identificar rapidamente o conteúdo do alerta e sua importância. O título deve refletir os principais aspectos da relação entre a ocorrência e o contexto.
+- **Critérios de sucesso**: O título deve ter até 50 caracteres e transmitir de forma clara e concisa a natureza da relação entre a ocorrência e o contexto, destacando os elementos principais.
 
 Ocorrencia:
 
@@ -263,6 +273,7 @@ Retorne apenas os seguintes campos em JSON:
   'relation_key_factors' ['lista de fatores que indica a relação entre o contexto e a ocorrencia'],
   'relation_confidence': 'nivel de semelhança entre o contexto e a ocorrencia. Valor entre 0 e 1',
   'relation':'valor da relacao. true/false'
+  'relation_title': 'titulo do alerta em no maximo 50 caracteres'
 }
 
 Lembrete: Complete todas as justificativas com base em dados observáveis e use exemplos práticos se possível para reforçar a coerência na análise.
@@ -302,6 +313,7 @@ with
             a.scope_level_explanation as scope_level_explanation_report,
             a.threat_level as threat_level_report,
             a.threat_explanation as threat_explanation_report,
+            a.title_report,
             a.predicted_time_interval as predicted_time_interval_report,
             datetime_add(
                 a.data_report, interval safe_cast(a.predicted_time_interval as int64) minute
