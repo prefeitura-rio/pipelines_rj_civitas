@@ -137,9 +137,6 @@ with Flow(
 
         messages = task_build_messages_text(
             dataframe=new_alerts,
-            project_id=project_id,
-            dataset_id=dataset_id,
-            table_id=table_id_relacao,
         )
         messages.set_upstream(new_alerts)
 
