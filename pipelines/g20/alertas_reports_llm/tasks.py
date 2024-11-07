@@ -48,8 +48,9 @@ def task_get_data(
     dataset_id: str,
     source: str,
     table_id: str,
-    query_template: str,
-    prompt: str,
+    table_id_enriquecido: str = "",
+    query_template: str = None,
+    prompt: str = None,
     start_datetime: str = None,
     end_datetime: str = None,
     minutes_interval: int = 30,
@@ -109,6 +110,9 @@ def task_get_data(
         query_template.replace("__prompt_replacer__", prompt)
         .replace("__date_filter_replacer__", date_filter)
         .replace("__final_select_replacer__", select_replacer)
+        .replace("__project_id__", project_id)
+        .replace("__dataset_id__", dataset_id)
+        .replace("__table_id_enriquecido__", table_id_enriquecido)
     )
 
     log(f"Query {source.capitalize()}:\n\n{query}")

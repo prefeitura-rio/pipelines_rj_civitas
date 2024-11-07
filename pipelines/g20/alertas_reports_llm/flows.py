@@ -77,6 +77,7 @@ with Flow(
             dataframe=occurrences,
             dataset_id=dataset_id,
             table_id=table_id_enriquecido,
+            table_id_enriquecido=table_id_enriquecido,
             model_name=model_name,
             max_output_tokens=max_output_tokens,
             temperature=temperature,

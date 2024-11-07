@@ -352,7 +352,7 @@ with
     source_data as (
         select
             *
-        from `rj-civitas.integracao_reports.reports_enriquecidos`
+        from `__project_id__.__dataset_id__.__table_id_enriquecido__`
         where __date_filter_replacer__
 
     ),
