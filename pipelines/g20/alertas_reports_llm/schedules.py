@@ -51,6 +51,11 @@ Para cada ocorrência, siga as instruções abaixo:
 - **Raciocínio**: Avaliar o risco é essencial para priorizar a resposta e proteção de vidas. A classificação deve ser baseada no potencial de dano físico e na probabilidade de evento imediato, categorizando a ameaça como "BAIXO" ou "ALTO".
 - **Critérios de sucesso**: A justificativa é detalhada e direta, refletindo o nível de ameaça com base em riscos reais à vida e à integridade física, e a classificação final é consistente com os dados fornecidos.
 
+### Subtask 5:
+- **Descrição**: Criar um título resumido para a ocorrencia baseado nos campos preenchidos anteriormente.
+- **Raciocínio**: Um título informativo e objetivo ajuda a identificar rapidamente o conteúdo da ocorrencia e sua importância. O título deve refletir os principais aspectos da relação entre a ocorrência e o contexto.
+- **Critérios de sucesso**: O título deve ter até 50 caracteres e transmitir de forma clara e concisa a natureza da relação entre a ocorrência e o contexto, destacando os elementos principais.
+
 
 1. **Tópicos**:
     - Identifique o tópico principal e quaisquer tópicos relacionados com base na descrição da ocorrência.
@@ -78,6 +83,7 @@ Para cada ocorrência, siga as instruções abaixo:
      - **BAIXO**: Risco indireto ou muito improvável (não representa risco direto à vida ou integridade, inclui maus-tratos a animais, transgressões ambientais, trabalhistas, etc.)
      - **ALTO**: Ameaça iminente à vida ou integridade física (inclui tiroteios, bloqueio de vias, manifestações, ameaças de bombas ou terrorismo).
     - Justifique a avaliação da ameaça com uma análise objetiva do risco envolvido, considerando o potencial de dano à vida e integridade física dos participantes.
+
 
 
 Ocorrencia :
@@ -116,7 +122,7 @@ Retorne apenas os seguintes campos em JSON:
     "threat_explanation": "Avaliação detalhada da ameaça",
     "threat_level": "valor nível de ameaça"
 
-    "title_report": ""
+    "title_report": "titulo da ocorrencia em no maximo 50 caracteres"
 }
 
 Lembrete: Complete todas as justificativas com base em dados observáveis e use exemplos práticos se possível para reforçar a coerência na análise.
