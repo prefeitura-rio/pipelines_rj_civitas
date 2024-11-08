@@ -336,6 +336,7 @@ def task_get_llm_reponse_and_update_table(
 
             # wait some seconds after table creation
             if not table_exists and batch_index == 0:
+                log("Waiting for table to be created...")
                 time.sleep(10)
 
     else:
