@@ -3,8 +3,7 @@
 This module contains tasks for appending new data to Google Sheets.
 """
 import asyncio
-
-# import time
+import time
 from datetime import datetime, timedelta
 from typing import List, Literal
 
@@ -305,6 +304,8 @@ def task_get_llm_reponse_and_update_table(
             for i in range(0, len(input_list), batch_size):
                 yield input_list[i : i + batch_size]  # noqa
 
+        table_exists = check_if_table_exists(dataset_id=dataset_id, table_id=table_id)
+
         for batch_index, batch in enumerate(chunks(model_input, batch_size)):
             log(f"Processing batch {batch_index + 1}/{(len(model_input) // batch_size + 1)}")
 
@@ -332,6 +333,10 @@ def task_get_llm_reponse_and_update_table(
                 table_id=table_id,
                 schema=schema,
             )
+
+            # wait some seconds after table creation
+            if not table_exists and batch_index == 0:
+                time.sleep(10)
 
     else:
         log(f"No new data to load to {dataset_id}.{table_id}")
