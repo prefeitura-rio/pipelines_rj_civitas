@@ -39,3 +39,6 @@ models:
     radar_readings:
       +materialized: table
       +schema: radar_readings
+    g20:
+      +materialized: table
+      +schema: g20
