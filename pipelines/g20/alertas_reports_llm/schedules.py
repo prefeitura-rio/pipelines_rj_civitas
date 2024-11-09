@@ -81,29 +81,6 @@ a. Abrangência
 - Deve refletir os elementos principais da ocorrência
 
 
-CAMPOS A SEREM ANALISADOS:
-
-1. TÓPICOS
-- Principal: Escolha UMA categoria. exemplos: "ameaça à segurança", "clima adverso", "protestos", "infraestrutura", crie novos tópicos se necessário.
-- Relacionados: Liste tópicos adicionais relevantes
-- Justificativa: Explique brevemente a escolha baseada nos fatos apresentados
-
-2. ABRANGÊNCIA
-- Nível: Escolha UM ["Casa", "Quadra", "Bairro", "Região", "Cidade", "Estado", "País"]
-- Justificativa: Explique o impacto geográfico potencial
-
-3. TEMPO
-- Intervalo:
-
-4. AMEAÇA
-- Nível: Classifique como ["BAIXO", "ALTO"]
-  * BAIXO: Risco indireto/improvável (ex: infrações ambientais)
-  * ALTO: Ameaça direta/iminente (ex: tiroteios, bloqueios)
-- Justificativa: Analise o risco à vida/integridade física
-
-5. TÍTULO
-
-
 Dados da Ocorrência:
 
 Data da Ocorrência (Quando chegou à prefeitura): ''',
