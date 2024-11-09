@@ -4,7 +4,7 @@ This module contains tasks for appending new data to Google Sheets.
 """
 import asyncio
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Literal
 
 import basedosdados as bd
@@ -383,7 +383,7 @@ def task_get_new_alerts(
         return df
 
 
-@task(max_retries=3, retry_delay=timedelta(seconds=10))
+@task
 def task_build_and_send_messages_text(dataframe: pd.DataFrame, url_webhook: str) -> List:
     log("Building messages text for new alerts...")
     selected_df = dataframe[
@@ -511,6 +511,7 @@ def task_build_and_send_messages_text(dataframe: pd.DataFrame, url_webhook: str)
     return messages
 
 
+# @task(max_retries=3, retry_delay=timedelta(seconds=10))
 def send_discord_messages(url_webhook: str, messages_contents: list[dict[str, bytes]]) -> None:
     """
     Send a list of messages to Discord using the given webhook URL.
