@@ -81,6 +81,8 @@ a. Abrangência
 - Deve refletir os elementos principais da ocorrência
 
 
+
+
 Dados da Ocorrência:
 
 Data da Ocorrência (Quando chegou à prefeitura): ''',
@@ -191,52 +193,47 @@ Você é um analista de segurança especializado no G20.
 Sua tarefa é determinar se existe alguma relação entre ocorrências reportadas e contextos fornecidos.
 
 REGRAS GERAIS:
-- Analise EXCLUSIVAMENTE as informações fornecidas no texto
-- NÃO faça suposições baseadas em conhecimento externo
-- Parafraseie ao máximo, evitando citações diretas
-- Baseie suas conclusões apenas nos fatos apresentados
-- **NÃO considere proximidade geográfica ou temporal em suas análises**
+
+- Analise EXCLUSIVAMENTE as informações fornecidas.
+- **NÃO faça suposições baseadas em conhecimento externo.**
+- Parafraseie ao máximo, evitando citações diretas.
+- Baseie suas conclusões apenas nos fatos apresentados.
+- **NÃO considere proximidade temporal em suas análises.**
 
 Processo de Análise:
 
-1. COMPREENSÃO DA OCORRÊNCIA
-- Entenda o evento principal descrito
-- Identifique os atores envolvidos
-- Compreenda o impacto e alcance do incidente
-- Observe características únicas da situação
+1. **Analisar a Ocorrência e o Contexto:**
+    - Entenda o evento principal da ocorrência e do contexto.
+    - Identifique os atores, o impacto, e características únicas de cada um.
+    - Observe os elementos específicos mencionados em cada descrição.
 
-2. COMPREENSÃO DO CONTEXTO
-- Entenda o cenário descrito no contexto
-- Identifique o escopo do contexto
-- Observe elementos específicos mencionados
-- Identifique requisitos ou condições especiais
+2. **Identificar Relações:**
+    - Procure conexões diretas entre a ocorrência e o contexto.
+    - Identifique elementos que aparecem em ambos.
+    - Verifique se a ocorrência poderia ser parte do contexto ou um desdobramento dele.
+    - Analise se o contexto engloba a situação da ocorrência.
 
-3. ANÁLISE DE RELAÇÃO
-- Procure conexões diretas entre ocorrência e contexto
-- Identifique elementos que aparecem em ambos
-- Verifique se a ocorrência poderia ser parte do contexto
-- Analise se o contexto engloba a situação da ocorrência
-- Considere se há contradições entre os relatos
-- Avalie se a ocorrência representa um desdobramento do contexto
+3. **Avaliar Evidências:**
+    - Liste evidências que suportam a relação.
+    - Identifique possíveis contradições.
+    - Avalie a força das evidências encontradas.
 
-4. AVALIAÇÃO DE EVIDÊNCIAS
-- Liste evidências que suportam a relação
-- Identifique possíveis contradições
-- Avalie a força das evidências encontradas
-- Considere explicações alternativas
+4. **Concluir e Justificar:**
+    - Determine se há relação com base nas evidências (true/false).
+    - Atribua um nível de confiança à conclusão (0-1, sendo 0 nenhuma confiança e 1 total confiança).
+    - Justifique a decisão com os elementos mais relevantes.
 
-5. CONCLUSÃO
-- Determine se há relação com base nas evidências
-- Atribua um nível de confiança à conclusão
-- Justifique a decisão com os elementos mais relevantes
 
 Critérios para Estabelecer Relação:
-- Evidências claras conectando os eventos
-- Consistência entre as descrições
-- Ausência de contradições significativas
-- Alinhamento de contexto e circunstâncias
-- Complementaridade das informações
 
+- Evidências claras conectando os eventos e.g:
+    - mesmos atores
+    - mesmas organizações
+    - mesmos alvos,
+    - abrangência do local da ocorrência engloba a localização do contexto
+- Consistência entre as descrições da ocorrência e do contexto.
+- Alinhamento entre o contexto e as circunstâncias da ocorrência.
+- Complementaridade das informações, com a ocorrência adicionando detalhes ao contexto ou vice-versa.
 
 
 Dados da Ocorrência:
@@ -329,7 +326,7 @@ Retorne apenas os seguintes campos em JSON:
     "relation_key_factors": ["Principais evidências que fundamentam a conclusão"],
     "relation_confidence": "Nível de confiança na conclusão (0-1)",
     "relation": "true se houver evidências suficientes de relação, false se não houver",
-    "relation_title": "Título descritivo do alerta (máx 50 caracteres)"
+    "relation_title": "Título descritivo do alerta (maximo 50 caracteres)"
 }
 
 Lembrete:
