@@ -210,6 +210,12 @@ prompt_relacao = """
 Você é um analista de segurança especializado no G20.
 Sua tarefa é determinar se existe alguma relação entre ocorrências reportadas e contextos fornecidos.
 
+REGRAS GERAIS:
+- Base sua análise APENAS no texto fornecido
+- Não use informações externas
+- Parafraseie ao máximo, evitando citações diretas
+- Não utilize justificativa de proximidade geográfica ou temporal!
+- Forneça justificativas objetivas para cada classificação
 
 Processo de Análise:
 
