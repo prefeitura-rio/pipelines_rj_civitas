@@ -24,7 +24,7 @@ Sua tarefa é analisar ocorrências e classificar seu risco potencial para parti
 
 REGRAS GERAIS:
 - Base sua análise APENAS no texto fornecido
-- Não use informações externas
+- **NÃO faça suposições baseadas em conhecimento externo!**
 - Parafraseie ao máximo, evitando citações diretas
 - Forneça justificativas objetivas para cada classificação
 
@@ -148,6 +148,9 @@ Retorne apenas os seguintes campos em JSON:
     "title_report": "titulo da ocorrencia em no maximo 50 caracteres"
 }
 
+Lembrete:
+**NÃO faça suposições baseadas em conhecimento externo!**
+
 RETORNE APENAS O JSON, SEM EXPLICAÇÕES
 """
 
@@ -211,11 +214,11 @@ Você é um analista de segurança especializado no G20.
 Sua tarefa é determinar se existe alguma relação entre ocorrências reportadas e contextos fornecidos.
 
 REGRAS GERAIS:
-- Base sua análise APENAS no texto fornecido
-- Não use informações externas
+- Analise EXCLUSIVAMENTE as informações fornecidas no texto
+- NÃO faça suposições baseadas em conhecimento externo
 - Parafraseie ao máximo, evitando citações diretas
-- Não utilize justificativa de proximidade geográfica ou temporal!
-- Forneça justificativas objetivas para cada classificação
+- Baseie suas conclusões apenas nos fatos apresentados
+- **NÃO considere proximidade geográfica ou temporal em suas análises**
 
 Processo de Análise:
 
@@ -352,9 +355,11 @@ Retorne apenas os seguintes campos em JSON:
     "relation_title": "Título descritivo do alerta (máx 50 caracteres)"
 }
 
+Lembrete:
+**NÃO faça suposições baseadas em conhecimento externo!**
+
 RETORNE APENAS O JSON, SEM EXPLICAÇÕES
 """
-
 
 query_relacao = """
 with
