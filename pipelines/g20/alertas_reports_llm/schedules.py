@@ -76,7 +76,7 @@ a. Abrangência
     * Situação instável/imprevisível
     * Alta probabilidade de escalada
 
-5. TITULAÇÃO
+5. TÍTULO
 - Máximo 50 caracteres
 - Deve refletir os elementos principais da ocorrência
 
