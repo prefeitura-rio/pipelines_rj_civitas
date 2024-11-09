@@ -383,10 +383,8 @@ def task_get_new_alerts(
         return df
 
 
-@task
-def task_build_messages_text(
-    dataframe: pd.DataFrame,
-) -> List:
+@task(max_retries=3, retry_delay=timedelta(seconds=10))
+def task_build_and_send_messages_text(dataframe: pd.DataFrame, url_webhook: str) -> List:
     log("Building messages text for new alerts...")
     selected_df = dataframe[
         [
@@ -467,6 +465,8 @@ def task_build_messages_text(
 """
 
         for index, contexto in enumerate(contextos_list):
+            log(f"Message {index+1}/{len(contextos_list)}")
+
             nome_contexto = contexto["nome_contexto"].strip()
             nome_contexto = "Não Informado" if nome_contexto == "" else nome_contexto
 
@@ -496,18 +496,22 @@ def task_build_messages_text(
         else:
             map = None
 
-        messages.append(
-            {
-                "message": msg,
-                "image_data": map,
-            }
+        send_discord_messages(
+            url_webhook=url_webhook,
+            messages_contents=[
+                {
+                    "message": msg,
+                    "image_data": map,
+                }
+            ],
         )
-    log(f"Messages built and ready to be sent: {len(messages)}")
+
+        messages.append(msg)
+    log(f"Messages built: {len(messages)}")
     return messages
 
 
-@task(max_retries=3, retry_delay=timedelta(seconds=10))
-def task_send_discord_messages(url_webhook: str, messages_contents: list[dict[str, bytes]]) -> None:
+def send_discord_messages(url_webhook: str, messages_contents: list[dict[str, bytes]]) -> None:
     """
     Send a list of messages to Discord using the given webhook URL.
 

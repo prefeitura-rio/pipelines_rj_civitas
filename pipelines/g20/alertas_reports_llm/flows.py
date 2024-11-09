@@ -13,13 +13,12 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 from pipelines.constants import constants
 from pipelines.g20.alertas_reports_llm.schedules import g20_reports_schedule
 from pipelines.g20.alertas_reports_llm.tasks import (
-    task_build_messages_text,
+    task_build_and_send_messages_text,
     task_get_data,
     task_get_date_execution,
     task_get_llm_reponse_and_update_table,
     task_get_new_alerts,
     task_get_secret_folder,
-    task_send_discord_messages,
 )
 
 with Flow(
@@ -136,15 +135,11 @@ with Flow(
         )
         new_alerts.set_upstream(secrets)
 
-        messages = task_build_messages_text(
+        messages = task_build_and_send_messages_text(
             dataframe=new_alerts,
+            url_webhook=secrets["G20"],
         )
         messages.set_upstream(new_alerts)
-
-        discord_messages = task_send_discord_messages(
-            url_webhook=secrets["G20"], messages_contents=messages
-        )
-        discord_messages.set_upstream(messages)
 
 
 g20_alerts.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
