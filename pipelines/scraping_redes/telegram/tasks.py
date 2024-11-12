@@ -10,7 +10,7 @@ Tasks include:
 """
 
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Literal
 
 import basedosdados as bd
@@ -22,8 +22,8 @@ from prefeitura_rio.pipelines_utils.infisical import get_secret_folder
 from prefeitura_rio.pipelines_utils.logging import log
 from pytz import timezone
 
-from pipelines.fogo_cruzado.extract_load.utils import save_data_in_bq
 from pipelines.scraping_redes.models.palver import Palver
+from pipelines.scraping_redes.utils.utils import check_if_table_exists, save_data_in_bq
 
 bd.config.billing_project_id = "rj-civitas"
 bd.config.from_file = True
@@ -92,20 +92,53 @@ def task_set_palver_variables(base_url: str, token: str):
 
 
 @task
-def task_get_chats(chat_usernames: List[str]) -> List[Dict[str, Any]]:
+def task_get_chats(
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    chat_usernames: List[str],
+    mode: Literal["prod", "staging"] = "staging",
+) -> List[Dict[str, Any]]:
     log(f"Getting chats IDs from Palver for chat usernames: {chat_usernames}")
-    query_chats = "username: (" + " OR ".join(chat_usernames) + ")"
-    chats = Palver.get_chats(source_name="telegram", query=query_chats)
+    chats = []
+    dataset_id += "_staging" if mode == "staging" else ""
+    table_exists = check_if_table_exists(
+        dataset_id="scraping_redes", table_id="telegram_chats", mode=mode
+    )
 
+    if table_exists:
+        query = rf"""SELECT
+            username
+        FROM
+            `{project_id}.{dataset_id}.{table_id}`"""
+        usernames_in_table = bd.read_sql(query)
+        chat_usernames = [
+            username
+            for username in chat_usernames
+            if username not in usernames_in_table["username"].tolist()
+        ]
+
+    for i, username in enumerate(chat_usernames):
+        chats.extend(
+            Palver.get_chats(
+                source_name="telegram", query=f"username: ({username})", page=1, page_size=1
+            )
+        )
+        chats[i].update({"username": username})
+
+    # query_chats = "username: (" + " OR ".join(chat_usernames) + ")"
+    # chats = Palver.get_chats(source_name="telegram", query=query_chats)
+    log(f"Found {len(chats)} chats")
+    log(chats)
     return chats
 
 
 # @task
 def get_chats_last_dates(
-    project_id: str, dataset_id: str, table_id: str, chats: List[Dict[str, Any]]
+    project_id: str, dataset_id: str, table_id: str, chats_ids: List[str]
 ) -> Dict[str, str]:
 
-    chats_ids = [chat["id"] for chat in chats]
+    # chats_ids = [chat["id"] for chat in chats]
 
     data = bd.read_sql(
         f"""
@@ -129,15 +162,43 @@ def get_chats_last_dates(
 # def task_get_chats_ids(chats: List[Dict[str, Any]]) -> List[str]:
 @task
 def task_get_messages(
-    chats: List[Dict[str, Any]], start_date: str = None, end_date: str = None
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    chats: List[Dict[str, Any]],
+    start_date: str = None,
+    end_date: str = None,
 ) -> List[Dict[str, Any]]:
     chats_ids = [chat["id"] for chat in chats]
-    query_messages = "chat_id: (" + " OR ".join(chats_ids) + ")"
-    log(f"Getting messages from Palver for chat usernames: {query_messages}")
-    messages = Palver.get_messages(
-        source_name="telegram", query=query_messages, start_date=start_date, end_date=end_date
+
+    last_dates = get_chats_last_dates(
+        project_id=project_id, dataset_id=dataset_id, table_id=table_id, chats_ids=chats_ids
     )
-    log(messages[0])
+    messages = []
+
+    for chat in chats_ids:
+        query_message = f"chat_id: ({chat})"
+
+        if last_dates.get(chat, None):
+            last_date = datetime.strptime(last_dates[chat], "%Y-%m-%dT%H:%M:%SZ") + timedelta(
+                seconds=1
+            )
+            start_date = last_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        log(f"Getting messages from Palver for chat username: {query_message}")
+        messages.extend(
+            Palver.get_messages(
+                source_name="telegram",
+                query=query_message,
+                start_date=start_date,
+                end_date=end_date,
+            )
+        )
+    # query_messages = "chat_id: (" + " OR ".join(chats_ids) + ")"
+    # log(f"Getting messages from Palver for chat usernames: {query_messages}")
+    # messages = Palver.get_messages(
+    # source_name="telegram", query=query_messages, start_date=start_date, end_date=end_date
+    # )
 
     columns = [
         "id",
@@ -188,6 +249,11 @@ def task_load_to_table(
         table_id (str): The ID of the table.
         occurrences (List[Dict]): The list of dictionaries to be saved to BigQuery.
     """
+    if len(occurrences) == 0 or occurrences is None:
+        log(f"No occurrences to write to {project_id}.{dataset_id}.{table_id}")
+        return None
+
+    log(f"write_disposition for table {table_id}: {write_disposition}")
     log(f"Writing occurrences to {project_id}.{dataset_id}.{table_id}")
     if table_id == "telegram_messages":
         SCHEMA = [
@@ -219,6 +285,7 @@ def task_load_to_table(
             bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
             bigquery.SchemaField(name="participants", field_type="INT64", mode="NULLABLE"),
             bigquery.SchemaField(name="source", field_type="STRING", mode="NULLABLE"),
+            bigquery.SchemaField(name="username", field_type="STRING", mode="NULLABLE"),
             bigquery.SchemaField(
                 name="timestamp_creation", field_type="timestamp", mode="NULLABLE"
             ),
@@ -226,6 +293,7 @@ def task_load_to_table(
     else:
         raise ValueError(f"Table {table_id} not supported")
 
+    log(SCHEMA)
     save_data_in_bq(
         project_id=project_id,
         dataset_id=dataset_id,

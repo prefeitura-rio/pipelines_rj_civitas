@@ -54,6 +54,7 @@ with Flow(
     write_disposition_messages = Parameter("write_disposition_messages", default="")
     start_date = Parameter("start_date", default=None)
     end_date = Parameter("end_date", default=None)
+    mode = Parameter("mode", default="")
     # materialize_after_dump = Parameter("materialize_after_dump", default=True)
     # materialize_reports_fc_after_dump = Parameter("materialize_reports_fc_after_dump", default=True)
 
@@ -73,7 +74,11 @@ with Flow(
     channels_names.set_upstream(palver_variables)
 
     chats = task_get_chats(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=table_id_chats,
         chat_usernames=channels_names,
+        mode=mode,
     )
     chats.set_upstream(channels_names)
 
@@ -87,11 +92,14 @@ with Flow(
     load_chats_to_bq.set_upstream(chats)
 
     messages = task_get_messages(
+        project_id=project_id,
+        dataset_id=dataset_id_staging,
+        table_id=table_id_messages,
         chats=chats,
         start_date=start_date,
         end_date=end_date,
     )
-    messages.set_upstream(chats)
+    messages.set_upstream(load_chats_to_bq)
 
     load_messages_to_bq = task_load_to_table(
         project_id=project_id,

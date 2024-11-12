@@ -2,8 +2,14 @@
 from datetime import datetime
 from typing import Any, Dict, List, Literal
 
+import basedosdados as bd
 import pytz
 from google.cloud import bigquery
+
+
+def check_if_table_exists(dataset_id: str, table_id: str, mode: Literal["prod", "staging"]) -> bool:
+    tb = bd.Table(dataset_id=dataset_id, table_id=table_id)
+    return tb.table_exists(mode=mode)
 
 
 def save_data_in_bq(
@@ -42,8 +48,15 @@ def save_data_in_bq(
         ),
         clustering_fields=["timestamp_creation"],
     )
+    # Adicionando timestamp de criação em UTC para cada registro
+    # for data in json_data:
+    #     data["timestamp_creation"] = datetime.now(tz=pytz.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
-    # Adding timestamp
+    # # Adding timestamp
+    # for data in json_data:
+    #     data.update({
+    #         "timestamp_creation": datetime.now(tz=pytz.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+    #     })
     json_data = [
         {
             **data,

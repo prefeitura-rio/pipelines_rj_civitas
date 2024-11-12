@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Literal
+from typing import Dict, List, Literal
 
 import requests
 from prefeitura_rio.pipelines_utils.logging import log
@@ -70,7 +70,7 @@ class Palver:
         sort_field: Literal["participants", "name"] = None,
         start_date: str = None,
         end_date: str = None,
-    ) -> dict:
+    ) -> List[Dict]:
 
         url = f"{cls.__base_url}/{source_name}/messages"
         params = {

@@ -22,15 +22,16 @@ fogo_cruzado_minutely_parameters = {
     "table_id_usuarios": "usuarios_monitorados",
     "table_id_messages": "telegram_messages",
     "table_id_chats": "telegram_chats",
-    "write_disposition_chats": "WRITE_TRUNCATE",
+    "write_disposition_chats": "WRITE_APPEND",
     "write_disposition_messages": "WRITE_APPEND",
     "start_date": "2024-11-11 00:00:00",
-    "end_date": "2024-11-12 10:00:00",
+    "end_date": "2024-11-13 03:00:00",
+    "mode": "staging",
 }
 
 telegram_interval_clocks = [
     IntervalClock(
-        interval=timedelta(minutes=5),
+        interval=timedelta(minutes=1),
         start_date=datetime(2024, 9, 7, 0, 0, tzinfo=tz),
         labels=[
             constants.RJ_CIVITAS_AGENT_LABEL.value,
