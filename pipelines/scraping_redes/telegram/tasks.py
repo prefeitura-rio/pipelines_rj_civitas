@@ -251,8 +251,9 @@ def task_get_messages(
     ]
 
     if len(selected_messages) == 0:
-        log(f"No messages found for chat IDs: {chats_ids}")
-        skip_flow_run()
+        message = f"No messages found for chat IDs: {chats_ids}"
+        log(message)
+        skip_flow_run(message)
 
     return selected_messages
 
