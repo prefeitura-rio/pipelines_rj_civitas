@@ -5,3 +5,4 @@ module.
 """
 
 from pipelines.scraping_redes.telegram.flows import *  # noqa
+from pipelines.scraping_redes.twitter.flows import *  # noqa

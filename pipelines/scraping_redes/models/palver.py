@@ -57,6 +57,7 @@ class Palver:
         except Exception as e:
             log(f"Error getting chats: {e}")
             raise e
+
         return response_data
 
     @classmethod
