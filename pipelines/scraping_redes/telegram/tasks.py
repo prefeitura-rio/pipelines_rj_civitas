@@ -369,7 +369,7 @@ def task_get_llm_reponse_and_update_table(
 
     # query = f"SELECT * FROM `{project_id}.{dataset_id}.telegram_messages` WHERE timestamp_creation > '{date_execution}'"
     table_enriquecimento_exists = check_if_table_exists(
-        dataset_id=dataset_id, table_id=table_id, mode=mode
+        dataset_id=dataset_id, table_id=table_id, mode="prod"
     )
 
     if table_enriquecimento_exists:
@@ -420,7 +420,7 @@ def task_get_llm_reponse_and_update_table(
             for i in range(0, len(input_list), batch_size):
                 yield input_list[i : i + batch_size]  # noqa
 
-        table_exists = check_if_table_exists(dataset_id=dataset_id, table_id=table_id, mode=mode)
+        table_exists = check_if_table_exists(dataset_id=dataset_id, table_id=table_id, mode="prod")
 
         for batch_index, batch in enumerate(chunks(model_input, batch_size)):
             log(f"Processing batch {batch_index + 1}/{(len(model_input) // batch_size + 1)}")
@@ -483,18 +483,36 @@ def task_geocode_localities(
     # Initialize Google Maps client with service account credentials
     client = googlemaps.Client(key=api_key)
 
+    table_telegram_georreferenciado_exists = check_if_table_exists(
+        dataset_id=dataset_id, table_id="telegram_georreferenciado", mode="prod"
+    )
+
     # Get data from telegram_enriquecido
     query = f"""
     SELECT DISTINCT
-        id,
-        text,
-        locality,
-        is_news_related,
-        date_execution
-    FROM `{project_id}.{dataset_id}.{table_id}`
-    WHERE locality IS NOT NULL
-    AND locality != ''
+        a.id,
+        a.text,
+        a.locality,
+        a.is_news_related,
+        a.date_execution
+    FROM `{project_id}.{dataset_id}.{table_id}` a
     """
+
+    if table_telegram_georreferenciado_exists:
+        query += """
+        LEFT JOIN
+            {project_id}.{dataset_id}.telegram_georreferenciado b
+        ON
+            a.id = b.id
+        WHERE
+            b.id IS NULL
+            AND a.locality IS NOT NULL
+            AND a.locality != ''"""
+    else:
+        query += """
+        WHERE
+            locality IS NOT NULL
+            AND locality != ''"""
 
     df = bd.read_sql(query)
 

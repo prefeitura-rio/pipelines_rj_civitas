@@ -104,7 +104,7 @@ Saída esperada:
       FROM
        `rj-civitas.scraping_redes_staging.telegram_messages` WHERE LENGTH(text) > 0
 )
-select * from enriquecimento a
+select a.* from enriquecimento a
 """
 
 fogo_cruzado_minutely_parameters = {
