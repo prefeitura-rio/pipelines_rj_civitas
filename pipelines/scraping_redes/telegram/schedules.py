@@ -110,6 +110,7 @@ select a.* from enriquecimento a
 fogo_cruzado_minutely_parameters = {
     "project_id": "rj-civitas",
     "dataset_id": "scraping_redes",
+    "table_id": "telegram",
     "table_id_usuarios": "usuarios_monitorados",
     "table_id_messages": "telegram_messages",
     "table_id_chats": "telegram_chats",

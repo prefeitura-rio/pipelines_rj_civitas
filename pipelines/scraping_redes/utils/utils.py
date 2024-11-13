@@ -64,7 +64,7 @@ def save_data_in_bq(
     json_data = [
         {
             **data,
-            "timestamp_creation": datetime.now(tz=pytz.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "timestamp_creation": datetime.now(tz=pytz.utc).strftime("%Y-%m-%dT%H:%M:%S"),
         }
         for data in json_data
     ]

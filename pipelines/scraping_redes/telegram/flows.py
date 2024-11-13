@@ -3,24 +3,22 @@
 This module defines a Prefect workflow for extracting and transforming data..
 """
 
-from prefect import Parameter  # case
+from prefect import Parameter, case  # case
 from prefect.run_configs import KubernetesRun
 from prefect.storage import GCS
-
-# from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
+from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
+from prefect.utilities.edges import unmapped
+from prefeitura_rio.core import settings
 from prefeitura_rio.pipelines_utils.custom import Flow
-
-# from prefeitura_rio.pipelines_utils.prefect import (
-# task_get_current_flow_run_labels,
-# task_rename_current_flow_run_dataset_table,
-# )
+from prefeitura_rio.pipelines_utils.prefect import task_get_current_flow_run_labels
 from prefeitura_rio.pipelines_utils.state_handlers import (
     handler_initialize_sentry,
     handler_inject_bd_credentials,
     handler_skip_if_running,
 )
-from prefeitura_rio.pipelines_utils.tasks import (  # task_run_dbt_model_task,
+from prefeitura_rio.pipelines_utils.tasks import (
     create_table_and_upload_to_gcs,
+    get_current_flow_project_name,
 )
 
 from pipelines.constants import constants
@@ -38,9 +36,6 @@ from pipelines.scraping_redes.telegram.tasks import (
     task_set_palver_variables,
 )
 
-# from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
-
-
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
     name="CIVITAS: Telegram (PALVER) - Extração e Carga",
@@ -53,6 +48,7 @@ with Flow(
 
     project_id = Parameter("project_id", default="")
     dataset_id = Parameter("dataset_id", default="")
+    table_id = Parameter("table_id", default="")
     table_id_usuarios = Parameter("table_id_usuarios", default="")
     table_id_messages = Parameter("table_id_messages", default="")
     table_id_chats = Parameter("table_id_chats", default="")
@@ -77,8 +73,7 @@ with Flow(
         "telegram_raw_chats_path", default="/tmp/pipelines/scraping_redes/telegram/data/raw/chats"
     )
 
-    # materialize_after_dump = Parameter("materialize_after_dump", default=True)
-    # materialize_reports_fc_after_dump = Parameter("materialize_reports_fc_after_dump", default=True)
+    materialize_after_dump = Parameter("materialize_after_dump", default=True)
 
     secrets = task_get_secret_folder(secret_path="/palver")
     api_key = task_get_secret_folder(secret_path="/api-keys")
@@ -174,6 +169,36 @@ with Flow(
         mode=mode,
     )
     save_geocoded.set_upstream(geocoded_data)
+
+    # Get TEMPLATE flow name
+    materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
+    materialization_labels = task_get_current_flow_run_labels()
+    current_flow_project_name = get_current_flow_project_name()
+
+    with case(task=materialize_after_dump, value=True):
+        telegram_materialization_parameters = [
+            {
+                "dataset_id": dataset_id,
+                "table_id": table_id,
+                "dbt_alias": False,
+            }
+        ]
+
+        telegram_materialization_flow_runs = create_flow_run.map(
+            flow_name=unmapped("CIVITAS: (PALVER) Materialize Telegram"),
+            project_name=unmapped(current_flow_project_name),
+            parameters=telegram_materialization_parameters,
+            labels=unmapped(materialization_labels),
+        )
+
+        telegram_materialization_flow_runs.set_upstream(save_geocoded)
+
+        telegram_materialization_wait_for_flow_run = wait_for_flow_run.map(
+            flow_run_id=telegram_materialization_flow_runs,
+            stream_states=unmapped(True),
+            stream_logs=unmapped(True),
+            raise_final_state=unmapped(True),
+        )
 
 extracao_palver_telegram.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
 extracao_palver_telegram.run_config = KubernetesRun(

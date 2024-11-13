@@ -293,7 +293,7 @@ def task_load_to_table(
             bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
             bigquery.SchemaField(name="chat_id", field_type="STRING", mode="NULLABLE"),
             bigquery.SchemaField(name="sender_id", field_type="STRING", mode="NULLABLE"),
-            bigquery.SchemaField(name="datetime", field_type="STRING", mode="NULLABLE"),
+            bigquery.SchemaField(name="datetime", field_type="TIMESTAMP", mode="NULLABLE"),
             bigquery.SchemaField(name="text", field_type="STRING", mode="NULLABLE"),
             bigquery.SchemaField(name="sentiment", field_type="STRING", mode="NULLABLE"),
             bigquery.SchemaField(name="transcript_lang", field_type="STRING", mode="NULLABLE"),
@@ -320,7 +320,7 @@ def task_load_to_table(
             bigquery.SchemaField(name="source", field_type="STRING", mode="NULLABLE"),
             bigquery.SchemaField(name="username", field_type="STRING", mode="NULLABLE"),
             bigquery.SchemaField(
-                name="timestamp_creation", field_type="timestamp", mode="NULLABLE"
+                name="timestamp_creation", field_type="TIMESTAMP", mode="NULLABLE"
             ),
         ]
     else:
@@ -513,6 +513,10 @@ def task_geocode_localities(
         WHERE
             locality IS NOT NULL
             AND locality != ''"""
+
+    # keep only news related messages
+    query += """
+        AND a.is_news_related = True"""
 
     log(f"QUERY GEOREF: \n{query}")
     df = bd.read_sql(query)

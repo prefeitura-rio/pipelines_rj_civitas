@@ -82,3 +82,11 @@ sources:
       - name: contextos
       - name: reports_enriquecidos
         identifier: reports_enriquecidos_v2
+
+  - name: stg_scraping_redes
+    database: rj-civitas
+    schema: scraping_redes_staging
+    tables:
+      - name: telegram_georreferenciado
+      - name: telegram_messages
+      - name: telegram_chats
