@@ -499,7 +499,7 @@ def task_geocode_localities(
     """
 
     if table_telegram_georreferenciado_exists:
-        query += """
+        query += f"""
         LEFT JOIN
             {project_id}.{dataset_id}.telegram_georreferenciado b
         ON
@@ -514,6 +514,7 @@ def task_geocode_localities(
             locality IS NOT NULL
             AND locality != ''"""
 
+    log(f"QUERY GEOREF: \n{query}")
     df = bd.read_sql(query)
 
     if len(df) == 0:
