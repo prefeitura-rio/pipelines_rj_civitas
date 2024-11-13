@@ -34,6 +34,7 @@ sources:
       - name: reports_1746
       - name: reports_disque_denuncia
       - name: reports_fogo_cruzado
+      - name: reports_telegram
 
   - name: disque_denuncia
     database: rj-civitas

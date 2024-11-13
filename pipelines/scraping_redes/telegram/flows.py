@@ -74,6 +74,9 @@ with Flow(
     )
 
     materialize_after_dump = Parameter("materialize_after_dump", default=True)
+    materialize_reports_telegram_after_dump = Parameter(
+        "materialize_reports_telegram_after_dump", default=True
+    )
 
     secrets = task_get_secret_folder(secret_path="/palver")
     api_key = task_get_secret_folder(secret_path="/api-keys")
@@ -170,12 +173,12 @@ with Flow(
     )
     save_geocoded.set_upstream(geocoded_data)
 
-    # Get TEMPLATE flow name
-    materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
-    materialization_labels = task_get_current_flow_run_labels()
-    current_flow_project_name = get_current_flow_project_name()
-
     with case(task=materialize_after_dump, value=True):
+
+        materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
+        materialization_labels = task_get_current_flow_run_labels()
+        current_flow_project_name = get_current_flow_project_name()
+
         telegram_materialization_parameters = [
             {
                 "dataset_id": dataset_id,
@@ -199,6 +202,26 @@ with Flow(
             stream_logs=unmapped(True),
             raise_final_state=unmapped(True),
         )
+
+        with case(task=materialize_reports_telegram_after_dump, value=True):
+            telegram_reports_materialization_parameters = [
+                {
+                    "dataset_id": "integracao_reports_staging",
+                    "table_id": "reports_telegram",
+                    "dbt_alias": False,
+                }
+            ]
+
+            telegram_reports_materialization_flow_runs = create_flow_run.map(
+                flow_name=unmapped("CIVITAS: integracao_reports_staging - Materialize telegram"),
+                project_name=unmapped(current_flow_project_name),
+                parameters=telegram_reports_materialization_parameters,
+                labels=unmapped(materialization_labels),
+            )
+            telegram_reports_materialization_flow_runs.set_upstream(
+                telegram_materialization_flow_runs
+            )
+
 
 extracao_palver_telegram.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
 extracao_palver_telegram.run_config = KubernetesRun(

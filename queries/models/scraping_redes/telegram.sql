@@ -11,7 +11,6 @@
         cluster_by = ['timestamp_creation']
     )
 }}
--- Define a (CTE) to add row numbers partitioned by 'id' and ordered by 'timestamp_insercao'.
 WITH query AS (
   SELECT
     a.*,
