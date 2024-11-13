@@ -6,6 +6,9 @@ import basedosdados as bd
 import pandas as pd
 import pytz
 from google.cloud import bigquery
+from prefect.engine.runner import ENDRUN
+from prefect.engine.state import Skipped
+from prefeitura_rio.pipelines_utils.logging import log
 
 
 def check_if_table_exists(dataset_id: str, table_id: str, mode: Literal["prod", "staging"]) -> bool:
@@ -123,3 +126,9 @@ def load_data_from_dataframe(
     client.load_table_from_dataframe(
         dataframe, destination=destination_table, num_retries=3, job_config=job_config
     )
+
+
+def skip_flow_run(message: str):
+    log(message)
+    skip = Skipped(message=message)
+    raise ENDRUN(state=skip)

@@ -32,6 +32,7 @@ from pipelines.scraping_redes.utils.utils import (
     get_default_value_for_field,
     load_data_from_dataframe,
     save_data_in_bq,
+    skip_flow_run,
 )
 
 bd.config.billing_project_id = "rj-civitas"
@@ -137,14 +138,12 @@ def task_get_chats(
         chats.extend(chat)
         chats[i].update({"username": username})
 
-        # os.makedirs('./tmp/raw', exist_ok=True) # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
         df_chats = pd.DataFrame(chat)
 
         df_chats.to_csv(
             f"{destination_path}/{username}.csv", sep=",", quotechar='"', quoting=2, index=False
         )
-        log(f"Chats salvos em {destination_path}/{username}.csv")
+        log(f"Files saved in {destination_path}/{username}.csv")
 
     log(f"Found {len(chats)} new chats")
     return chats
@@ -250,6 +249,10 @@ def task_get_messages(
         }
         for message in messages
     ]
+
+    if len(selected_messages) == 0:
+        log(f"No messages found for chat IDs: {chats_ids}")
+        skip_flow_run()
 
     return selected_messages
 
