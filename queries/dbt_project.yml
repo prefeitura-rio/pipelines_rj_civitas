@@ -42,3 +42,6 @@ models:
     g20:
       +materialized: table
       +schema: g20
+    scraping_redes:
+      +materialized: table
+      +schema: scraping_redes

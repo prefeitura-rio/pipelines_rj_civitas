@@ -33,3 +33,10 @@ SELECT
   * EXCEPT(timestamp_update)
 FROM
     {{ source('stg_integracao_reports', 'reports_fogo_cruzado') }}
+UNION ALL
+
+SELECT
+  CONCAT(id_source, id_report_original) AS id_report,
+  * EXCEPT(timestamp_creation)
+FROM
+    {{ source('stg_integracao_reports', 'reports_telegram') }}
