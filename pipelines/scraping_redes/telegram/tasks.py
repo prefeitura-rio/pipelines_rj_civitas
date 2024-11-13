@@ -10,10 +10,13 @@ Tasks include:
 """
 
 
+import time
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, Dict, List, Literal
 
 import basedosdados as bd
+import pandas as pd
 import urllib3
 from google.cloud import bigquery
 from infisical import InfisicalClient
@@ -22,8 +25,14 @@ from prefeitura_rio.pipelines_utils.infisical import get_secret_folder
 from prefeitura_rio.pipelines_utils.logging import log
 from pytz import timezone
 
+from pipelines.scraping_redes.models.model import EnrichResponseModel, Model
 from pipelines.scraping_redes.models.palver import Palver
-from pipelines.scraping_redes.utils.utils import check_if_table_exists, save_data_in_bq
+from pipelines.scraping_redes.utils.utils import (
+    check_if_table_exists,
+    get_default_value_for_field,
+    load_data_from_dataframe,
+    save_data_in_bq,
+)
 
 bd.config.billing_project_id = "rj-civitas"
 bd.config.from_file = True
@@ -86,13 +95,14 @@ def task_get_channels_names_from_bq(project_id: str, dataset_id: str, table_id: 
 
 @task
 def task_set_palver_variables(base_url: str, token: str):
-    log(f"Setting Palver variables: base_url={base_url}, token={token}")
+    log("Setting Palver variables..")
     Palver.set_base_url(base_url)
     Palver.set_token(token)
 
 
 @task
 def task_get_chats(
+    destination_path: str,
     project_id: str,
     dataset_id: str,
     table_id: str,
@@ -105,6 +115,8 @@ def task_get_chats(
     table_exists = check_if_table_exists(
         dataset_id="scraping_redes", table_id="telegram_chats", mode=mode
     )
+    destination_path = Path(destination_path)
+    destination_path.mkdir(parents=True, exist_ok=True)
 
     if table_exists:
         query = rf"""SELECT
@@ -119,17 +131,22 @@ def task_get_chats(
         ]
 
     for i, username in enumerate(chat_usernames):
-        chats.extend(
-            Palver.get_chats(
-                source_name="telegram", query=f"username: ({username})", page=1, page_size=1
-            )
+        chat = Palver.get_chats(
+            source_name="telegram", query=f"username: ({username})", page=1, page_size=1
         )
+        chats.extend(chat)
         chats[i].update({"username": username})
 
-    # query_chats = "username: (" + " OR ".join(chat_usernames) + ")"
-    # chats = Palver.get_chats(source_name="telegram", query=query_chats)
-    log(f"Found {len(chats)} chats")
-    log(chats)
+        # os.makedirs('./tmp/raw', exist_ok=True) # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+        df_chats = pd.DataFrame(chat)
+
+        df_chats.to_csv(
+            f"{destination_path}/{username}.csv", sep=",", quotechar='"', quoting=2, index=False
+        )
+        log(f"Chats salvos em {destination_path}/{username}.csv")
+
+    log(f"Found {len(chats)} new chats")
     return chats
 
 
@@ -159,23 +176,31 @@ def get_chats_last_dates(
     return dict_data
 
 
-# def task_get_chats_ids(chats: List[Dict[str, Any]]) -> List[str]:
 @task
 def task_get_messages(
     project_id: str,
     dataset_id: str,
     table_id: str,
-    chats: List[Dict[str, Any]],
     start_date: str = None,
     end_date: str = None,
+    mode: Literal["prod", "staging"] = "staging",
 ) -> List[Dict[str, Any]]:
-    chats_ids = [chat["id"] for chat in chats]
 
-    last_dates = get_chats_last_dates(
-        project_id=project_id, dataset_id=dataset_id, table_id=table_id, chats_ids=chats_ids
-    )
+    dataset_id += "_staging" if mode == "staging" else ""
+    chats = bd.read_sql(f"SELECT id FROM `{project_id}.{dataset_id}.telegram_chats`")
+
+    # chats_ids = [chat["id"] for chat in chats]
+    chats_ids = chats["id"].tolist()
+    table_exists = check_if_table_exists(dataset_id=dataset_id, table_id=table_id, mode="prod")
+    if table_exists:
+        last_dates = get_chats_last_dates(
+            project_id=project_id, dataset_id=dataset_id, table_id=table_id, chats_ids=chats_ids
+        )
+    else:
+        last_dates = {}
+
     messages = []
-
+    log(f"Getting messages from Palver for chat IDs: {chats_ids}")
     for chat in chats_ids:
         query_message = f"chat_id: ({chat})"
 
@@ -186,19 +211,16 @@ def task_get_messages(
             start_date = last_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         log(f"Getting messages from Palver for chat username: {query_message}")
-        messages.extend(
-            Palver.get_messages(
-                source_name="telegram",
-                query=query_message,
-                start_date=start_date,
-                end_date=end_date,
-            )
+
+        message = Palver.get_messages(
+            source_name="telegram",
+            query=query_message,
+            start_date=start_date,
+            end_date=end_date,
         )
-    # query_messages = "chat_id: (" + " OR ".join(chats_ids) + ")"
-    # log(f"Getting messages from Palver for chat usernames: {query_messages}")
-    # messages = Palver.get_messages(
-    # source_name="telegram", query=query_messages, start_date=start_date, end_date=end_date
-    # )
+
+        if message:
+            messages.extend(message)
 
     columns = [
         "id",
@@ -239,6 +261,7 @@ def task_load_to_table(
     table_id: str,
     occurrences: List[Dict[str, Any]],
     write_disposition: Literal["WRITE_TRUNCATE", "WRITE_APPEND"] = "WRITE_APPEND",
+    mode: Literal["prod", "staging"] = "staging",
 ):
     """
     Save a list of dictionaries to a BigQuery table.
@@ -249,6 +272,8 @@ def task_load_to_table(
         table_id (str): The ID of the table.
         occurrences (List[Dict]): The list of dictionaries to be saved to BigQuery.
     """
+    dataset_id += "_staging" if mode == "staging" else ""
+
     if len(occurrences) == 0 or occurrences is None:
         log(f"No occurrences to write to {project_id}.{dataset_id}.{table_id}")
         return None
@@ -293,7 +318,6 @@ def task_load_to_table(
     else:
         raise ValueError(f"Table {table_id} not supported")
 
-    log(SCHEMA)
     save_data_in_bq(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -303,3 +327,112 @@ def task_load_to_table(
         write_disposition=write_disposition,
     )
     log(f"{len(occurrences)} occurrences written to {project_id}.{dataset_id}.{table_id}")
+
+
+@task
+def task_get_date_execution(utc: bool = False) -> str:
+    if utc:
+        date_execution = datetime.now(tz=timezone("UTC")).strftime("%Y-%m-%d %H:%M:%S")
+    else:
+        date_execution = datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M:%S")
+
+    return date_execution
+
+
+@task
+def task_get_llm_reponse_and_update_table(
+    # dataframe: pd.DataFrame,
+    dataset_id: str,
+    table_id: str,
+    query: str = None,
+    prompt_column: str = None,
+    model_name: str = "gemini-1.5-flash",
+    max_output_tokens: int = 1024,
+    temperature: float = 0.2,
+    top_k: int = 32,
+    top_p: int = 1,
+    project_id: str = "rj-civitas",
+    location: str = "us-central1",
+    batch_size: int = 10,
+    date_execution: str = None,
+    mode: Literal["prod", "staging"] = "staging",
+) -> None:
+    dataset_id += "_staging" if mode == "staging" else ""
+
+    # query = f"SELECT * FROM `{project_id}.{dataset_id}.telegram_messages` WHERE timestamp_creation > '{date_execution}'"
+    dataframe = (bd.read_sql(query)).reset_index()
+
+    if len(dataframe) > 0:
+
+        log(f"Start generate llm response for {prompt_column} with {len(dataframe)} rows")
+        if prompt_column == "prompt_column":
+            response_schema = EnrichResponseModel.schema()
+        else:
+            raise ValueError("prompt_column must be 'prompt_column'")
+
+        schema = [
+            bigquery.SchemaField(name="id", field_type="STRING", mode="REQUIRED"),
+            bigquery.SchemaField(name="text", field_type="STRING", mode="NULLABLE"),
+            bigquery.SchemaField(name="prompt_column", field_type="STRING", mode="NULLABLE"),
+            bigquery.SchemaField(name="is_related_news", field_type="BOOLEAN", mode="NULLABLE"),
+            bigquery.SchemaField(name="locality", field_type="STRING", mode="NULLABLE"),
+            bigquery.SchemaField(name="date_execution", field_type="TIMESTAMP", mode="NULLABLE"),
+        ]
+
+        model_input = [
+            {
+                "prompt_text": prompt,
+                "response_schema": response_schema,
+                "model_name": model_name,
+                "max_output_tokens": max_output_tokens,
+                "temperature": temperature,
+                "top_k": top_k,
+                "top_p": top_p,
+                "index": index,
+            }
+            for prompt, index in zip(dataframe[prompt_column].tolist(), dataframe["index"].tolist())
+        ]
+        model = Model()
+        model.vertex_init(project_id=project_id, location=location)
+
+        def chunks(input_list: list, batch_size: int):
+            for i in range(0, len(input_list), batch_size):
+                yield input_list[i : i + batch_size]  # noqa
+
+        table_exists = check_if_table_exists(dataset_id=dataset_id, table_id=table_id, mode=mode)
+
+        for batch_index, batch in enumerate(chunks(model_input, batch_size)):
+            log(f"Processing batch {batch_index + 1}/{(len(model_input) // batch_size + 1)}")
+
+            responses = model.model_predict_batch(model_input=batch)
+
+            batch_df = dataframe.merge(pd.DataFrame(responses), on="index")
+            batch_df = batch_df.drop(columns=["index"])
+            batch_df["date_execution"] = pd.Timestamp(date_execution)
+
+            batch_df["error_name"] = batch_df["error_name"].astype(str)
+            batch_df["error_message"] = batch_df["error_message"].astype(str)
+
+            schema_columns = {field.name: field for field in schema}
+            missing_columns = set(schema_columns.keys()) - set(batch_df.columns)
+
+            for col_name in missing_columns:
+                field = schema_columns[col_name]
+                default_value = get_default_value_for_field(field, len(batch_df))
+                batch_df[col_name] = default_value
+
+            load_data_from_dataframe(
+                dataframe=batch_df,
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=table_id,
+                schema=schema,
+            )
+
+            # wait some seconds after table creation
+            if not table_exists and batch_index == 0:
+                log("Waiting for table to be created...")
+                time.sleep(10)
+
+    else:
+        log(f"No new data to load to {dataset_id}.{table_id}")

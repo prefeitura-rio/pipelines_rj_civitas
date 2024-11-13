@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal
 
 import basedosdados as bd
+import pandas as pd
 import pytz
 from google.cloud import bigquery
 
@@ -71,3 +72,54 @@ def save_data_in_bq(
         job.result()
     except Exception as e:
         raise Exception(e)
+
+
+def get_default_value_for_field(field: bigquery.SchemaField, length: int):
+    if field.mode == "REPEATED":
+        return [[] for _ in range(length)]
+
+    defaults = {
+        "STRING": ["" for _ in range(length)],
+        "INTEGER": [0 for _ in range(length)],
+        "INT64": [0 for _ in range(length)],
+        "FLOAT": [0.0 for _ in range(length)],
+        "FLOAT64": [0.0 for _ in range(length)],
+        "BOOLEAN": [False for _ in range(length)],
+        "BOOL": [False for _ in range(length)],
+        "TIMESTAMP": [None for _ in range(length)],
+        "DATETIME": [None for _ in range(length)],
+        "DATE": [None for _ in range(length)],
+        "STRUCT": [None for _ in range(length)],
+    }
+    return defaults.get(field.field_type, [None for _ in range(length)])
+
+
+def load_data_from_dataframe(
+    dataframe: pd.DataFrame,
+    dataset_id: str,
+    table_id: str,
+    project_id: str = None,
+    write_disposition: str = "WRITE_APPEND",
+    schema: list[bigquery.SchemaField] = [],
+) -> None:
+    client = bigquery.Client()
+    destination_table = ""
+    destination_table += f"{project_id}." if project_id else ""
+    destination_table += f"{dataset_id}.{table_id}"
+
+    job_config = bigquery.LoadJobConfig(
+        schema=schema or None,
+        # Optionally, set the write disposition. BigQuery appends loaded rows
+        # to an existing table by default, but with WRITE_TRUNCATE write
+        # disposition it replaces the table with the loaded data.
+        write_disposition=write_disposition,
+        # time_partitioning=bigquery.TimePartitioning(
+        #     type_=bigquery.TimePartitioningType.MONTH,
+        #     field="timestamp_insercao",  # name of column to use for partitioning
+        # ),
+        # clustering_fields=["timestamp_insercao"],
+    )
+
+    client.load_table_from_dataframe(
+        dataframe, destination=destination_table, num_retries=3, job_config=job_config
+    )

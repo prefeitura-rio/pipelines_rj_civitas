@@ -19,12 +19,17 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
     handler_inject_bd_credentials,
     handler_skip_if_running,
 )
+from prefeitura_rio.pipelines_utils.tasks import (  # task_run_dbt_model_task,
+    create_table_and_upload_to_gcs,
+)
 
 from pipelines.constants import constants
 from pipelines.scraping_redes.telegram.schedules import telegram_update_schedule
 from pipelines.scraping_redes.telegram.tasks import (
     task_get_channels_names_from_bq,
     task_get_chats,
+    task_get_date_execution,
+    task_get_llm_reponse_and_update_table,
     task_get_messages,
     task_get_secret_folder,
     task_load_to_table,
@@ -46,20 +51,38 @@ with Flow(
 
     project_id = Parameter("project_id", default="")
     dataset_id = Parameter("dataset_id", default="")
-    dataset_id_staging = Parameter("dataset_id_staging", default="")
     table_id_usuarios = Parameter("table_id_usuarios", default="")
     table_id_messages = Parameter("table_id_messages", default="")
     table_id_chats = Parameter("table_id_chats", default="")
+    table_id_enriquecido = Parameter("table_id_enriquecido", default="")
     write_disposition_chats = Parameter("write_disposition_chats", default="")
     write_disposition_messages = Parameter("write_disposition_messages", default="")
     start_date = Parameter("start_date", default=None)
     end_date = Parameter("end_date", default=None)
     mode = Parameter("mode", default="")
+    query_enriquecimento = Parameter("query_enriquecimento", default="")
+
+    model_name = Parameter("model_name", default="gemini-1.5-flash-002")
+    max_output_tokens = Parameter("max_output_tokens", default=1024)
+    temperature = Parameter("temperature", default=0.2)
+    top_k = Parameter("top_k", default=32)
+    top_p = Parameter("top_p", default=1)
+    location = Parameter("location", default="us-central1")
+    batch_size = Parameter("batch_size", default=10)
+
+    telegram_raw_chats_path = Parameter(
+        "telegram_raw_chats_path", default="/tmp/pipelines/scraping_redes/telegram/data/raw/chats"
+    )
+
     # materialize_after_dump = Parameter("materialize_after_dump", default=True)
     # materialize_reports_fc_after_dump = Parameter("materialize_reports_fc_after_dump", default=True)
 
     secrets = task_get_secret_folder(secret_path="/palver")
+    # import os
+    # secrets = {"PALVER_BASE_URL": os.getenv('PALVER_BASE_URL'), "PALVER_TOKEN": os.getenv('PALVER_TOKEN')}
     # redis_password = task_get_secret_folder(secret_path="/redis")
+
+    date_execution = task_get_date_execution(utc=True)
 
     palver_variables = task_set_palver_variables(
         base_url=secrets["PALVER_BASE_URL"],
@@ -74,6 +97,7 @@ with Flow(
     channels_names.set_upstream(palver_variables)
 
     chats = task_get_chats(
+        destination_path=telegram_raw_chats_path,
         project_id=project_id,
         dataset_id=dataset_id,
         table_id=table_id_chats,
@@ -82,33 +106,52 @@ with Flow(
     )
     chats.set_upstream(channels_names)
 
-    load_chats_to_bq = task_load_to_table(
-        project_id=project_id,
-        dataset_id=dataset_id_staging,
+    load_chats_to_bq = create_table_and_upload_to_gcs(
+        data_path=telegram_raw_chats_path,
+        dataset_id=dataset_id,
         table_id=table_id_chats,
-        occurrences=chats,
-        write_disposition=write_disposition_chats,
+        dump_mode=write_disposition_chats,
+        biglake_table=False,
     )
     load_chats_to_bq.set_upstream(chats)
 
     messages = task_get_messages(
         project_id=project_id,
-        dataset_id=dataset_id_staging,
+        dataset_id=dataset_id,
         table_id=table_id_messages,
-        chats=chats,
         start_date=start_date,
         end_date=end_date,
+        mode=mode,
     )
     messages.set_upstream(load_chats_to_bq)
 
     load_messages_to_bq = task_load_to_table(
         project_id=project_id,
-        dataset_id=dataset_id_staging,
+        dataset_id=dataset_id,
         table_id=table_id_messages,
         occurrences=messages,
         write_disposition=write_disposition_messages,
+        mode=mode,
     )
     load_messages_to_bq.set_upstream(messages)
+
+    task_enriquecimento = task_get_llm_reponse_and_update_table(
+        dataset_id=dataset_id,
+        table_id=table_id_enriquecido,
+        query=query_enriquecimento,
+        model_name=model_name,
+        max_output_tokens=max_output_tokens,
+        temperature=temperature,
+        top_k=top_k,
+        top_p=top_p,
+        project_id=project_id,
+        location=location,
+        batch_size=batch_size,
+        date_execution=date_execution,
+        prompt_column="prompt_column",
+        mode=mode,
+    )
+    task_enriquecimento.set_upstream(load_messages_to_bq)
 
 extracao_palver_telegram.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
 extracao_palver_telegram.run_config = KubernetesRun(
