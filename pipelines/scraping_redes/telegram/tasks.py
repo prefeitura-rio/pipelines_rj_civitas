@@ -205,9 +205,20 @@ def task_get_messages(
         query_message = f"chat_id: ({chat})"
 
         if last_dates.get(chat, None):
-            last_date = datetime.strptime(last_dates[chat], "%Y-%m-%dT%H:%M:%SZ") + timedelta(
-                seconds=1
-            )
+            last_date = last_dates[chat]
+
+            # Convert to datetime if it's a string
+            if isinstance(last_date, str):
+                try:
+                    last_date = datetime.strptime(last_date, "%Y-%m-%dT%H:%M:%S")
+                except ValueError as e:
+                    raise ValueError(f"Invalid date format for chat {chat}: {e}")
+
+            # Check if it's a datetime object
+            if not isinstance(last_date, datetime):
+                raise ValueError(f"last_dates[{chat}] is not a datetime object")
+
+            last_date += timedelta(seconds=1)
             start_date = last_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         # log(f"Getting messages from Palver for chat username: {query_message}")
