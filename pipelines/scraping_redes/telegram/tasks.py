@@ -212,36 +212,14 @@ def task_get_messages(
 
         # log(f"Getting messages from Palver for chat username: {query_message}")
 
-        page_size = 100
-        all_messages = []
+        log(f"Getting messages from Palver for chat username: {query_message}")
 
-        first_response = Palver.get_messages(
+        message = Palver.get_messages(
             source_name="telegram",
             query=query_message,
             start_date=start_date,
             end_date=end_date,
-            page=1,
-            page_size=page_size,
         )
-
-        if first_response:
-            all_messages.extend(first_response)
-            total_pages = first_response.get("totalPages", 1)
-
-            for page in range(2, total_pages + 1):
-                response = Palver.get_messages(
-                    source_name="telegram",
-                    query=query_message,
-                    start_date=start_date,
-                    end_date=end_date,
-                    page=page,
-                    page_size=page_size,
-                )
-
-                if response:
-                    all_messages.extend(response)
-
-        message = all_messages
 
         if message:
             messages.extend(message)
@@ -498,6 +476,7 @@ def task_geocode_localities(
         id,
         text,
         locality,
+        is_news_related,
         date_execution
     FROM `{project_id}.{dataset_id}.{table_id}`
     WHERE locality IS NOT NULL
@@ -535,6 +514,7 @@ def task_geocode_localities(
                         "latitude": location["lat"],
                         "longitude": location["lng"],
                         "formatted_address": result["formatted_address"],
+                        "is_news_related": row["is_news_related"],
                     }
                 )
             else:

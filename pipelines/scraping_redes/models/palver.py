@@ -84,14 +84,27 @@ class Palver:
         }
         headers = {"Authorization": f"Bearer {cls.__token}"}
 
+        # first request
         try:
             response = requests.get(url, params=params, headers=headers)
             response.raise_for_status()
+            total_pages = response.json().get("meta", {}).get("totalPages", 1)
             data = response.json().get("data", [])
-            log(f"{len(data)} messages found")
+
         except Exception as e:
             log(f"Error getting chats: {e}")
             raise e
+
+        for i in range(2, total_pages + 1):
+            params["page"] = i
+            try:
+                response = requests.get(url, params=params, headers=headers)
+                response.raise_for_status()
+                data.extend(response.json().get("data", []))
+            except Exception as e:
+                log(f"Error getting chats: {e}")
+                raise e
+
         return data
 
 
