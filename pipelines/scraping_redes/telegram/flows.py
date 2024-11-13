@@ -185,7 +185,7 @@ with Flow(
         ]
 
         telegram_materialization_flow_runs = create_flow_run.map(
-            flow_name=unmapped("CIVITAS: (PALVER) Materialize Telegram"),
+            flow_name=unmapped(materialization_flow_name),
             project_name=unmapped(current_flow_project_name),
             parameters=telegram_materialization_parameters,
             labels=unmapped(materialization_labels),
