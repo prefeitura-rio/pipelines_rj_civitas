@@ -26,6 +26,7 @@ from prefeitura_rio.pipelines_utils.tasks import (  # task_run_dbt_model_task,
 from pipelines.constants import constants
 from pipelines.scraping_redes.telegram.schedules import telegram_update_schedule
 from pipelines.scraping_redes.telegram.tasks import (
+    task_geocode_localities,
     task_get_channels_names_from_bq,
     task_get_chats,
     task_get_date_execution,
@@ -33,6 +34,7 @@ from pipelines.scraping_redes.telegram.tasks import (
     task_get_messages,
     task_get_secret_folder,
     task_load_to_table,
+    task_save_geocoded_data,
     task_set_palver_variables,
 )
 
@@ -55,6 +57,7 @@ with Flow(
     table_id_messages = Parameter("table_id_messages", default="")
     table_id_chats = Parameter("table_id_chats", default="")
     table_id_enriquecido = Parameter("table_id_enriquecido", default="")
+    table_id_georreferenciado = Parameter("table_id_georreferenciado", default="")
     write_disposition_chats = Parameter("write_disposition_chats", default="")
     write_disposition_messages = Parameter("write_disposition_messages", default="")
     start_date = Parameter("start_date", default=None)
@@ -78,6 +81,7 @@ with Flow(
     # materialize_reports_fc_after_dump = Parameter("materialize_reports_fc_after_dump", default=True)
 
     secrets = task_get_secret_folder(secret_path="/palver")
+    api_key = task_get_secret_folder(secret_path="/api-keys")
     # import os
     # secrets = {"PALVER_BASE_URL": os.getenv('PALVER_BASE_URL'), "PALVER_TOKEN": os.getenv('PALVER_TOKEN')}
     # redis_password = task_get_secret_folder(secret_path="/redis")
@@ -152,6 +156,24 @@ with Flow(
         mode=mode,
     )
     task_enriquecimento.set_upstream(load_messages_to_bq)
+
+    geocoded_data = task_geocode_localities(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=table_id_enriquecido,
+        mode=mode,
+        api_key=api_key["GOOGLE_MAPS_API_KEY"],
+    )
+    geocoded_data.set_upstream(task_enriquecimento)
+
+    save_geocoded = task_save_geocoded_data(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=table_id_georreferenciado,
+        geocoded_data=geocoded_data,
+        mode=mode,
+    )
+    save_geocoded.set_upstream(geocoded_data)
 
 extracao_palver_telegram.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
 extracao_palver_telegram.run_config = KubernetesRun(

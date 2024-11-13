@@ -31,7 +31,7 @@ query_enriquecimento = r"""WITH enriquecimento AS (
 O retorno deve ser em formato JSON, como no exemplo abaixo:
 
 {
-  "is_related_news": true ou false,
+  "is_news_related": true ou false,
   "locality": "endereço ou localidade ou string vazia"
 }
 
@@ -43,7 +43,7 @@ Mensagem:
 ### Exemplo de Saída:
 
 {
-  "is_related_news": false,
+  "is_news_related": false,
   "locality": "estação da luz, são paulo"
 }
 
@@ -58,7 +58,7 @@ Mensagem:
 
 Saída esperada:
 {
-  "is_related_news": true,
+  "is_news_related": true,
   "locality": "cidade nova"
 }
 
@@ -71,7 +71,7 @@ Mensagem:
 
 Saída esperada:
 {
-  "is_related_news": false,
+  "is_news_related": false,
   "locality": ""
 }
 
@@ -84,7 +84,7 @@ Mensagem:
 
 Saída esperada:
 {
-  "is_related_news": false,
+  "is_news_related": false,
   "locality": "teatro municipal do rio de janeiro"
 }
 
@@ -92,7 +92,7 @@ Saída esperada:
 
 ### Observações:
 
-- **is_related_news**: A chave `is_related_news` deve ser **true** se a mensagem contém uma notícia, alerta ou informação relevante (como um tiroteio, acidente, evento), e **false** caso contrário (se for apenas uma descrição ou conversa sem informação relevante).
+- **is_news_related**: A chave `is_news_related` deve ser **true** se a mensagem contém uma notícia, alerta ou informação relevante (como um tiroteio, acidente, evento), e **false** caso contrário (se for apenas uma descrição ou conversa sem informação relevante).
 
 - **locality**: A chave `locality` deve conter o endereço ou localidade mais específica possível mencionada na mensagem. Caso o modelo não consiga inferir nenhuma localidade, o valor dessa chave deve ser uma **string vazia** (`""`).
 
@@ -116,6 +116,7 @@ fogo_cruzado_minutely_parameters = {
     "table_id_messages": "telegram_messages",
     "table_id_chats": "telegram_chats",
     "table_id_enriquecido": "telegram_enriquecido",
+    "table_id_georreferenciado": "telegram_georreferenciado",
     "write_disposition_chats": "WRITE_APPEND",
     "write_disposition_messages": "WRITE_APPEND",
     "start_date": "2024-11-01 00:00:00",

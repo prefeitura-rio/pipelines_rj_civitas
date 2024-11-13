@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Literal
 
 import basedosdados as bd
+import googlemaps
 import pandas as pd
 import urllib3
 from google.cloud import bigquery
@@ -209,14 +210,38 @@ def task_get_messages(
             )
             start_date = last_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        log(f"Getting messages from Palver for chat username: {query_message}")
+        # log(f"Getting messages from Palver for chat username: {query_message}")
 
-        message = Palver.get_messages(
+        page_size = 100
+        all_messages = []
+
+        first_response = Palver.get_messages(
             source_name="telegram",
             query=query_message,
             start_date=start_date,
             end_date=end_date,
+            page=1,
+            page_size=page_size,
         )
+
+        if first_response:
+            all_messages.extend(first_response)
+            total_pages = first_response.get("totalPages", 1)
+
+            for page in range(2, total_pages + 1):
+                response = Palver.get_messages(
+                    source_name="telegram",
+                    query=query_message,
+                    start_date=start_date,
+                    end_date=end_date,
+                    page=page,
+                    page_size=page_size,
+                )
+
+                if response:
+                    all_messages.extend(response)
+
+        message = all_messages
 
         if message:
             messages.extend(message)
@@ -255,6 +280,7 @@ def task_get_messages(
         log(message)
         skip_flow_run(message)
 
+    log(f"Found {len(selected_messages)} messages")
     return selected_messages
 
 
@@ -378,7 +404,7 @@ def task_get_llm_reponse_and_update_table(
             bigquery.SchemaField(name="id", field_type="STRING", mode="REQUIRED"),
             bigquery.SchemaField(name="text", field_type="STRING", mode="NULLABLE"),
             bigquery.SchemaField(name="prompt_column", field_type="STRING", mode="NULLABLE"),
-            bigquery.SchemaField(name="is_related_news", field_type="BOOLEAN", mode="NULLABLE"),
+            bigquery.SchemaField(name="is_news_related", field_type="BOOLEAN", mode="NULLABLE"),
             bigquery.SchemaField(name="locality", field_type="STRING", mode="NULLABLE"),
             bigquery.SchemaField(name="date_execution", field_type="TIMESTAMP", mode="NULLABLE"),
         ]
@@ -440,3 +466,126 @@ def task_get_llm_reponse_and_update_table(
 
     else:
         log(f"No new data to load to {dataset_id}.{table_id}")
+
+
+@task(max_retries=3, retry_delay=timedelta(seconds=10))
+def task_geocode_localities(
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    mode: Literal["prod", "staging"] = "staging",
+    api_key: str = None,
+) -> List[Dict]:
+    """Geocodes localities from telegram_enriquecido table using Google Geocoding API.
+
+    Args:
+        project_id (str): BigQuery project ID
+        dataset_id (str): BigQuery dataset ID
+        table_id (str): BigQuery table ID containing enriched data
+        mode (Literal["prod", "staging"]): Execution mode. Defaults to "staging".
+
+    Returns:
+        List[Dict]: List of dictionaries containing geocoded data
+    """
+    dataset_id += "_staging" if mode == "staging" else ""
+
+    # Initialize Google Maps client with service account credentials
+    client = googlemaps.Client(key=api_key)
+
+    # Get data from telegram_enriquecido
+    query = f"""
+    SELECT DISTINCT
+        id,
+        text,
+        locality,
+        date_execution
+    FROM `{project_id}.{dataset_id}.{table_id}`
+    WHERE locality IS NOT NULL
+    AND locality != ''
+    """
+
+    df = bd.read_sql(query)
+
+    if len(df) == 0:
+        log("No localities to geocode")
+        return []
+
+    geocoded_data = []
+
+    for _, row in df.iterrows():
+        try:
+            # Add "Rio de Janeiro" to improve geocoding accuracy
+            search_text = f"{row['locality']}, Rio de Janeiro, RJ, Brasil"
+
+            # Get geocoding results
+            geocode_result = client.geocode(
+                address=search_text,
+                region="br",  # Restrict to Brazil
+            )
+
+            if geocode_result:
+                result = geocode_result[0]
+                location = result["geometry"]["location"]
+
+                geocoded_data.append(
+                    {
+                        "id": row["id"],
+                        "text": row["text"],
+                        "locality": row["locality"],
+                        "latitude": location["lat"],
+                        "longitude": location["lng"],
+                        "formatted_address": result["formatted_address"],
+                    }
+                )
+            else:
+                log(f"No results found for locality: {row['locality']}")
+
+        except Exception as e:
+            log(f"Error geocoding locality {row['locality']}: {str(e)}")
+            continue
+
+    log(f"Successfully geocoded {len(geocoded_data)} localities")
+    return geocoded_data
+
+
+@task
+def task_save_geocoded_data(
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    geocoded_data: List[Dict],
+    mode: Literal["prod", "staging"] = "staging",
+) -> None:
+    """Saves geocoded data to BigQuery table.
+
+    Args:
+        project_id (str): BigQuery project ID
+        dataset_id (str): BigQuery dataset ID
+        table_id (str): BigQuery table ID for geocoded data
+        geocoded_data (List[Dict]): List of dictionaries containing geocoded data
+        mode (Literal["prod", "staging"]): Execution mode. Defaults to "staging".
+    """
+    if not geocoded_data:
+        log("No geocoded data to save")
+        return None
+
+    dataset_id += "_staging" if mode == "staging" else ""
+
+    schema = [
+        bigquery.SchemaField(name="id", field_type="STRING", mode="REQUIRED"),
+        bigquery.SchemaField(name="text", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="locality", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="latitude", field_type="FLOAT64", mode="NULLABLE"),
+        bigquery.SchemaField(name="longitude", field_type="FLOAT64", mode="NULLABLE"),
+        bigquery.SchemaField(name="formatted_address", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="timestamp_creation", field_type="TIMESTAMP", mode="NULLABLE"),
+    ]
+
+    save_data_in_bq(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=table_id,
+        schema=schema,
+        json_data=geocoded_data,
+        write_disposition="WRITE_APPEND",
+    )

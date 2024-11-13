@@ -70,7 +70,6 @@ def save_data_in_bq(
     ]
 
     try:
-        print(json_data)
         job = client.load_table_from_json(json_data, table_full_name, job_config=job_config)
         job.result()
     except Exception as e:

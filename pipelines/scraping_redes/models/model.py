@@ -20,7 +20,7 @@ SAFETY_CONFIG = {
 
 
 class EnrichResponseModel(BaseModel):
-    is_related_news: bool
+    is_news_related: bool
     locality: str
 
 
