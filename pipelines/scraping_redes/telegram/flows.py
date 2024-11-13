@@ -58,7 +58,7 @@ with Flow(
     table_id_chats = Parameter("table_id_chats", default="")
     table_id_enriquecido = Parameter("table_id_enriquecido", default="")
     table_id_georreferenciado = Parameter("table_id_georreferenciado", default="")
-    write_disposition_chats = Parameter("write_disposition_chats", default="")
+    dump_mode_chats = Parameter("dump_mode_chats", default="")
     write_disposition_messages = Parameter("write_disposition_messages", default="")
     start_date = Parameter("start_date", default=None)
     end_date = Parameter("end_date", default=None)
@@ -114,7 +114,7 @@ with Flow(
         data_path=telegram_raw_chats_path,
         dataset_id=dataset_id,
         table_id=table_id_chats,
-        dump_mode=write_disposition_chats,
+        dump_mode=dump_mode_chats,
         biglake_table=False,
     )
     load_chats_to_bq.set_upstream(chats)

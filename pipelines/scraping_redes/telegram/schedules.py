@@ -117,7 +117,7 @@ fogo_cruzado_minutely_parameters = {
     "table_id_chats": "telegram_chats",
     "table_id_enriquecido": "telegram_enriquecido",
     "table_id_georreferenciado": "telegram_georreferenciado",
-    "write_disposition_chats": "WRITE_APPEND",
+    "dump_mode_chats": "append",
     "write_disposition_messages": "WRITE_APPEND",
     "start_date": "2024-11-01 00:00:00",
     "end_date": datetime.now(tz=pytz.utc).strftime("%Y-%m-%d %H:%M:%S"),
