@@ -558,6 +558,7 @@ def task_save_geocoded_data(
         bigquery.SchemaField(name="latitude", field_type="FLOAT64", mode="NULLABLE"),
         bigquery.SchemaField(name="longitude", field_type="FLOAT64", mode="NULLABLE"),
         bigquery.SchemaField(name="formatted_address", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="is_news_related", field_type="BOOLEAN", mode="NULLABLE"),
         bigquery.SchemaField(name="timestamp_creation", field_type="TIMESTAMP", mode="NULLABLE"),
     ]
 
