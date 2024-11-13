@@ -368,6 +368,19 @@ def task_get_llm_reponse_and_update_table(
     dataset_id += "_staging" if mode == "staging" else ""
 
     # query = f"SELECT * FROM `{project_id}.{dataset_id}.telegram_messages` WHERE timestamp_creation > '{date_execution}'"
+    table_enriquecimento_exists = check_if_table_exists(
+        dataset_id=dataset_id, table_id=table_id, mode=mode
+    )
+
+    if table_enriquecimento_exists:
+        query += rf"""
+        LEFT JOIN
+            {project_id}.{dataset_id}.{table_id} b
+        ON
+            a.id = b.id
+        WHERE
+            b.id IS NULL"""
+
     dataframe = (bd.read_sql(query)).reset_index()
 
     if len(dataframe) > 0:

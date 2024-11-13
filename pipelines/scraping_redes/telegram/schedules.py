@@ -103,10 +103,8 @@ Saída esperada:
   ) AS prompt_column
       FROM
        `rj-civitas.scraping_redes_staging.telegram_messages` WHERE LENGTH(text) > 0
-      LIMIT 200
-
 )
-select * from enriquecimento
+select * from enriquecimento a
 """
 
 fogo_cruzado_minutely_parameters = {
