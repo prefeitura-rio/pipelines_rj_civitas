@@ -19,7 +19,8 @@ WITH query AS (
     c.name AS chat_name,
     c.username AS chat_username,
     b.sender_id,
-    b.datetime AS timestamp_message
+    b.datetime AS timestamp_message,
+    ROW_NUMBER() OVER (PARTITION BY a.id ORDER BY b.timestamp_creation DESC) AS row_num
   FROM
     {{ source('stg_scraping_redes', 'telegram_georreferenciado') }} a
   LEFT JOIN
@@ -30,6 +31,7 @@ WITH query AS (
     {{ source('stg_scraping_redes', 'telegram_chats') }} c
   ON
     b.chat_id = c.id
+  QUALIFY row_num = 1
 )
 SELECT
   id,

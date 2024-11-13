@@ -90,3 +90,9 @@ sources:
       - name: telegram_georreferenciado
       - name: telegram_messages
       - name: telegram_chats
+
+  - name: scraping_redes
+    database: rj-civitas
+    schema: scraping_redes
+    tables:
+      - name: telegram
