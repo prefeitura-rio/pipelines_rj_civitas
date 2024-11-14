@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This module defines a Prefect workflow for extracting and transforming data.
+This module defines a Prefect workflow for extracting and transforming data
 """
 
 from prefect import Parameter, case  # case

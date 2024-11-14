@@ -546,7 +546,7 @@ def task_geocode_localities(
         log(f"Geocoding locality {i+1}/{len(df)}")
         try:
             # Add "Rio de Janeiro" to improve geocoding accuracy
-            search_text = f"{row['locality']}, Rio de Janeiro, RJ, Brasil"
+            search_text = row["locality"]
 
             # Get geocoding results
             geocode_result = client.geocode(
