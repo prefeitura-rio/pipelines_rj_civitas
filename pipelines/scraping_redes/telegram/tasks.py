@@ -232,10 +232,6 @@ def task_get_messages(
             last_date += timedelta(seconds=1)
             start_date = last_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        # log(f"Getting messages from Palver for chat username: {query_message}")
-
-        log(f"Getting messages from Palver for chat username: {query_message}")
-
         message = Palver.get_messages(
             source_name="telegram",
             query=query_message,
@@ -576,8 +572,6 @@ def task_geocode_localities(
                         "is_news_related": row["is_news_related"],
                     }
                 )
-            else:
-                log(f"No results found for locality: {row['locality']}")
 
         except Exception as e:
             log(f"Error geocoding locality {row['locality']}: {str(e)}")
