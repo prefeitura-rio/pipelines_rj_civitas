@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Literal
 import basedosdados as bd
 import googlemaps
 import pandas as pd
+import pytz
 import urllib3
 from google.cloud import bigquery
 from infisical import InfisicalClient
@@ -192,6 +193,10 @@ def task_get_messages(
 ) -> List[Dict[str, Any]]:
 
     dataset_id += "_staging" if mode == "staging" else ""
+
+    if end_date is None or end_date == "":
+        end_date = datetime.now(tz=pytz.utc) + timedelta(days=1)
+
     chats = bd.read_sql(f"SELECT id FROM `{project_id}.{dataset_id}.telegram_chats`")
 
     # chats_ids = [chat["id"] for chat in chats]
@@ -206,6 +211,7 @@ def task_get_messages(
 
     messages = []
     log(f"Getting messages from Palver for chat IDs: {chats_ids}")
+
     for chat in chats_ids:
         query_message = f"chat_id: ({chat})"
 
@@ -225,10 +231,6 @@ def task_get_messages(
 
             last_date += timedelta(seconds=1)
             start_date = last_date.strftime("%Y-%m-%dT%H:%M:%SZ")
-
-        # log(f"Getting messages from Palver for chat username: {query_message}")
-
-        log(f"Getting messages from Palver for chat username: {query_message}")
 
         message = Palver.get_messages(
             source_name="telegram",
@@ -570,8 +572,6 @@ def task_geocode_localities(
                         "is_news_related": row["is_news_related"],
                     }
                 )
-            else:
-                log(f"No results found for locality: {row['locality']}")
 
         except Exception as e:
             log(f"Error geocoding locality {row['locality']}: {str(e)}")

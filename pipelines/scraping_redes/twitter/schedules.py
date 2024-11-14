@@ -119,7 +119,6 @@ fogo_cruzado_minutely_parameters = {
     "dump_mode_chats": "append",
     "write_disposition_messages": "WRITE_APPEND",
     "start_date": "2024-11-01 00:00:00",
-    "end_date": datetime.now(tz=pytz.utc).strftime("%Y-%m-%d %H:%M:%S"),
     "mode": "staging",
     "query_enriquecimento": query_enriquecimento,
 }
