@@ -20,7 +20,10 @@ WITH messages AS (
 
   {% if is_incremental() %}
   WHERE
-    DATETIME(timestamp_creation) > (SELECT max(timestamp_creation) FROM {{ this }})
+    DATETIME(timestamp_creation) > COALESCE(
+      (SELECT max(timestamp_creation) FROM {{ this }}),
+      DATETIME('1900-01-01 00:00:00')
+    )
   {% endif %}
 )
 SELECT
@@ -43,3 +46,4 @@ FROM
   messages
 WHERE
   is_news_related = True
+  AND state = 'RJ'

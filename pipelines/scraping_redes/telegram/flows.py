@@ -81,7 +81,12 @@ with Flow(
     secrets = task_get_secret_folder(secret_path="/palver")
     api_key = task_get_secret_folder(secret_path="/api-keys")
     # import os
-    # secrets = {"PALVER_BASE_URL": os.getenv('PALVER_BASE_URL'), "PALVER_TOKEN": os.getenv('PALVER_TOKEN')}
+
+    # secrets = {
+    #     "PALVER_BASE_URL": os.getenv("PALVER_BASE_URL"),
+    #     "PALVER_TOKEN": os.getenv("PALVER_TOKEN"),
+    # }
+    # api_key = {"GOOGLE_MAPS_API_KEY": os.getenv("GOOGLE_MAPS_API_KEY")}
     # redis_password = task_get_secret_folder(secret_path="/redis")
 
     date_execution = task_get_date_execution(utc=True)

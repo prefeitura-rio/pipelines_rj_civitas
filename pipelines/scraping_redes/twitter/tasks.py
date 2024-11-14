@@ -23,7 +23,7 @@ from google.cloud import bigquery
 from infisical import InfisicalClient
 from prefect import task
 from prefeitura_rio.pipelines_utils.infisical import get_secret_folder
-from prefeitura_rio.pipelines_utils.logging import log
+from prefeitura_rio.pipelines_utils.logging import log, log_mod
 from pytz import timezone
 
 from pipelines.scraping_redes.models.model import EnrichResponseModel, Model
@@ -31,6 +31,7 @@ from pipelines.scraping_redes.models.palver import Palver
 from pipelines.scraping_redes.utils.utils import (
     check_if_table_exists,
     get_default_value_for_field,
+    get_state_from_components,
     load_data_from_dataframe,
     save_data_in_bq,
     skip_flow_run,
@@ -543,7 +544,7 @@ def task_geocode_localities(
 
     log(f"Geocoding localities from {dataset_id}.{table_id}")
     for i, row in df.iterrows():
-        log(f"Geocoding locality {i+1}/{len(df)}")
+        log_mod(f"Geocoding locality {i}/{len(df)}", index=i, mod=100)
         try:
             # Add "Rio de Janeiro" to improve geocoding accuracy
             search_text = row["locality"]
@@ -557,6 +558,7 @@ def task_geocode_localities(
             if geocode_result:
                 result = geocode_result[0]
                 location = result["geometry"]["location"]
+                state = get_state_from_components(result["address_components"])
 
                 geocoded_data.append(
                     {
@@ -566,6 +568,7 @@ def task_geocode_localities(
                         "latitude": location["lat"],
                         "longitude": location["lng"],
                         "formatted_address": result["formatted_address"],
+                        "state": state if state else "",
                         "is_news_related": row["is_news_related"],
                     }
                 )
@@ -610,6 +613,7 @@ def task_save_geocoded_data(
         bigquery.SchemaField(name="latitude", field_type="FLOAT64", mode="NULLABLE"),
         bigquery.SchemaField(name="longitude", field_type="FLOAT64", mode="NULLABLE"),
         bigquery.SchemaField(name="formatted_address", field_type="STRING", mode="NULLABLE"),
+        bigquery.SchemaField(name="state", field_type="STRING", mode="NULLABLE"),
         bigquery.SchemaField(name="is_news_related", field_type="BOOLEAN", mode="NULLABLE"),
         bigquery.SchemaField(name="timestamp_creation", field_type="TIMESTAMP", mode="NULLABLE"),
     ]

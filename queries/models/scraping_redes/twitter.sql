@@ -44,6 +44,7 @@ SELECT
   latitude,
   longitude,
   formatted_address,
+  state,
   is_news_related,
   timestamp_creation
 FROM
