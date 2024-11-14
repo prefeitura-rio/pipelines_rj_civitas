@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This module defines a Prefect workflow for extracting and transforming data..
+This module defines a Prefect workflow for extracting and transforming data.
 """
 
 from prefect import Parameter, case  # case
@@ -22,8 +22,8 @@ from prefeitura_rio.pipelines_utils.tasks import (
 )
 
 from pipelines.constants import constants
-from pipelines.scraping_redes.telegram.schedules import telegram_update_schedule
-from pipelines.scraping_redes.telegram.tasks import (
+from pipelines.scraping_redes.twitter.schedules import twitter_update_schedule
+from pipelines.scraping_redes.twitter.tasks import (
     task_geocode_localities,
     task_get_channels_names_from_bq,
     task_get_chats,
@@ -38,13 +38,13 @@ from pipelines.scraping_redes.telegram.tasks import (
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
-    name="CIVITAS: Telegram (PALVER) - Extração e Carga",
+    name="CIVITAS: Twitter (PALVER) - Extração e Carga",
     state_handlers=[
         handler_inject_bd_credentials,
         handler_initialize_sentry,
         handler_skip_if_running,
     ],
-) as extracao_palver_telegram:
+) as extracao_palver_twitter:
 
     project_id = Parameter("project_id", default="")
     dataset_id = Parameter("dataset_id", default="")
@@ -69,13 +69,13 @@ with Flow(
     location = Parameter("location", default="us-central1")
     batch_size = Parameter("batch_size", default=10)
 
-    telegram_raw_chats_path = Parameter(
-        "telegram_raw_chats_path", default="/tmp/pipelines/scraping_redes/telegram/data/raw/chats"
+    twitter_raw_chats_path = Parameter(
+        "twitter_raw_chats_path", default="/tmp/pipelines/scraping_redes/x/data/raw/chats"
     )
 
     materialize_after_dump = Parameter("materialize_after_dump", default=True)
-    materialize_reports_telegram_after_dump = Parameter(
-        "materialize_reports_telegram_after_dump", default=True
+    materialize_reports_twitter_after_dump = Parameter(
+        "materialize_reports_twitter_after_dump", default=True
     )
 
     secrets = task_get_secret_folder(secret_path="/palver")
@@ -104,7 +104,7 @@ with Flow(
     channels_names.set_upstream(palver_variables)
 
     chats = task_get_chats(
-        destination_path=telegram_raw_chats_path,
+        destination_path=twitter_raw_chats_path,
         project_id=project_id,
         dataset_id=dataset_id,
         table_id=table_id_chats,
@@ -114,7 +114,7 @@ with Flow(
     chats.set_upstream(channels_names)
 
     load_chats_to_bq = create_table_and_upload_to_gcs(
-        data_path=telegram_raw_chats_path,
+        data_path=twitter_raw_chats_path,
         dataset_id=dataset_id,
         table_id=table_id_chats,
         dump_mode=dump_mode_chats,
@@ -184,7 +184,7 @@ with Flow(
         materialization_labels = task_get_current_flow_run_labels()
         current_flow_project_name = get_current_flow_project_name()
 
-        telegram_materialization_parameters = [
+        twitter_materialization_parameters = [
             {
                 "dataset_id": dataset_id,
                 "table_id": table_id,
@@ -192,48 +192,48 @@ with Flow(
             }
         ]
 
-        telegram_materialization_flow_runs = create_flow_run.map(
+        twitter_materialization_flow_runs = create_flow_run.map(
             flow_name=unmapped(materialization_flow_name),
             project_name=unmapped(current_flow_project_name),
-            parameters=telegram_materialization_parameters,
+            parameters=twitter_materialization_parameters,
             labels=unmapped(materialization_labels),
         )
 
-        telegram_materialization_flow_runs.set_upstream(save_geocoded)
+        twitter_materialization_flow_runs.set_upstream(save_geocoded)
 
-        telegram_materialization_wait_for_flow_run = wait_for_flow_run.map(
-            flow_run_id=telegram_materialization_flow_runs,
+        twitter_materialization_wait_for_flow_run = wait_for_flow_run.map(
+            flow_run_id=twitter_materialization_flow_runs,
             stream_states=unmapped(True),
             stream_logs=unmapped(True),
             raise_final_state=unmapped(True),
         )
 
-        with case(task=materialize_reports_telegram_after_dump, value=True):
-            telegram_reports_materialization_parameters = [
+        with case(task=materialize_reports_twitter_after_dump, value=True):
+            twitter_reports_materialization_parameters = [
                 {
                     "dataset_id": "integracao_reports_staging",
-                    "table_id": "reports_telegram",
+                    "table_id": "reports_twitter",
                     "dbt_alias": False,
                 }
             ]
 
-            telegram_reports_materialization_flow_runs = create_flow_run.map(
-                flow_name=unmapped("CIVITAS: integracao_reports_staging - Materialize telegram"),
+            twitter_reports_materialization_flow_runs = create_flow_run.map(
+                flow_name=unmapped("CIVITAS: integracao_reports_staging - Materialize twitter"),
                 project_name=unmapped(current_flow_project_name),
-                parameters=telegram_reports_materialization_parameters,
+                parameters=twitter_reports_materialization_parameters,
                 labels=unmapped(materialization_labels),
             )
-            telegram_reports_materialization_flow_runs.set_upstream(
-                telegram_materialization_flow_runs
+            twitter_reports_materialization_flow_runs.set_upstream(
+                twitter_materialization_flow_runs
             )
 
 
-extracao_palver_telegram.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
-extracao_palver_telegram.run_config = KubernetesRun(
+extracao_palver_twitter.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
+extracao_palver_twitter.run_config = KubernetesRun(
     image=constants.DOCKER_IMAGE.value,
     labels=[
         constants.RJ_CIVITAS_AGENT_LABEL.value,
     ],
 )
 
-extracao_palver_telegram.schedule = telegram_update_schedule
+extracao_palver_twitter.schedule = twitter_update_schedule

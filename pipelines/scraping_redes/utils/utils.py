@@ -131,3 +131,21 @@ def skip_flow_run(message: str):
     log(message)
     skip = Skipped(message=message)
     raise ENDRUN(state=skip)
+
+
+def get_state_from_components(address_components):
+    """Extracts the state abbreviation from Google Maps Geocoding API address components.
+
+    Args:
+        address_components (list): List of address components returned by the Google Maps
+            Geocoding API containing information about the address parts.
+
+    Returns:
+        str | None: The state abbreviation (e.g. 'RJ' for Rio de Janeiro) if found in the
+            administrative_area_level_1 component, None otherwise.
+    """
+    for component in address_components:
+        if "administrative_area_level_1" in component["types"]:
+            # Returns the state abbreviation if it exists
+            return component["short_name"]
+    return None

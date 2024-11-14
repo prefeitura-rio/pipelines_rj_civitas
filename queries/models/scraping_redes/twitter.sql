@@ -21,13 +21,13 @@ WITH query AS (
     b.datetime AS timestamp_message,
     ROW_NUMBER() OVER (PARTITION BY a.id ORDER BY b.timestamp_creation DESC) AS row_num
   FROM
-    {{ source('stg_scraping_redes', 'telegram_georreferenciado') }} a
+    {{ source('stg_scraping_redes', 'twitter_georreferenciado') }} a
   LEFT JOIN
-    {{ source('stg_scraping_redes', 'telegram_messages') }} b
+    {{ source('stg_scraping_redes', 'twitter_messages') }} b
   ON
     a.id = b.id
   LEFT JOIN
-    {{ source('stg_scraping_redes', 'telegram_chats') }} c
+    {{ source('stg_scraping_redes', 'twitter_chats') }} c
   ON
     b.chat_id = c.id
   QUALIFY row_num = 1

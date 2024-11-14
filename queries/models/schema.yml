@@ -35,6 +35,7 @@ sources:
       - name: reports_disque_denuncia
       - name: reports_fogo_cruzado
       - name: reports_telegram
+      - name: reports_twitter
 
   - name: disque_denuncia
     database: rj-civitas
@@ -91,9 +92,13 @@ sources:
       - name: telegram_georreferenciado
       - name: telegram_messages
       - name: telegram_chats
+      - name: twitter_georreferenciado
+      - name: twitter_messages
+      - name: twitter_chats
 
   - name: scraping_redes
     database: rj-civitas
     schema: scraping_redes
     tables:
       - name: telegram
+      - name: twitter
