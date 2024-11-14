@@ -3,6 +3,7 @@ from typing import Dict, List, Literal
 
 import requests
 from prefeitura_rio.pipelines_utils.logging import log
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 
 class Palver:
@@ -22,6 +23,9 @@ class Palver:
         cls.__base_url = url
 
     @classmethod
+    @retry(
+        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10), reraise=True
+    )
     def get_chats(
         cls,
         source_name: str,
@@ -61,6 +65,9 @@ class Palver:
         return response_data
 
     @classmethod
+    @retry(
+        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10), reraise=True
+    )
     def get_messages(
         cls,
         source_name: str,
@@ -107,11 +114,3 @@ class Palver:
                 raise e
 
         return data
-
-
-if __name__ == "__main__":
-    # palver = Palver()
-    # palver.set_base_url("https://api.telegram.org/bot{token}/getUpdates")
-    # palver.set_token("654321")
-    # palver.get_messages("civitas")
-    pass
