@@ -85,12 +85,12 @@ def task_get_channels_names_from_bq(project_id: str, dataset_id: str, table_id: 
         f"Getting channels names from BigQuery: project_id={project_id}, dataset_id={dataset_id}, table_id={table_id}"
     )
     query = rf"""
-        SELECT
-            DISTINCT TRIM(REGEXP_EXTRACT(telegram, r't\.me/(.*)')) AS chat_username
+        SELECT DISTINCT
+            TRIM(REGEXP_REPLACE(twitter, r'^@', '')) AS chat_username
         FROM
             `{project_id}.{dataset_id}.{table_id}`
         WHERE
-            telegram IS NOT NULL
+            twitter IS NOT NULL
     """
     df = bd.read_sql(query)
     return df["chat_username"].tolist()
@@ -116,7 +116,7 @@ def task_get_chats(
     chats = []
     dataset_id += "_staging" if mode == "staging" else ""
     table_exists = check_if_table_exists(
-        dataset_id="scraping_redes", table_id="telegram_chats", mode=mode
+        dataset_id="scraping_redes", table_id="twitter_chats", mode=mode
     )
     destination_path = Path(destination_path)
     destination_path.mkdir(parents=True, exist_ok=True)
@@ -135,9 +135,10 @@ def task_get_chats(
 
     for i, username in enumerate(chat_usernames):
         chat = Palver.get_chats(
-            source_name="telegram", query=f"username: ({username})", page=1, page_size=1
+            source_name="twitter", query=f"c_username: ({username})", page=1, page_size=1
         )
         if chat:
+            log(f"Found chat for username: {username} - chat: {chat}")
             chat[0].update({"username": username})
             chats.extend(chat)
 
@@ -192,7 +193,7 @@ def task_get_messages(
 ) -> List[Dict[str, Any]]:
 
     dataset_id += "_staging" if mode == "staging" else ""
-    chats = bd.read_sql(f"SELECT id FROM `{project_id}.{dataset_id}.telegram_chats`")
+    chats = bd.read_sql(f"SELECT id FROM `{project_id}.{dataset_id}.twitter_chats`")
 
     # chats_ids = [chat["id"] for chat in chats]
     chats_ids = chats["id"].tolist()
@@ -231,7 +232,7 @@ def task_get_messages(
         log(f"Getting messages from Palver for chat username: {query_message}")
 
         message = Palver.get_messages(
-            source_name="telegram",
+            source_name="twitter",
             query=query_message,
             start_date=start_date,
             end_date=end_date,
@@ -303,7 +304,7 @@ def task_load_to_table(
 
     log(f"write_disposition for table {table_id}: {write_disposition}")
     log(f"Writing occurrences to {project_id}.{dataset_id}.{table_id}")
-    if table_id == "telegram_messages":
+    if table_id.endswith("messages"):
         SCHEMA = [
             bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
             bigquery.SchemaField(name="chat_id", field_type="STRING", mode="NULLABLE"),
@@ -327,11 +328,10 @@ def task_load_to_table(
                 name="timestamp_creation", field_type="timestamp", mode="NULLABLE"
             ),
         ]
-    elif table_id == "telegram_chats":
+    elif table_id.endswith("chats"):
         SCHEMA = [
             bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
             bigquery.SchemaField(name="name", field_type="STRING", mode="NULLABLE"),
-            bigquery.SchemaField(name="participants", field_type="INT64", mode="NULLABLE"),
             bigquery.SchemaField(name="source", field_type="STRING", mode="NULLABLE"),
             bigquery.SchemaField(name="username", field_type="STRING", mode="NULLABLE"),
             bigquery.SchemaField(
@@ -382,7 +382,6 @@ def task_get_llm_reponse_and_update_table(
 ) -> None:
     dataset_id += "_staging" if mode == "staging" else ""
 
-    # query = f"SELECT * FROM `{project_id}.{dataset_id}.telegram_messages` WHERE timestamp_creation > '{date_execution}'"
     table_enriquecimento_exists = check_if_table_exists(
         dataset_id=dataset_id, table_id=table_id, mode="prod"
     )
@@ -482,7 +481,7 @@ def task_geocode_localities(
     mode: Literal["prod", "staging"] = "staging",
     api_key: str = None,
 ) -> List[Dict]:
-    """Geocodes localities from telegram_enriquecido table using Google Geocoding API.
+    """Geocodes localities from twitter_enriquecido table using Google Geocoding API.
 
     Args:
         project_id (str): BigQuery project ID
@@ -498,11 +497,11 @@ def task_geocode_localities(
     # Initialize Google Maps client with service account credentials
     client = googlemaps.Client(key=api_key)
 
-    table_telegram_georreferenciado_exists = check_if_table_exists(
-        dataset_id=dataset_id, table_id="telegram_georreferenciado", mode="prod"
+    table_twitter_georreferenciado_exists = check_if_table_exists(
+        dataset_id=dataset_id, table_id="twitter_georreferenciado", mode="prod"
     )
 
-    # Get data from telegram_enriquecido
+    # Get data from twitter_enriquecido
     query = f"""
     SELECT DISTINCT
         a.id,
@@ -513,10 +512,10 @@ def task_geocode_localities(
     FROM `{project_id}.{dataset_id}.{table_id}` a
     """
 
-    if table_telegram_georreferenciado_exists:
+    if table_twitter_georreferenciado_exists:
         query += f"""
         LEFT JOIN
-            {project_id}.{dataset_id}.telegram_georreferenciado b
+            {project_id}.{dataset_id}.twitter_georreferenciado b
         ON
             a.id = b.id
         WHERE
@@ -542,9 +541,11 @@ def task_geocode_localities(
 
     geocoded_data = []
 
+    log(f"Geocoding localities from {dataset_id}.{table_id}")
     for i, row in df.iterrows():
         log_mod(f"Geocoding locality {i}/{len(df)}", index=i, mod=100)
         try:
+            # Add "Rio de Janeiro" to improve geocoding accuracy
             search_text = row["locality"]
 
             # Get geocoding results
@@ -616,7 +617,6 @@ def task_save_geocoded_data(
         bigquery.SchemaField(name="timestamp_creation", field_type="TIMESTAMP", mode="NULLABLE"),
     ]
 
-    log(f"Saving {len(geocoded_data)} geocoded data to {project_id}.{dataset_id}.{table_id}")
     save_data_in_bq(
         project_id=project_id,
         dataset_id=dataset_id,

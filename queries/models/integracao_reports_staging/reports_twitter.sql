@@ -16,7 +16,7 @@ WITH messages AS (
   SELECT
     *
   FROM
-    {{ source('scraping_redes', 'telegram') }}
+    {{ source('scraping_redes', 'twitter') }}
 
   {% if is_incremental() %}
   WHERE
@@ -27,7 +27,7 @@ WITH messages AS (
   {% endif %}
 )
 SELECT
-  'telegram' AS id_source,
+  'twitter' AS id_source,
   id AS id_report_original,
   timestamp_message AS data_report,
   [''] AS orgaos,
