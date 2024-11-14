@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Literal
 import basedosdados as bd
 import googlemaps
 import pandas as pd
+import pytz
 import urllib3
 from google.cloud import bigquery
 from infisical import InfisicalClient
@@ -193,6 +194,10 @@ def task_get_messages(
 ) -> List[Dict[str, Any]]:
 
     dataset_id += "_staging" if mode == "staging" else ""
+
+    if end_date is None or end_date == "":
+        end_date = datetime.now(tz=pytz.utc) + timedelta(days=1)
+
     chats = bd.read_sql(f"SELECT id FROM `{project_id}.{dataset_id}.twitter_chats`")
 
     # chats_ids = [chat["id"] for chat in chats]
