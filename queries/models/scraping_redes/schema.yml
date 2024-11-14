@@ -55,3 +55,56 @@ models:
       - name: timestamp_creation
         description: Data e hora de criação do registro no banco de dados.
 
+  - name: twitter
+    description: >-
+      **Descrição**: Tabela que contém mensagens de canais do Twitter.
+
+      **Fonte**: [API Palver]
+
+      **Frequência de atualização**: A cada minuto
+
+      **Cobertura temporal**: Novembro de 2024
+
+      **Publicado por**: Nicolas Evilasio
+
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+
+    columns:
+      - name: id
+        description: Identificador único para cada mensagem no banco de dados.
+
+      - name: chat_id
+        description: Identificador único para cada canal do Twitter.
+
+      - name: sender_id
+        description: Identificador único para cada usuário que enviou a mensagem.
+
+      - name: chat_name
+        description: Nome do canal do Twitter.
+
+      - name: chat_username
+        description: Nome de usuário do canal do Twitter.
+
+      - name: timestamp_message
+        description: Data e hora da mensagem.
+
+      - name: text
+        description: Texto da mensagem.
+
+      - name: locality
+        description: Localidade da informação da mensagem.
+
+      - name: latitude
+        description: Latitude da informação da mensagem.
+
+      - name: longitude
+        description: Longitude da informação da mensagem.
+
+      - name: formatted_address
+        description: Endereço formatado da informação da mensagem.
+
+      - name: is_news_related
+        description: Indica se a mensagem é relacionada a notícias.
+
+      - name: timestamp_creation
+        description: Data e hora de criação do registro no banco de dados.
