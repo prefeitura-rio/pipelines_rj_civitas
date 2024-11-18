@@ -6,7 +6,7 @@ Tasks include:
 - Retrieving reports from a REST API
 - Saving reports as XML files
 - Parsing and normalizing XML data
-- Transforming XML data into structured CSV files
+- Transforming XML data into structured CSV files.
 """
 
 
