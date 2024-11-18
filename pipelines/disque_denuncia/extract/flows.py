@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-This module defines a Prefect workflow for extracting and transforming data.
-related to 'Disque Denúncia' reports.
+This module defines a Prefect workflow for extracting and transforming data
+related to 'Disque Denúncia' reports, including updating missing coordinates.
 """
 
 
@@ -33,6 +33,9 @@ from pipelines.disque_denuncia.extract.tasks import (
     check_report_qty,
     get_reports_from_start_date,
     loop_transform_report_data,
+    task_get_date_execution,
+    task_get_secret_folder,
+    update_missing_coordinates,
 )
 
 # Define the Prefect Flow for data extraction and transformation
@@ -45,6 +48,8 @@ with Flow(
     ],
 ) as extracao_disque_denuncia:
 
+    # Parâmetros
+    project_id = Parameter("project_id", default="")
     start_date = Parameter("start_date", default="2021-01-01")
     dataset_id = Parameter("dataset_id", default="disque_denuncia")
     table_id = Parameter("table_id", default="denuncias")
@@ -56,6 +61,12 @@ with Flow(
     loop_limiter = Parameter("loop_limiter", default=False)
     tipo_difusao = Parameter("tipo_difusao", default="interesse")
     mod = Parameter("mod", default=100)
+    mode = Parameter("mode", default="")
+
+    api_key = task_get_secret_folder(secret_path="/api-keys")
+
+    date_execution = task_get_date_execution(utc=True)
+
 
     # Task to get reports from the specified start date
     reports_response = get_reports_from_start_date(
@@ -82,6 +93,7 @@ with Flow(
     )
     csv_path_list.set_upstream(report_qty_check)
 
+    # Cria a tabela e faz o upload dos dados para o BigQuery
     create_table = create_table_and_upload_to_gcs(
         data_path=Path("/tmp/pipelines/disque_denuncia/data/partition_directory"),
         dataset_id=dataset_id,
@@ -90,6 +102,16 @@ with Flow(
         biglake_table=biglake_table,
     )
     create_table.set_upstream(csv_path_list)
+
+    # Atualiza coordenadas ausentes usando a API do Google Maps
+    update_coordinates_task = update_missing_coordinates(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=table_id,
+        api_key=api_key,
+        mode=mode,
+    )
+    update_coordinates_task.set_upstream(create_table)
 
     # Get TEMPLATE flow name
     materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
@@ -108,7 +130,7 @@ with Flow(
             labels=unmapped(materialization_labels),
         )
 
-        dump_prod_materialization_flow_runs.set_upstream(create_table)
+        dump_prod_materialization_flow_runs.set_upstream(update_coordinates_task)
 
         dump_prod_wait_for_flow_run = wait_for_flow_run.map(
             flow_run_id=dump_prod_materialization_flow_runs,

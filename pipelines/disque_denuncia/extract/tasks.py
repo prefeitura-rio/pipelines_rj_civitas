@@ -13,9 +13,10 @@ import glob
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Literal, Optional, Union
 
 import basedosdados as bd
+from infisical import InfisicalClient
 import pandas as pd
 import requests
 import xmltodict
@@ -25,7 +26,10 @@ from prefect.engine.state import Skipped
 from prefeitura_rio.pipelines_utils.bd import get_project_id
 from prefeitura_rio.pipelines_utils.logging import log, log_mod
 from prefeitura_rio.pipelines_utils.prefect import get_flow_run_mode
+from prefeitura_rio.pipelines_utils.infisical import get_secret_folder
 from pytz import timezone
+from google.cloud import bigquery
+import googlemaps
 
 tz = timezone("America/Sao_Paulo")
 
@@ -743,3 +747,151 @@ def check_report_qty(reports_response):
         log("No data returned by the API, finishing the flow.", level="info")
         skip = Skipped(message="No data returned by the API, finishing the flow.")
         raise ENDRUN(state=skip)
+
+
+
+@task(max_retries=3, retry_delay=timedelta(seconds=30))
+def update_missing_coordinates(
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    api_key: str,
+    mode: Literal["prod", "staging"] = "staging",
+) -> int:
+    """
+    Updates rows with missing latitude and longitude in a BigQuery table using Google Maps API.
+
+    Args:
+        project_id (str): GCP project ID.
+        dataset_id (str): BigQuery dataset name.
+        table_id (str): BigQuery table name.
+        api_key (str): Google Maps API key.
+        mode (Literal["prod", "staging"]): Execution mode. Defaults to "staging".
+
+    Returns:
+        int: Number of rows updated.
+    """
+    # Adjust dataset for staging mode
+    dataset_id += "_staging" if mode == "staging" else ""
+
+    # Initialize BigQuery and Google Maps clients
+    bq_client = bigquery.Client()
+    client = googlemaps.Client(key=api_key)
+
+
+    # Query rows with missing latitude or longitude
+    query = f"""
+    SELECT 
+        id_denuncia, 
+        tipo_logradouro, 
+        logradouro, 
+        numero_logradouro, 
+        bairro_logradouro, 
+        cep_logradouro, 
+        municipio, 
+        estado
+    FROM `{project_id}.{dataset_id}.{table_id}`
+    WHERE latitude IS NULL OR longitude IS NULL
+    """
+    log(f"Running query: {query}")
+    rows = bq_client.query(query).result()
+
+    if rows.total_rows == 0:
+        log("No rows found with missing latitude/longitude.")
+        return 0
+
+    # Geocode rows and prepare updates
+    updates = []
+    for row in rows:
+        address_parts = [
+            row.tipo_logradouro,
+            row.logradouro,
+            row.numero_logradouro,
+            row.bairro_logradouro,
+            row.cep_logradouro,
+            row.municipio,
+            row.estado,
+        ]
+        full_address = ", ".join(filter(None, address_parts))
+
+        try:
+            geocode_result = client.geocode(full_address, region="br")
+            if geocode_result:
+                location = geocode_result[0]["geometry"]["location"]
+                updates.append({
+                    "id_denuncia": row.id_denuncia,
+                    "latitude": location["lat"],
+                    "longitude": location["lng"],
+                    "data_insercao": datetime.utcnow()
+                })
+        except Exception as e:
+            log(f"Error geocoding address '{full_address}': {e}")
+
+    # Update rows in BigQuery
+    if updates:
+        log(f"Updating {len(updates)} rows in BigQuery.")
+        update_query = f"""
+        UPDATE `{project_id}.{dataset_id}.{table_id}`
+        SET
+            latitude = @latitude,
+            longitude = @longitude,
+            data_insercao = @data_insercao
+        WHERE id_denuncia = @id_denuncia
+        """
+        for update in updates:
+            job_config = bigquery.QueryJobConfig(
+                query_parameters=[
+                    bigquery.ScalarQueryParameter("latitude", "FLOAT64", update["latitude"]),
+                    bigquery.ScalarQueryParameter("longitude", "FLOAT64", update["longitude"]),
+                    bigquery.ScalarQueryParameter("data_insercao", "TIMESTAMP", update["data_insercao"]),
+                    bigquery.ScalarQueryParameter("id_denuncia", "STRING", update["id_denuncia"])
+                ]
+            )
+            bq_client.query(update_query, job_config=job_config).result()
+
+    log(f"Successfully updated {len(updates)} rows.")
+    return len(updates)
+
+
+
+@task
+def task_get_secret_folder(
+    secret_path: str = "/",
+    secret_name: str = None,
+    type: Literal["shared", "personal"] = "personal",
+    environment: str = None,
+    client: InfisicalClient = None,
+) -> dict:
+    """
+    Fetches secrets from Infisical. If passing only `secret_path` and
+    no `secret_name`, returns all secrets inside a folder.
+
+    Args:
+        secret_name (str, optional): _description_. Defaults to None.
+        secret_path (str, optional): _description_. Defaults to '/'.
+        environment (str, optional): _description_. Defaults to 'dev'.
+
+    Returns:
+        _type_: _description_
+    """
+    log(
+        f"Getting secrets from Infisical: secret_path={secret_path}, secret_name={secret_name}, type={type}, environment={environment}"
+    )
+    secrets = get_secret_folder(
+        secret_path=secret_path,
+        secret_name=secret_name,
+        type=type,
+        environment=environment,
+        client=client,
+    )
+    return secrets
+
+
+@task
+def task_get_date_execution(utc: bool = False) -> str:
+    if utc:
+        date_execution = datetime.now(tz=timezone("UTC")).strftime("%Y-%m-%d %H:%M:%S")
+    else:
+        date_execution = datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M:%S")
+
+    return date_execution
