@@ -4,8 +4,10 @@ This module contains tasks for appending new data to Google Sheets.
 """
 import asyncio
 import time
-from datetime import datetime
-from typing import List, Literal
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta
+from functools import partial
+from typing import Dict, List, Literal, Tuple
 
 import basedosdados as bd
 import pandas as pd
@@ -38,7 +40,10 @@ tz = pytz.timezone("America/Sao_Paulo")
 
 @task
 def task_get_date_execution() -> str:
-    return datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M:%S")
+    """
+    Returns the current date and time in the UTC timezone.
+    """
+    return datetime.now(tz=pytz.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
 @task
@@ -53,7 +58,6 @@ def task_get_data(
     start_datetime: str = None,
     end_datetime: str = None,
     minutes_interval: int = 30,
-    date_execution: str = None,
 ) -> pd.DataFrame:
     if source not in ["enriquecimento", "relacao"]:
         raise ValueError("source deve ser 'enriquecimento' ou 'relacao'")
@@ -67,7 +71,7 @@ def task_get_data(
         date_filter = (
             f"""
                 datetime(data_report) >= timestamp_sub(
-                datetime(current_timestamp(), 'America/Sao_Paulo'), interval {minutes_interval} minute
+                datetime(current_timestamp()), interval {minutes_interval} minute
                 )
         """
             if start_datetime is None or end_datetime is None
@@ -78,11 +82,15 @@ def task_get_data(
     else:
         date_filter = (
             f"""
-                datetime(date_execution) = '{date_execution}'
+                TIMESTAMP_DIFF(
+                        CURRENT_TIMESTAMP(),
+                        data_report,
+                        MINUTE
+                    ) <= {minutes_interval}
         """
             if start_datetime is None or end_datetime is None
             else f"""
-                datetime(date_execution) BETWEEN '{start_datetime}' AND '{end_datetime}'
+                datetime(data_report) BETWEEN '{start_datetime}' AND '{end_datetime}'
         """
         )
 
@@ -116,6 +124,7 @@ def task_get_data(
 
     log(f"Query {source.capitalize()}:\n\n{query}")
     dataframe = bd.read_sql(query)
+    log(f"Found {len(dataframe)} rows")
 
     return dataframe.reset_index()
 
@@ -237,6 +246,8 @@ def get_bq_table_schema(source: str = None) -> list[bigquery.SchemaField]:
         bigquery.SchemaField(name="local_contexto", field_type="STRING", mode="NULLABLE"),
         bigquery.SchemaField(name="geometria_contexto", field_type="STRING", mode="NULLABLE"),
         bigquery.SchemaField(name="raio_de_busca_contexto", field_type="INT64", mode="NULLABLE"),
+        bigquery.SchemaField(name="cidade_inteira_contexto", field_type="BOOLEAN", mode="NULLABLE"),
+        bigquery.SchemaField(name="solicitantes_contexto", field_type="STRING", mode="REPEATED"),
         bigquery.SchemaField(name="data_report_tz", field_type="TIMESTAMP", mode="NULLABLE"),
         bigquery.SchemaField(name="data_inicio_tz", field_type="TIMESTAMP", mode="NULLABLE"),
         bigquery.SchemaField(name="prompt_relacao", field_type="STRING", mode="NULLABLE"),
@@ -366,28 +377,169 @@ def task_get_new_alerts(
     project_id: str,
     dataset_id: str,
     table_id: str,
-    date_execution: str,
 ) -> pd.DataFrame:
-    query = f"""
-    SELECT DISTINCT *
-    FROM `{project_id}.{dataset_id}.{table_id}`
-    WHERE date_execution = '{date_execution}'
-    AND relation = TRUE
-    """
-    log(f"Searching for new alerts with date_execution: {date_execution}")
+    # query = f"""
+    # SELECT
+    #     DISTINCT *
+    # FROM
+    #     `{project_id}.{dataset_id}.{table_id}` a
+    # WHERE
+    #     relation = TRUE
+    # """
+
+    query = rf"""WITH
+  contexts_by_report AS (
+  SELECT
+    a.id_report,
+    a.date_execution,
+    a.relation,
+    solicitante,
+    ARRAY_AGG(a.id_relacao) AS id_relacao--,
+  FROM
+    `{project_id}.{dataset_id}.{table_id}` a
+    JOIN UNNEST(a.solicitantes_contexto) AS solicitante
+  WHERE
+    a.relation = TRUE
+    AND LOWER(a.threat_level_report) = 'alto'
+    AND ARRAY_LENGTH(solicitantes_contexto ) > 0
+  GROUP BY
+    ALL
+),
+  alert_ids AS (
+  SELECT
+    a.*,
+    CAST(
+        FARM_FINGERPRINT(
+            CONCAT(
+                a.relation,
+                ARRAY_TO_STRING(
+                    ARRAY(
+                        SELECT
+                            element
+                        FROM
+                            UNNEST(id_relacao) AS element
+                        ORDER BY
+                            element ASC
+                    ),
+                    ', ' ),
+              a.date_execution,
+              a.solicitante
+            )
+        ) AS STRING
+    ) AS id_alerta
+  FROM
+    contexts_by_report a
+)
+SELECT
+  DISTINCT
+  a.id_alerta,
+  c.*,
+  a.solicitante
+FROM
+  `{project_id}.{dataset_id}.{table_id}` c
+JOIN
+  (
+    SELECT id_report, id, id_alerta, solicitante FROM alert_ids, UNNEST(id_relacao) AS id) a
+ON
+  a.id = c.id_relacao"""
+
+    source_table_exists = check_if_table_exists(dataset_id=dataset_id, table_id=table_id)
+    if not source_table_exists:
+        log(f"Source table {dataset_id}.{table_id} does not exist.")
+        return pd.DataFrame()
+
+    destiny_table_exists = check_if_table_exists(
+        dataset_id=dataset_id, table_id="alertas_historico"
+    )
+
+    if destiny_table_exists:
+        query += f"\nWHERE NOT EXISTS (SELECT 1 FROM `{project_id}.{dataset_id}.alertas_historico` b WHERE b.id_alerta = a.id_alerta )"
+
+    log("Searching for new alerts.")
+    log(f"New alerts query: \n{query}")
     df = bd.read_sql(query)
 
     if len(df) == 0:
-        skip_flow_run("There is no new alerts to be sent to Discord.")
+        log("There is no new alerts to be sent to Discord.")
+        return pd.DataFrame()  # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     else:
+        log(f"Found {len(df)} new alerts.")
         return df
 
 
+# @task
+# def task_get_new_alerts(
+#     project_id: str,
+#     dataset_id: str,
+#     table_id: str,
+#     date_execution: str,
+# ) -> pd.DataFrame:
+#     query = f"""
+#     SELECT DISTINCT *
+#     FROM `{project_id}.{dataset_id}.{table_id}`
+#     WHERE date_execution = '{date_execution}'
+#     AND relation = TRUE
+#     """
+#     log(f"Searching for new alerts with date_execution: {date_execution}")
+#     df = bd.read_sql(query)
+
+#     if len(df) == 0:
+#         skip_flow_run("There is no new alerts to be sent to Discord.")
+#     else:
+#         log(f"Found {len(df)} new alerts.")
+#         return df
+
+
 @task
-def task_build_and_send_messages_text(dataframe: pd.DataFrame, url_webhook: str) -> List:
+def task_build_messages_text(
+    dataframe: pd.DataFrame,
+) -> List:
+    """
+    Builds text messages for new alerts by processing and formatting alert data.
+
+    This function takes a DataFrame generated by task_get_new_alerts() containing alert data,
+    processes it to create formatted text messages with metadata and context information.
+    It handles multiple records per alert, generates maps when coordinates are available,
+    and processes everything in parallel for better performance.
+
+    Args:
+        dataframe (pd.DataFrame): DataFrame generated by task_get_new_alerts() containing the alert records
+
+    Returns:
+        List[Dict]: A list of dictionaries containing formatted messages. Each dictionary has:
+            - meta: Dict with metadata like id_relacao, requester, whole_city flag
+            - data: Dict with message text, map image data (if available), and processed contexts
+
+    Example output format:
+    [
+        {
+            "meta": {
+                "id_relacao": "123",
+                "solicitante": "AGENCY",
+                "cidade_inteira": False
+            },
+            "data": {
+                "message": "Formatted text...",
+                "image_data": bytes or None
+            }
+        },
+        ...
+    ]
+    """
+    if len(dataframe) == 0:
+        log("No new alerts to build messages text.")
+        return []
+
     log("Building messages text for new alerts...")
-    selected_df = dataframe[
+
+    # Prepare DataFrame - agora agrupando por id_report, solicitante e cidade_inteira
+    # df_exploded = dataframe.explode('solicitantes_contexto')
+    # filtered_df = df_exploded.dropna(subset=['solicitantes_contexto'])
+    filtered_df = dataframe.dropna(subset=["solicitante"])
+
+    selected_df = filtered_df[
         [
+            "id_alerta",
             "id_report_original",
             "id_report",
             "id_source",
@@ -409,123 +561,202 @@ def task_build_and_send_messages_text(dataframe: pd.DataFrame, url_webhook: str)
             "endereco_contexto",
             "title_report",
             "relation_title",
+            "cidade_inteira_contexto",
+            "solicitante",
         ]
     ]
 
-    messages = []
-    for id_report_original in selected_df["id_report_original"].unique():
-        msg = ""
+    def process_single_record(
+        record_group: Tuple[Tuple, List[Dict]],
+        fix_bad_formatting=None,
+        get_delay_time_string=None,
+        generate_png_map=None,
+    ) -> Dict:
+        """
+        Process a single group of records to create a formatted message.
 
-        df_report = selected_df[selected_df["id_report_original"] == id_report_original]
+        Args:
+            record_group (Tuple[Tuple, List[Dict]]): Tuple containing (id_report, solicitante, cidade_inteira)
+                                                    and list of records
+        """
+        group_key, records = record_group
+        id_report, solicitante, cidade_inteira = group_key
+        first_record = records[0]
 
-        contextos = ", ".join(df_report["nome_contexto"])
-        data_report = df_report["data_report"].unique()[0]
-        atraso_report = get_delay_time_string(occurrence_timestamp=data_report)
-        fonte_report = df_report["id_source"].unique()[0]
-        data_report_str = data_report.strftime("%d/%m/%Y %H:%M:%S")
-        descricao_report = df_report["descricao_report"].unique()[0]
-        descricao_report = "Não Informado" if descricao_report == "" else descricao_report
-        logradouro_report = df_report["logradouro_report"].unique()[0]
-        numero_logradouro_report = df_report["numero_logradouro_report"].unique()[0]
-        latitude_report = df_report["latitude_report"].unique()[0]
-        longitude_report = df_report["longitude_report"].unique()[0]
-        title_report = fix_bad_formatting(df_report["title_report"].unique()[0])
-        title_report = "Não Informado" if title_report.strip() == "" else title_report.strip()
+        # Add metadata with new grouping
+        metadata = {
+            # "id_relacao": [record['id_relacao'] for record in records],
+            "id_alerta": first_record["id_alerta"],
+            "solicitante": solicitante.upper().strip(),
+            "cidade_inteira": cidade_inteira,
+        }
 
-        endereco_report = f"{logradouro_report}, {numero_logradouro_report}"
+        # Build base message
+        msg = f"""
+## {fix_bad_formatting(first_record['title_report']) or 'Não Informado'}
 
-        contextos_list = df_report[
-            [
-                "nome_contexto",
-                "relation_confidence",
-                "relation_key_factors",
-                "id_relacao",
-                "relation_explanation",
-                "datahora_inicio_contexto",
-                "datahora_fim_contexto",
-                "endereco_contexto",
-                "relation_title",
-            ]
-        ].to_dict("records")
+**ID Report:** {id_report}
+**Contextos:** {', '.join(sorted({r['nome_contexto'] for r in records}))}
 
-        msg += f"""
-## {title_report}
+- **Atraso:** {get_delay_time_string(first_record['data_report'])}
+- **Fonte:** {first_record['id_source']}
+- **ID:** {first_record['id_report_original']}
+- **Data:** {first_record['data_report'].strftime("%d/%m/%Y %H:%M:%S")}
+- **Endereço:** {first_record['logradouro_report']}, {first_record['numero_logradouro_report']}
 
-**Contextos:** {contextos}
-
-- **Atraso:** {atraso_report}
-- **Fonte:** {fonte_report}
-- **ID:** {id_report_original}
-- **Data:** {data_report_str}
-- **Endereço:** {endereco_report}
-
-- **Descrição:** {descricao_report}
+- **Descrição:** {first_record['descricao_report'] or 'Não Informado'}
 
 ----
 """
 
-        for index, contexto in enumerate(contextos_list):
-            log(f"Message {index+1}/{len(contextos_list)}")
+        # Agrupar contextos por nome para evitar duplicatas
+        contextos_por_nome = {}
+        for ctx in records:
+            nome_contexto = ctx["nome_contexto"].strip() or "Não Informado"
+            if nome_contexto not in contextos_por_nome:
+                contextos_por_nome[nome_contexto] = {
+                    "id_relacao": ctx["id_relacao"],
+                    "nome": nome_contexto,
+                    "confianca": ctx["relation_confidence"],
+                    "fatores": ctx["relation_key_factors"],
+                    "data_inicio": ctx["datahora_inicio_contexto"],
+                    "data_fim": ctx["datahora_fim_contexto"],
+                }
 
-            nome_contexto = contexto["nome_contexto"].strip()
-            nome_contexto = "Não Informado" if nome_contexto == "" else nome_contexto
-
-            endereco_contexto = contexto["endereco_contexto"].strip()
-            endereco_contexto = "Não Informado" if endereco_contexto == "" else endereco_contexto
-
-            # relation_title = fix_bad_formatting(contexto["relation_title"])
-            # relation_title = (
-            #     "Não Informado" if relation_title.strip() == "" else relation_title.strip()
-            # )
+        # Process unique contexts
+        contextos_processados = []
+        for idx, (nome, ctx) in enumerate(sorted(contextos_por_nome.items()), 1):
+            contextos_processados.append(ctx)
 
             msg += f"""
-**{index+1}. {nome_contexto}**
-- **Data Início:** {contexto['datahora_inicio_contexto']}
-- **Data Fim:** {contexto['datahora_fim_contexto']}
-- **Confiança:** {contexto['relation_confidence']}
+**{idx}. {ctx['nome']}**
+- **Data Início:** {ctx['data_inicio']}
+- **Data Fim:** {ctx['data_fim']}
+- **Confiança:** {ctx['confianca']}
+- **ID Relação:** {ctx['id_relacao']}
 - **Fatores:**
 """
-            for fator in contexto["relation_key_factors"]:
-                msg += f"""  - {fix_bad_formatting(fator)}\n"""
-            # msg+=f"- **Descrição Relação:** {fix_bad_formatting(contexto['relation_explanation'])}\n"
-            msg += f"- **ID:** {contexto['id_relacao']}\n"
+            for fator in ctx["fatores"]:
+                msg += f"  - {fix_bad_formatting(fator)}\n"
 
-        # plot map if there is latitude and longitude
-        if latitude_report and longitude_report:
-            map = generate_png_map(locations=[(latitude_report, longitude_report)])
-        else:
-            map = None
+        # Generate map
+        map_data = None
+        if first_record["latitude_report"] and first_record["longitude_report"]:
+            map_data = generate_png_map(
+                [(first_record["latitude_report"], first_record["longitude_report"])]
+            )
 
-        send_discord_messages(
-            url_webhook=url_webhook,
-            messages_contents=[
-                {
-                    "message": msg,
-                    "image_data": map,
-                }
-            ],
-        )
+        return {
+            "meta": metadata,
+            "data": {
+                "message": msg,
+                "image_data": map_data,
+            },
+        }
 
-        messages.append(msg)
-    log(f"Messages built: {len(messages)}")
+    # Convert DataFrame to optimized format with new grouping
+    records_dict = {}
+    for record in selected_df.to_dict("records"):
+        group_key = (record["id_report"], record["solicitante"], record["cidade_inteira_contexto"])
+        records_dict.setdefault(group_key, []).append(record)
+
+    # Create partial function with dependencies
+    process_func = partial(
+        process_single_record,
+        fix_bad_formatting=fix_bad_formatting,
+        get_delay_time_string=get_delay_time_string,
+        generate_png_map=generate_png_map,
+    )
+
+    # Process in parallel
+    start = time.time()
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        messages = list(executor.map(process_func, records_dict.items()))
+
+    end = time.time()
+    log(f"Messages built and ready to be sent: {len(messages)} in {end-start:.2f} seconds")
+
     return messages
 
 
-# @task(max_retries=3, retry_delay=timedelta(seconds=10))
-def send_discord_messages(url_webhook: str, messages_contents: list[dict[str, bytes]]) -> None:
+@task(max_retries=3, retry_delay=timedelta(seconds=10))
+def task_send_discord_messages(
+    webhooks: dict[str, str], messages: list[dict], project_id: str, dataset_id: str, table_id: str
+) -> None:
     """
-    Send a list of messages to Discord using the given webhook URL.
-
-    If the message is longer than 2000 characters, it is split into multiple messages.
+    Send messages to different Discord channels and save alert history to BigQuery.
 
     Args:
-        url_webhook (str): The URL of the webhook.
-        messages (List[str]): The list of messages to send.
-        image_data (bytes, optional): The PNG image data to embed. Defaults to None.
+        webhooks (Dict[str, str]): Dictionary mapping channel names to webhook URLs
+        messages (List[Dict]): List of message dictionaries
+        project_id (str): BigQuery project ID
+        dataset_id (str): BigQuery dataset ID
+        table_id (str): BigQuery table ID
     """
+    # def generate_alert_id(data: dict) -> str:
+    #     """
+    #     Generate deterministic hash from data information
+    #     """
+    #     # Sort meta keys to ensure consistent ordering
+    #     meta_str = json.dumps(data, sort_keys=True)
+    #     return hashlib.sha256(meta_str.encode()).hexdigest()
+
+    # def generate_alert_id(meta: dict) -> str:
+    #     """
+    #     Generate deterministic hash from meta information
+    #     """
+    #     # Sort meta keys to ensure consistent ordering
+    #     meta_str = json.dumps(meta, sort_keys=True)
+
+    #     query = fr"""SELECT
+    # farm_fingerprint(
+    #     CONCAT(
+    #         {meta['cidade_inteira']},
+    #         ARRAY_TO_STRING({sorted(meta['id_relacao'])}, ', '),
+    #         "{meta['solicitante']}"
+    #     )
+    #     ) AS id_farmprint_json_string"""
+
+    #     log(f'Query generate alert id:\n {query}')
+    #     alert_id =bd.read_sql(query)
+
+    #     return alert_id
+
+    def save_alert_history(meta: dict, message_text: str, timestamp: datetime) -> None:
+        """
+        Save alert metadata to BigQuery history table
+        """
+        alert_data = {
+            "id_alerta": meta["id_alerta"],
+            "solicitante": meta["solicitante"],
+            "cidade_inteira": meta["cidade_inteira"],
+            "timestamp_alert": pd.Timestamp(timestamp),
+            "texto_alerta": message_text,
+        }
+
+        # Convert to DataFrame for easy upload
+        df = pd.DataFrame([alert_data])
+
+        # Upload to BigQuery
+        load_data_from_dataframe(
+            dataframe=df,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=table_id,
+            write_disposition="WRITE_APPEND",
+            schema=[
+                bigquery.SchemaField(name="id_alerta", field_type="STRING", mode="REQUIRED"),
+                bigquery.SchemaField(name="solicitante", field_type="STRING", mode="REQUIRED"),
+                bigquery.SchemaField(name="cidade_inteira", field_type="BOOLEAN", mode="REQUIRED"),
+                bigquery.SchemaField(
+                    name="timestamp_alert", field_type="TIMESTAMP", mode="REQUIRED"
+                ),
+                bigquery.SchemaField(name="texto_alerta", field_type="STRING", mode="REQUIRED"),
+            ],
+        )
 
     async def main():
-        if not messages_contents:
+        if not messages:
             log("No messages to send.")
             return None
 
@@ -536,9 +767,8 @@ def send_discord_messages(url_webhook: str, messages_contents: list[dict[str, by
                     chunks.append(text)
                     break
 
-                # Find the last newline before the limit
                 split_index = text[:limit].rfind("\n")
-                if split_index == -1:  # If no newline found, use the limit
+                if split_index == -1:
                     split_index = limit
 
                 chunks.append(text[:split_index])
@@ -546,22 +776,41 @@ def send_discord_messages(url_webhook: str, messages_contents: list[dict[str, by
 
             return chunks
 
-        log("Start sending messages to discord.")
-        for content in messages_contents:
-            chunks = split_by_newline(content["message"])
+        def get_webhook_url(meta: dict) -> str:
+            webhook_key = (
+                f"G20_{meta['solicitante']}_{'CIDADE' if meta['cidade_inteira'] else 'CONTEXTOS'}"
+            )
+            return webhooks.get(webhook_key)
+
+        log("Starting to send messages to Discord.")
+        for message_obj in messages:
+            log(
+                f"Sending message {message_obj['meta']['id_alerta']} to Discord: {message_obj['meta']['solicitante']}"
+            )
+            webhook_url = get_webhook_url(message_obj["meta"])
+            if not webhook_url:
+                log(f"No webhook URL found for meta: {message_obj['meta']}")
+                continue
+
+            message_data = message_obj["data"]
+            chunks = split_by_newline(message_data["message"])
 
             # Send text chunks sequentially without image
             for i in range(len(chunks) - 1):
                 await send_discord_message(
-                    webhook_url=url_webhook, message=chunks[i], image_data=None
+                    webhook_url=webhook_url, message=chunks[i], image_data=None
                 )
 
             # Send the last chunk with image
             await send_discord_message(
-                webhook_url=url_webhook, message=chunks[-1], image_data=content["image_data"]
+                webhook_url=webhook_url, message=chunks[-1], image_data=message_data["image_data"]
             )
 
-        log("Messages sent to discord successfully.")
+            # Save alert history after successful send
+            timestamp_utc = datetime.now(pytz.UTC).strftime("%Y-%m-%d %H:%M:%S")
+            save_alert_history(message_obj["meta"], message_data["message"], timestamp_utc)
+
+        log("Messages sent to discord and history saved successfully.")
 
     asyncio.run(main())
 

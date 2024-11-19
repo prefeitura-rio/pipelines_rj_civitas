@@ -392,9 +392,11 @@ with
             ifnull(
                 parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio),
                 cast('' as datetime)
-            ) as data_inicio_tz
+            ) as data_inicio_tz,
+            if(b.geometria IS NULL, True, if(b.cidade_inteira IS NULL, True, False)) AS cidade_inteira_contexto,
+            ifnull(b.solicitantes, []) AS solicitantes_contexto
         from source_data a
-        cross join (select * from `rj-civitas-dev.g20.contextos`) b
+        cross join (select * from `rj-civitas.integracao_reports.contextos`) b
         where
             cast(a.data_report as datetime)
             >= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio)
@@ -408,11 +410,74 @@ with
                 true,
                 st_intersects(
                     st_buffer(
-                        st_geogfromtext(b.geometria), coalesce(b.raio_de_busca, 5000)  -- RAIO PADRAO DE 5km
+                        st_geogfromtext(b.geometria), COALESCE(b.raio_de_busca, 5000)  -- RAIO PADRAO DE 5km
                     ),
                     st_geogpoint(cast(a.longitude AS float64), cast(a.latitude AS float64))
                 )
             )
+
+    UNION ALL
+
+        select
+            a.id_report,
+            a.id_source,
+            a.id_enriquecimento,
+            a.id_report_original,
+            a.data_report,
+            a.orgaos as orgaos_report,
+            a.categoria as categoria_report,
+            a.tipo_subtipo as tipo_subtipo_report,
+            a.descricao as descricao_report,
+            a.logradouro as logradouro_report,
+            a.numero_logradouro as numero_logradouro_report,
+            ifnull(a.latitude, 0.0) as latitude_report,
+            ifnull(a.longitude, 0.0) as longitude_report,
+            a.main_topic as main_topic_report,
+            a.related_topics as related_topics_report,
+            a.scope_level as scope_level_report,
+            a.scope_level_explanation as scope_level_explanation_report,
+            a.threat_level as threat_level_report,
+            a.threat_explanation as threat_explanation_report,
+            a.title_report,
+            a.predicted_time_interval as predicted_time_interval_report,
+            datetime_add(
+                a.data_report, interval safe_cast(a.predicted_time_interval as int64) minute
+            ) as predicted_end_time_report,
+            a.predicted_time_explanation as predicted_time_explanation_report,
+            ifnull(
+                cast(a.date_execution as datetime), cast('' as datetime)
+            ) as date_execution,
+            ifnull(b.id, '') as id_contexto,
+            ifnull(b.tipo, '') as tipo_contexto,
+            ifnull(b.datahora_inicio, '') as datahora_inicio_contexto,
+            ifnull(b.datahora_fim, '') as datahora_fim_contexto,
+            ifnull(b.nome, '') as nome_contexto,
+            ifnull(b.descricao, '') as descricao_contexto,
+            ifnull(b.informacoes_adicionais, '') as informacoes_adicionais_contexto,
+            'Rio de Janeiro, RJ, Brasil' as endereco_contexto,
+            'Cidade do Rio de Janeiro' as local_contexto,
+            '' as geometria_contexto,
+            0 as raio_de_busca_contexto,
+            ifnull(
+                cast(a.data_report as datetime), cast('' as datetime)
+            ) as data_report_tz,
+            ifnull(
+                parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio),
+                cast('' as datetime)
+            ) as data_inicio_tz,
+            b.cidade_inteira AS cidade_inteira_contexto,
+            ifnull(b.solicitantes, []) AS solicitantes_contexto
+        from source_data a
+        cross join (select * from `rj-civitas.integracao_reports.contextos`) b
+        where
+            cast(a.data_report as datetime)
+            >= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio)
+            and cast(a.data_report as datetime)
+            <= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_fim)
+            and lower(a.threat_level) = 'alto'
+            AND b.cidade_inteira = True
+            AND b.geometria IS NOT NULL
+
     ),
 
     prompt_table as (
@@ -435,7 +500,7 @@ with
 
 g20_report_clocks = [
     IntervalClock(
-        interval=timedelta(minutes=10),
+        interval=timedelta(minutes=5),
         start_date=datetime(2024, 1, 1, 0, 0, tzinfo=pytz.timezone("America/Sao_Paulo")),
         labels=[
             constants.RJ_CIVITAS_AGENT_LABEL.value,
