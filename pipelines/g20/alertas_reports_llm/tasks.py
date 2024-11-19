@@ -390,6 +390,7 @@ def task_get_new_alerts(
     a.date_execution,
     a.relation,
     solicitante,
+    a.cidade_inteira_contexto,
     ARRAY_AGG(a.id_relacao) AS id_relacao--,
   FROM
     `{project_id}.{dataset_id}.{table_id}` a
@@ -419,7 +420,8 @@ def task_get_new_alerts(
                     ),
                     ', ' ),
               a.date_execution,
-              a.solicitante
+              a.solicitante,
+              a.cidade_inteira_contexto
             )
         ) AS STRING
     ) AS id_alerta
@@ -430,12 +432,13 @@ SELECT
   DISTINCT
   a.id_alerta,
   c.*,
-  a.solicitante
+  a.solicitante,
+  a.cidade_inteira_contexto
 FROM
   `{project_id}.{dataset_id}.{table_id}` c
 JOIN
   (
-    SELECT id_report, id, id_alerta, solicitante FROM alert_ids, UNNEST(id_relacao) AS id) a
+    SELECT id_report, id, id_alerta, solicitante, cidade_inteira_contexto FROM alert_ids, UNNEST(id_relacao) AS id) a
 ON
   a.id = c.id_relacao
 WHERE
