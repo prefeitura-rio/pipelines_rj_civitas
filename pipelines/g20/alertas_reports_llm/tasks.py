@@ -377,15 +377,11 @@ def task_get_new_alerts(
     project_id: str,
     dataset_id: str,
     table_id: str,
+    minutes_interval: int = 360,
 ) -> pd.DataFrame:
-    # query = f"""
-    # SELECT
-    #     DISTINCT *
-    # FROM
-    #     `{project_id}.{dataset_id}.{table_id}` a
-    # WHERE
-    #     relation = TRUE
-    # """
+
+    if not isinstance(minutes_interval, int) or minutes_interval < 0:
+        raise ValueError("minutes_interval must be an integer greater than 0")
 
     query = rf"""WITH
   contexts_by_report AS (
@@ -441,7 +437,9 @@ JOIN
   (
     SELECT id_report, id, id_alerta, solicitante FROM alert_ids, UNNEST(id_relacao) AS id) a
 ON
-  a.id = c.id_relacao"""
+  a.id = c.id_relacao
+WHERE
+  TIMESTAMP_DIFF(CURRENT_TIMESTAMP(), c.data_report, MINUTE) <= {minutes_interval}"""
 
     source_table_exists = check_if_table_exists(dataset_id=dataset_id, table_id=table_id)
     if not source_table_exists:
@@ -453,7 +451,7 @@ ON
     )
 
     if destiny_table_exists:
-        query += f"\nWHERE NOT EXISTS (SELECT 1 FROM `{project_id}.{dataset_id}.alertas_historico` b WHERE b.id_alerta = a.id_alerta )"
+        query += f"\nAND NOT EXISTS (SELECT 1 FROM `{project_id}.{dataset_id}.alertas_historico` b WHERE b.id_alerta = a.id_alerta )"
 
     log("Searching for new alerts.")
     log(f"New alerts query: \n{query}")
