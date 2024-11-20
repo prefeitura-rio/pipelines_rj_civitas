@@ -19,74 +19,71 @@ from pipelines.constants import constants
 #####################################
 
 prompt_enriquecimento = """
-Você é um analista de segurança especializado no evento do G20. Sua tarefa é avaliar ocorrências e classificar o risco potencial para a vida e integridade física dos participantes.
+Você é um analista de segurança especializado em avaliar riscos durante o G20.
+Sua tarefa é analisar ocorrências e classificar seu risco potencial para participantes do evento.
 
-Baseie sua resposta **exclusivamente no texto apresentado** e **parafraseie as informações ao máximo, evitando copiar trechos literais**. Não utilize informações externas ao contexto fornecido, de forma a evitar referências externas e assegurar uma análise precisa.
+REGRAS GERAIS:
+- Base sua análise APENAS no texto fornecido
+- **NÃO faça suposições baseadas em conhecimento externo!**
+- Parafraseie ao máximo, evitando citações diretas
+- Forneça justificativas objetivas para cada classificação
 
-Ao realizar a avaliação, classifique o risco independentemente da localização exata do evento ou da ocorrência. Apresente justificativas claras e objetivas para cada classificação de risco, evitando generalizações.
-Preencha todos os campos do JSON com precisão e siga cada instrução na sequência indicada.
+Processo de Análise:
 
-Para cada ocorrência, siga as instruções abaixo:
+1. CLASSIFICAÇÃO TEMÁTICA
+a. Tópico Principal
+    - Identifique o tema central do incidente
+    - Escolha UMA categoria que melhor representa:
+        * Ameaça à Segurança (crimes, ataques, ameaças)
+        * Distúrbio Civil (protestos, manifestações)
+        * Infraestrutura (problemas estruturais, serviços)
+        * Saúde Pública (epidemias, contaminações)
+        * Clima/Ambiente (desastres naturais, poluição)
+        * Mobilidade (trânsito, bloqueios)
+        * Ordem Pública (desordem, vandalismo)
+    - Crie nova categoria se necessário
 
+b. Tópicos Relacionados
+    - Liste outros aspectos relevantes do incidente
+    - Identifique impactos secundários
+    - Considere desdobramentos possíveis
 
-##THOUGHT PROCESS##
+2. AVALIAÇÃO DE IMPACTO
+a. Abrangência
+    - Avalie a extensão do impacto:
+        * Casa: Afeta uma única residência/estabelecimento
+        * Quadra: Impacto limitado a algumas edificações
+        * Bairro: Afeta área residencial/comercial específica
+        * Região: Impacto em múltiplos bairros
+        * Cidade: Afeta município inteiro
+        * Estado/País: Impacto mais amplo
+    - Considere propagação potencial
 
-### Subtask 1:
-- **Descrição**: Identificar o tópico principal e tópicos relacionados com base na descrição da ocorrência.
-- **Raciocínio**: Definir tópicos é essencial para classificar e organizar o tipo de ameaça ou situação. Tópicos principais e secundários devem refletir a natureza da ocorrência, como "ameaça à segurança", "protestos" ou "problemas de infraestrutura", o que permite uma resposta focada.
-- **Critérios de sucesso**: A escolha do tópico principal e dos relacionados é relevante, justificada pela descrição e evidencia claramente o cenário da ocorrência.
+3. ANÁLISE DE TEMPORALIDADE
+- Forneça estimativa em minutos até início da ocorrência (use "0" se indefinido)
+- Baseie-se em dados concretos do relato
 
-### Subtask 2:
-- **Descrição**: Classificar o nível de abrangência e justificar a escolha com detalhes.
-- **Raciocínio**: O nível de abrangência define o escopo de impacto da ocorrência. Avaliar corretamente essa dimensão permite uma preparação proporcional à potencial ameaça.
-- **Critérios de sucesso**: O nível de abrangência é corretamente escolhido e explicado, levando em conta o alcance possível da ocorrência, desde um estabelecimento até um impacto nacional.
+4. AVALIAÇÃO DE AMEAÇA
+- BAIXO:
+    * Sem risco direto à vida dos participantes do evento
+    * Impacto principalmente logístico/operacional
+    * Situação controlável/previsível
+    * Baixa probabilidade de escalada
 
-### Subtask 3:
-- **Descrição**: Definir a estimativa temporal em minutos até o início da ocorrência e justificar a previsão.
-- **Raciocínio**: Estimar o tempo de início da ocorrência é fundamental para priorização de resposta. Em casos de incerteza, "0" será utilizado para representar um tempo indefinido.
-- **Critérios de sucesso**: A estimativa temporal é logicamente fundamentada nos dados disponíveis e a explicação da previsão é clara e observável.
+- ALTO:
+    * Risco direto à vida ou integridade física
+    * Potencial para danos significativos
+    * Situação instável/imprevisível
+    * Alta probabilidade de escalada
 
-### Subtask 4:
-- **Descrição**: Avaliar o nível de ameaça à vida e integridade física dos participantes, fornecendo uma justificativa detalhada.
-- **Raciocínio**: Avaliar o risco é essencial para priorizar a resposta e proteção de vidas. A classificação deve ser baseada no potencial de dano físico e na probabilidade de evento imediato, categorizando a ameaça como "BAIXO" ou "ALTO".
-- **Critérios de sucesso**: A justificativa é detalhada e direta, refletindo o nível de ameaça com base em riscos reais à vida e à integridade física, e a classificação final é consistente com os dados fornecidos.
-
-### Subtask 5:
-- **Descrição**: Criar um título resumido a ocorrencia baseado nos campos preenchidos anteriormente.
-- **Raciocínio**: Um título informativo e objetivo que ajude a identificar rapidamente o conteúdo da ocorrencia.
-- **Critérios de sucesso**: O título deve ter até 50 caracteres e transmitir de forma clara e concisa a descrição da ocorrência, destacando os elementos principais.
-
-
-1. **Tópicos**:
-    - Identifique o tópico principal e quaisquer tópicos relacionados com base na descrição da ocorrência.
-    - Exemplos de tópicos principais incluem: “ameaça à segurança”, “condições climáticas adversas”, “protestos”, “problemas de infraestrutura”, se necessário, adicione tópicos relacionados para complementar a classificação.
-    - Justifique a escolha do tópico principal e dos relacionados com base na descrição do evento.
-
-2. **Nível de Abrangência**:
-    - Classifique o nível de impacto com uma justificativa detalhada, usando uma das categorias a seguir:
-        - **Casa**: Afeta apenas uma residência/estabelecimento
-        - **Quadra**: Impacto limitado à área da quadra
-        - **Bairro**: Afeta um bairro inteiro
-        - **Região**: Impacta múltiplos bairros
-        - **Cidade**: Afeta toda a cidade
-        - **Estado**: Impacto em nível estadual
-        - **País**: Repercussão nacional
-    - Descreva o motivo da escolha do nível de abrangência com base no escopo potencial de impacto.
-
-3. **Avaliação Temporal**:
-    - Defina o intervalo de tempo em minutos até o possível início da. ocorrencia, explicando a estimativa com base nos dados disponíveis.
-    - Use “0” para tempos indefinidos.
-    - Explique como chegou à estimativa para o horário previsto, considerando as informações fornecidas.
-
-4. **Nível de Ameaça**:
-    - Avalie o risco e escolha entre os níveis abaixo:
-     - **BAIXO**: Risco indireto ou muito improvável (não representa risco direto à vida ou integridade, inclui maus-tratos a animais, transgressões ambientais, trabalhistas, etc.)
-     - **ALTO**: Ameaça iminente à vida ou integridade física (inclui tiroteios, bloqueio de vias, manifestações, ameaças de bombas ou terrorismo).
-    - Justifique a avaliação da ameaça com uma análise objetiva do risco envolvido, considerando o potencial de dano à vida e integridade física dos participantes.
+5. TÍTULO
+- Máximo 50 caracteres
+- Deve refletir os elementos principais da ocorrência
 
 
 
-Ocorrencia :
+
+Dados da Ocorrência:
 
 Data da Ocorrência (Quando chegou à prefeitura): ''',
                 cast(data_report as string),
@@ -113,6 +110,7 @@ Descrição: ''',
                 '''
 
 Retorne apenas os seguintes campos em JSON:
+
 {
     "main_topic": "tópico principal",
     "related_topics": ["array de tópicos relacionados"],
@@ -129,8 +127,8 @@ Retorne apenas os seguintes campos em JSON:
     "title_report": "titulo da ocorrencia em no maximo 50 caracteres"
 }
 
-Lembrete: Complete todas as justificativas com base em dados observáveis e use exemplos práticos se possível para reforçar a coerência na análise.
-
+Lembrete:
+**NÃO faça suposições baseadas em conhecimento externo!**
 
 RETORNE APENAS O JSON, SEM EXPLICAÇÕES
 """
@@ -191,61 +189,54 @@ __final_select_replacer__
 
 
 prompt_relacao = """
-Você é um analista de segurança especializado no evento do G20. Sua função é definir se existe uma relação entre a ocorrência e o contexto fornecido.
+Você é um analista de segurança especializado no G20.
+Sua tarefa é determinar se existe alguma relação entre ocorrências reportadas e contextos fornecidos.
 
-Baseie sua resposta **exclusivamente no texto apresentado** e **parafraseie as informações ao máximo, evitando copiar trechos literais**. Não utilize informações externas ao contexto fornecido, de forma a evitar referências externas e assegurar uma análise precisa.
+REGRAS GERAIS:
 
-Forneça uma avaliação clara e direta, justificando objetivamente se existe ou não uma relação entre a ocorrência e o contexto.
+- Analise EXCLUSIVAMENTE as informações fornecidas.
+- **NÃO faça suposições baseadas em conhecimento externo.**
+- Parafraseie ao máximo, evitando citações diretas.
+- Baseie suas conclusões apenas nos fatos apresentados.
+- **NÃO considere proximidade temporal em suas análises.**
 
-##THOUGHT PROCESS##
+Processo de Análise:
 
-### Subtask 1:
-- **Descrição**: Extrair e identificar as principais informações sobre a ocorrência.
-- **Raciocínio**: Compreender as características da ocorrência (ID, descrição, tópico principal e abrangência) é fundamental para estabelecer comparações com o contexto. Isso permite que o analista identifique elementos únicos que podem influenciar a relação com o contexto.
-- **Critérios de sucesso**: Extração correta das informações de ID, descrição, tópico principal e abrangência da ocorrência.
+1. **Analisar a Ocorrência e o Contexto:**
+    - Entenda o evento principal da ocorrência e do contexto.
+    - Identifique os atores, o impacto, e características únicas de cada um.
+    - Observe os elementos específicos mencionados em cada descrição.
 
-### Subtask 2:
-- **Descrição**: Analisar e extrair as principais informações sobre o contexto fornecido.
-- **Raciocínio**: Assim como na ocorrência, conhecer detalhadamente o contexto permite ao analista encontrar pontos de conexão com a ocorrência. Esses elementos incluem o tipo, descrição, informações adicionais e local do contexto.
-- **Critérios de sucesso**: Extração precisa dos campos de tipo, descrição, informações adicionais e local do contexto.
+2. **Identificar Relações:**
+    - Procure conexões diretas entre a ocorrência e o contexto.
+    - Identifique elementos que aparecem em ambos.
+    - Verifique se a ocorrência poderia ser parte do contexto ou um desdobramento dele.
+    - Analise se o contexto engloba a situação da ocorrência.
 
-### Subtask 3:
-- **Descrição**: Comparar fatores chave entre a ocorrência e o contexto para determinar se existe relação.
-- **Raciocínio**: Comparar os elementos centrais de ambos (tópico principal da ocorrência, tipo e local do contexto) é essencial para decidir se existe uma relação observável entre as duas partes. Esse é um passo crítico para justificar e evidenciar o vínculo entre ocorrência e contexto.
-- **Critérios de sucesso**: A análise deve identificar ao menos um fator-chave que justifique a relação entre a ocorrência e o contexto.
+3. **Avaliar Evidências:**
+    - Liste evidências que suportam a relação.
+    - Identifique possíveis contradições.
+    - Avalie a força das evidências encontradas.
 
-### Subtask 4:
-- **Descrição**: Determinar e justificar a explicação detalhada da relação entre a ocorrência e o contexto.
-- **Raciocínio**: Oferecer uma explicação detalhada da relação (ou ausência dela) fornece clareza e transparência ao analista. Para justificar de forma prática, exemplos de situações similares e dados específicos da ocorrência e
-do contexto ajudam a solidificar a análise. De um peso maior para correlação entre lugares proximos.
-- **Critérios de sucesso**: A explicação deve ser objetiva, coerente e se basear em dados observáveis, incluindo exemplos práticos quando aplicável.
+4. **Concluir e Justificar:**
+    - Determine se há relação com base nas evidências (true/false).
+    - Atribua um nível de confiança à conclusão (0-1, sendo 0 nenhuma confiança e 1 total confiança).
+    - Justifique a decisão com os elementos mais relevantes.
 
-### Subtask 5:
-- **Descrição**: Listar fatores-chave que influenciam a relação.
-- **Raciocínio**: Identificar e listar os fatores específicos que indicam a relação entre ocorrência e contexto oferece uma visão estruturada dos elementos de semelhança ou dissonância. Esses fatores guiam a análise e apoiam as justificativas.
-- **Critérios de sucesso**: A lista deve incluir fatores relevantes, como semelhança temática, geográfica ou contextual.
 
-### Subtask 6:
-- **Descrição**: Calcular o nível de confiança da relação entre ocorrência e contexto em uma escala de 0 a 1.
-- **Raciocínio**: Atribuir um valor quantitativo de confiança oferece uma métrica objetiva e ajuda a padronizar a avaliação de relações. Esse valor reflete a força da semelhança entre ocorrência e contexto com base nos fatores observados.
-- **Critérios de sucesso**: Definir um valor numérico que se alinha com o nível de similaridade, de forma transparente e proporcional ao contexto e à ocorrência.
+Critérios para Estabelecer Relação:
 
-### Subtask 7:
-- **Descrição**: Determinar e validar o valor final de relação como verdadeiro (true) ou falso (false).
-- **Raciocínio**: A decisão final de existência de relação é binária e serve como uma conclusão prática para que outros analistas ou sistemas tomem ações subsequentes.
-- **Critérios de sucesso**: Valor booleano final (true ou false) baseado em análise fundamentada e coerente com as evidências e critérios estabelecidos.
+- Evidências claras conectando os eventos e.g:
+    - mesmos atores
+    - mesmas organizações
+    - mesmos alvos,
+    - abrangência do local da ocorrência engloba a localização do contexto
+- Consistência entre as descrições da ocorrência e do contexto.
+- Alinhamento entre o contexto e as circunstâncias da ocorrência.
+- Complementaridade das informações, com a ocorrência adicionando detalhes ao contexto ou vice-versa.
 
-### Subtask 8:
-- **Descrição**: Determinar e validar o valor final de relação como verdadeiro (true) ou falso (false).
-- **Raciocínio**: A decisão final de existência de relação é binária e serve como uma conclusão prática para que outros analistas ou sistemas tomem ações subsequentes.
-- **Critérios de sucesso**: Valor booleano final (true ou false) baseado em análise fundamentada e coerente com as evidências e critérios estabelecidos.
 
-### Subtask 8:
-- **Descrição**: Criar um título resumido para o alerta baseado nos campos preenchidos anteriormente.
-- **Raciocínio**: Um título informativo e objetivo que ajude a identificar rapidamente o conteúdo do alerta e sua importância. O título deve refletir os principais aspectos da relação entre a ocorrência e o contexto.
-- **Critérios de sucesso**: O título deve ter até 50 caracteres e transmitir de forma clara e concisa a natureza da relação entre a ocorrência e o contexto, destacando os elementos principais.
-
-Ocorrencia:
+Dados da Ocorrência:
 
 Data da Ocorrência (Quando chegou à prefeitura): ''',
                 cast(data_report as string),
@@ -296,9 +287,7 @@ Explicacao Abrangencia Ocorrência: ''',
                 '''
 
 
-
-
-Contexto:
+Dados do Contexto:
 
 Nome Contexto: ''',
                 nome_contexto,
@@ -333,19 +322,18 @@ Endereço Contexto: ''',
 
 Retorne apenas os seguintes campos em JSON:
 {
-  'relation_explanation':'explicacao detalhada do motivo da relacao entre a ocorrencia e o contexto',
-  'relation_key_factors' ['lista de fatores que indica a relação entre o contexto e a ocorrencia'],
-  'relation_confidence': 'nivel de semelhança entre o contexto e a ocorrencia. Valor entre 0 e 1',
-  'relation':'valor da relacao. true/false'
-  'relation_title': 'titulo do alerta em no maximo 50 caracteres'
+    "relation_explanation": "Explicação detalhada da análise e conclusão",
+    "relation_key_factors": ["Principais evidências que fundamentam a conclusão"],
+    "relation_confidence": "Nível de confiança na conclusão (0-1)",
+    "relation": "true se houver evidências suficientes de relação, false se não houver",
+    "relation_title": "Título descritivo do alerta (maximo 50 caracteres)"
 }
 
-Lembrete: Complete todas as justificativas com base em dados observáveis e use exemplos práticos se possível para reforçar a coerência na análise.
-
+Lembrete:
+**NÃO faça suposições baseadas em conhecimento externo!**
 
 RETORNE APENAS O JSON, SEM EXPLICAÇÕES
 """
-
 
 query_relacao = """
 with
@@ -404,9 +392,11 @@ with
             ifnull(
                 parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio),
                 cast('' as datetime)
-            ) as data_inicio_tz
+            ) as data_inicio_tz,
+            if(b.geometria IS NULL, True, if(b.cidade_inteira IS NULL, True, False)) AS cidade_inteira_contexto,
+            ifnull(b.solicitantes, []) AS solicitantes_contexto
         from source_data a
-        cross join (select * from `rj-civitas-dev.g20.contextos`) b
+        cross join (select * from `rj-civitas.integracao_reports.contextos`) b
         where
             cast(a.data_report as datetime)
             >= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio)
@@ -420,11 +410,74 @@ with
                 true,
                 st_intersects(
                     st_buffer(
-                        st_geogfromtext(b.geometria), coalesce(b.raio_de_busca, 5000)  -- RAIO PADRAO DE 5km
+                        st_geogfromtext(b.geometria), COALESCE(b.raio_de_busca, 5000)  -- RAIO PADRAO DE 5km
                     ),
                     st_geogpoint(cast(a.longitude AS float64), cast(a.latitude AS float64))
                 )
             )
+
+    UNION ALL
+
+        select
+            a.id_report,
+            a.id_source,
+            a.id_enriquecimento,
+            a.id_report_original,
+            a.data_report,
+            a.orgaos as orgaos_report,
+            a.categoria as categoria_report,
+            a.tipo_subtipo as tipo_subtipo_report,
+            a.descricao as descricao_report,
+            a.logradouro as logradouro_report,
+            a.numero_logradouro as numero_logradouro_report,
+            ifnull(a.latitude, 0.0) as latitude_report,
+            ifnull(a.longitude, 0.0) as longitude_report,
+            a.main_topic as main_topic_report,
+            a.related_topics as related_topics_report,
+            a.scope_level as scope_level_report,
+            a.scope_level_explanation as scope_level_explanation_report,
+            a.threat_level as threat_level_report,
+            a.threat_explanation as threat_explanation_report,
+            a.title_report,
+            a.predicted_time_interval as predicted_time_interval_report,
+            datetime_add(
+                a.data_report, interval safe_cast(a.predicted_time_interval as int64) minute
+            ) as predicted_end_time_report,
+            a.predicted_time_explanation as predicted_time_explanation_report,
+            ifnull(
+                cast(a.date_execution as datetime), cast('' as datetime)
+            ) as date_execution,
+            ifnull(b.id, '') as id_contexto,
+            ifnull(b.tipo, '') as tipo_contexto,
+            ifnull(b.datahora_inicio, '') as datahora_inicio_contexto,
+            ifnull(b.datahora_fim, '') as datahora_fim_contexto,
+            ifnull(b.nome, '') as nome_contexto,
+            ifnull(b.descricao, '') as descricao_contexto,
+            ifnull(b.informacoes_adicionais, '') as informacoes_adicionais_contexto,
+            'Rio de Janeiro, RJ, Brasil' as endereco_contexto,
+            'Cidade do Rio de Janeiro' as local_contexto,
+            '' as geometria_contexto,
+            0 as raio_de_busca_contexto,
+            ifnull(
+                cast(a.data_report as datetime), cast('' as datetime)
+            ) as data_report_tz,
+            ifnull(
+                parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio),
+                cast('' as datetime)
+            ) as data_inicio_tz,
+            b.cidade_inteira AS cidade_inteira_contexto,
+            ifnull(b.solicitantes, []) AS solicitantes_contexto
+        from source_data a
+        cross join (select * from `rj-civitas.integracao_reports.contextos`) b
+        where
+            cast(a.data_report as datetime)
+            >= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_inicio)
+            and cast(a.data_report as datetime)
+            <= parse_datetime('%d/%m/%Y %H:%M:%S', b.datahora_fim)
+            and lower(a.threat_level) = 'alto'
+            AND b.cidade_inteira = True
+            AND b.geometria IS NOT NULL
+
     ),
 
     prompt_table as (
@@ -447,7 +500,7 @@ with
 
 g20_report_clocks = [
     IntervalClock(
-        interval=timedelta(minutes=10),
+        interval=timedelta(minutes=5),
         start_date=datetime(2024, 1, 1, 0, 0, tzinfo=pytz.timezone("America/Sao_Paulo")),
         labels=[
             constants.RJ_CIVITAS_AGENT_LABEL.value,
@@ -455,9 +508,16 @@ g20_report_clocks = [
         parameter_defaults={
             "query_enriquecimento": query_enriquecimento,
             "prompt_enriquecimento": prompt_enriquecimento,
+            "table_id_enriquecido": "test_reports_enriquecidos",
             "query_relacao": query_relacao,
             "prompt_relacao": prompt_relacao,
+            "table_id_relacao": "test_reports_contexto_enriquecidos",
             "batch_size": 10,
+            "table_id_alerts_history": "alertas_historico",
+            "minutes_interval_alerts": 360,
+            "get_llm_ocorrencias": False,
+            "get_llm_relacao": False,
+            "generate_alerts": True,
         },
     )
 ]
