@@ -130,7 +130,13 @@ with Flow(
     with case(generate_alerts, True):
         secrets = task_get_secret_folder(secret_path="/discord")
         secrets.set_upstream(reports_relacao)
-
+        # import os
+        # secrets = {
+        #     "G20_ABIN_CIDADE": os.getenv("G20_ABIN_CIDADE"),
+        #     "G20_ABIN_CONTEXTOS": os.getenv("G20_ABIN_CONTEXTOS"),
+        #     "G20_PF_CIDADE": os.getenv("G20_PF_CIDADE"),
+        #     "G20_PF_CONTEXTOS": os.getenv("G20_PF_CONTEXTOS"),
+        # }
         new_alerts = task_get_new_alerts(
             project_id=project_id,
             dataset_id=dataset_id,
@@ -138,6 +144,7 @@ with Flow(
             minutes_interval=minutes_interval_alerts,
         )
         new_alerts.set_upstream(secrets)
+        # new_alerts.set_upstream(reports_relacao)
 
         messages = task_build_messages_text(
             dataframe=new_alerts,
@@ -163,3 +170,6 @@ g20_alerts.run_config = KubernetesRun(
 )
 
 g20_alerts.schedule = g20_reports_schedule
+
+# if __name__ == "__main__":
+#     g20_alerts.run()
