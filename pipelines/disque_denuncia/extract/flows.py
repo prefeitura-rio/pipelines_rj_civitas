@@ -178,7 +178,7 @@ with Flow(
             id_column_name=id_column_name,
             address_columns_names=address_columns,
             lat_lon_columns_names=lat_lon_columns,
-            api_key=api_key,
+            api_key=api_key["GOOGLE_MAPS_API_KEY"],
             mode=mode,
             date_execution=date_execution,
             start_date=start_date_geocoding,
