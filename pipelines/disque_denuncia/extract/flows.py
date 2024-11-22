@@ -75,8 +75,6 @@ with Flow(
     date_column_name_geocoding = Parameter("date_column_name_geocoding", default=None)
 
     api_key = task_get_secret_folder(secret_path="/api-keys")
-    # import os
-    # api_key = os.getenv("GOOGLE_MAPS_API_KEY")
     date_execution = task_get_date_execution(utc=False)
 
     # Task to get reports from the specified start date
@@ -162,13 +160,6 @@ with Flow(
 
             reports_dd_materialization_flow_runs.set_upstream(dump_prod_materialization_flow_runs)
 
-            # reports_dd_wait_for_flow_run = wait_for_flow_run.map(
-            #     flow_run_id=reports_dd_materialization_flow_runs,
-            #     stream_states=unmapped(True),
-            #     stream_logs=unmapped(True),
-            #     raise_final_state=unmapped(True),
-            # )
-
     # Atualiza coordenadas ausentes usando a API do Google Maps
     with case(task=georeference_reports, value=True):
         update_coordinates_task = update_missing_coordinates_in_bigquery(
@@ -196,6 +187,3 @@ extracao_disque_denuncia.run_config = KubernetesRun(
 )
 
 extracao_disque_denuncia.schedule = disque_denuncia_etl_minutely_update_schedule
-
-if __name__ == "__main__":
-    extracao_disque_denuncia.run()

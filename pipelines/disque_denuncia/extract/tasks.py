@@ -857,16 +857,6 @@ def update_missing_coordinates_in_bigquery(
 
     for i, row in data.iterrows():
         address_parts = [row.get(col) for col in address_columns_names]
-        # address_parts = [
-        #     row.tipo_logradouro,
-        #     row.logradouro,
-        #     row.numero_logradouro,
-        #     row.bairro_logradouro,
-        #     row.cep_logradouro,
-        #     row.municipio,
-        #     row.estado,
-        # ]
-
         filtered_parts = filter_address_parts(address_parts)
         full_address = ", ".join(filtered_parts)
 
@@ -896,59 +886,6 @@ def update_missing_coordinates_in_bigquery(
         except Exception as e:
             log(f"Error geocoding address '{full_address}': {e}")
             errors.append(full_address)
-
-    # # Geocode rows and prepare updates
-    # updates = []
-    # for row in rows:
-    #     address_parts = [
-    #         row.tipo_logradouro,
-    #         row.logradouro,
-    #         row.numero_logradouro,
-    #         row.bairro_logradouro,
-    #         row.cep_logradouro,
-    #         row.municipio,
-    #         row.estado,
-    #     ]
-    #     full_address = ", ".join(filter(None, address_parts))
-
-    #     try:
-    #         geocode_result = client.geocode(full_address, region="br")
-    #         if geocode_result:
-    #             location = geocode_result[0]["geometry"]["location"]
-    #             updates.append({
-    #                 "id_denuncia": row.id_denuncia,
-    #                 "latitude": location["lat"],
-    #                 "longitude": location["lng"],
-    #                 "data_insercao": datetime.utcnow()
-    #             })
-    #     except Exception as e:
-    #         log(f"Error geocoding address '{full_address}': {e}")
-
-    # Update rows in BigQuery
-    # if updates:
-    #     log(f"Updating {len(updates)} rows in {project_id}.{dataset_id}.{table_id}")
-    #     update_query = f"""
-    #     UPDATE `{project_id}.{dataset_id}.{table_id}`
-    #     SET
-    #         latitude = @latitude,
-    #         longitude = @longitude,
-    #         timestamp_insercao = @timestamp_insercao
-    #     WHERE id_denuncia = @id_denuncia
-    #     """
-    #     for i, update in enumerate(updates):
-    #         log_mod(f"Updating row - {i}/{len(updates)}", index=i, mod=10)
-    #         job_config = bigquery.QueryJobConfig(
-    #             query_parameters=[
-    #                 bigquery.ScalarQueryParameter("latitude", "FLOAT64", update["latitude"]),
-    #                 bigquery.ScalarQueryParameter("longitude", "FLOAT64", update["longitude"]),
-    #                 bigquery.ScalarQueryParameter("timestamp_insercao", "DATETIME", update["timestamp_insercao"]),
-    #                 bigquery.ScalarQueryParameter("id_denuncia", "STRING", update["id_denuncia"])
-    #             ]
-    #         )
-    #         bq_client.query(update_query, job_config=job_config).result()
-
-    # log(f"Successfully updated {len(updates)} rows.")
-    # return len(updates)
 
     # If there are updates, prepare and execute the MERGE query
     if updates:
