@@ -13,16 +13,20 @@ import glob
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Literal, Optional, Union
 
 import basedosdados as bd
+import googlemaps
 import pandas as pd
 import requests
 import xmltodict
+from google.cloud import bigquery
+from infisical import InfisicalClient
 from prefect import task
 from prefect.engine.runner import ENDRUN
 from prefect.engine.state import Skipped
 from prefeitura_rio.pipelines_utils.bd import get_project_id
+from prefeitura_rio.pipelines_utils.infisical import get_secret_folder
 from prefeitura_rio.pipelines_utils.logging import log, log_mod
 from prefeitura_rio.pipelines_utils.prefect import get_flow_run_mode
 from pytz import timezone
@@ -743,3 +747,233 @@ def check_report_qty(reports_response):
         log("No data returned by the API, finishing the flow.", level="info")
         skip = Skipped(message="No data returned by the API, finishing the flow.")
         raise ENDRUN(state=skip)
+
+
+@task(max_retries=3, retry_delay=timedelta(seconds=30))
+def update_missing_coordinates_in_bigquery(
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    id_column_name: str,
+    address_columns_names: list[str],
+    lat_lon_columns_names: dict[str, str],
+    api_key: str,
+    region: str = "br",
+    mode: Literal["prod", "staging"] = "staging",
+    date_execution: str = None,
+    start_date: str = None,
+    date_column_name: str = None,
+    timestamp_creation_column_name: str = None,
+    timezone_str: str = "America/Sao_Paulo",
+) -> None:
+    """Updates missing coordinates in BigQuery using Google Maps Geocoding API.
+
+    Updates latitude and longitude coordinates for addresses in a BigQuery table by geocoding
+    addresses using the Google Maps API. Only processes rows where coordinates are missing.
+
+    Args:
+        project_id (str): Google Cloud project ID.
+        dataset_id (str): BigQuery dataset ID.
+        table_id (str): BigQuery table ID.
+        id_column_name (str): Name of the ID column in the table.
+        address_columns_names (list[str]): List of column names containing address parts.
+        lat_lon_columns_names (dict[str, str]): Dictionary mapping 'latitude' and 'longitude'
+            to their respective column names.
+        api_key (str): Google Maps API key for geocoding.
+        region (str, optional): Region code for geocoding. Defaults to "br".
+        mode (Literal["prod", "staging"], optional): Execution mode. Defaults to "staging".
+        start_date (str, optional): Filter records from this date. Defaults to None.
+        date_column_name (str, optional): Name of date column for filtering. Defaults to None.
+        timestamp_creation_column_name (str, optional): Name of timestamp creation column.
+            Defaults to None.
+        timezone_str (str, optional): Timezone string. Defaults to "America/Sao_Paulo".
+
+    Returns:
+        int: Number of rows successfully updated, or 0 if no updates needed.
+
+    Raises:
+        Exception: If geocoding fails or BigQuery update operation fails.
+    """
+    # Adjust dataset for staging mode
+    dataset_id += "_staging" if mode == "staging" else ""
+
+    # Initialize BigQuery and Google Maps clients
+    bd.config.billing_project_id = project_id
+    bd.config.from_file = True
+    bq_client = bigquery.Client()
+    client = googlemaps.Client(key=api_key)
+
+    # Query rows with missing latitude or longitude
+    address_columns_str = "`, `".join(address_columns_names)
+    query = f"""
+    SELECT
+        `{id_column_name}`,
+        `{address_columns_str}`
+    FROM `{project_id}.{dataset_id}.{table_id}`
+    WHERE
+        (`{lat_lon_columns_names['latitude']}` IS NULL OR `{lat_lon_columns_names['longitude']}` IS NULL)
+    """
+
+    if start_date:
+        query += f" AND `{date_column_name}` >= '{start_date}'"
+
+    elif date_execution:
+        query += f" AND `{timestamp_creation_column_name}` >= '{date_execution}'"
+
+    else:
+        raise ValueError("start_date or date_execution is required.")
+
+    log(f"Running query: {query}")
+    data = bd.read_sql(query)
+
+    if len(data) == 0:
+        log("No rows found with missing latitude/longitude.")
+        return 0
+    else:
+        log(f"Found {len(data)} rows with missing latitude/longitude.")
+
+    def filter_address_parts(address_parts: list[str]) -> list[str]:
+        final_address = []
+        dispensable_parts = [
+            "não informado",
+            "nao informado",
+            "ni",
+            "n.i",
+            "n.i.",
+            "ni.",
+            "",
+            "0",
+            "nan",
+        ]
+
+        for part in address_parts:
+            if str(part).lower() not in dispensable_parts:
+                final_address.append(str(part))
+        return final_address
+
+    # Geocode rows and prepare updates
+    updates = []
+    errors = []
+
+    for i, row in data.iterrows():
+        address_parts = [row.get(col) for col in address_columns_names]
+        filtered_parts = filter_address_parts(address_parts)
+        full_address = ", ".join(filtered_parts)
+
+        try:
+            log_mod(f"Geocoding address - {i}/{len(data)}", index=i, mod=10)
+            geocode_result = client.geocode(full_address, region=region)
+
+            if geocode_result:
+                location = geocode_result[0]["geometry"]["location"]
+
+                new_data = {
+                    f"{id_column_name}": row.get(id_column_name),
+                    f"{lat_lon_columns_names['latitude']}": location["lat"],
+                    f"{lat_lon_columns_names['longitude']}": location["lng"],
+                }
+
+                if timestamp_creation_column_name:
+                    new_data.update(
+                        {
+                            f"{timestamp_creation_column_name}": datetime.now(
+                                tz=timezone(timezone_str)
+                            ).strftime("%Y-%m-%d %H:%M:%S.%f")
+                        }
+                    )
+
+                updates.append(new_data)
+        except Exception as e:
+            log(f"Error geocoding address '{full_address}': {e}")
+            errors.append(full_address)
+
+    # If there are updates, prepare and execute the MERGE query
+    if updates:
+        log(
+            f"Updating latitude and longitude for {len(updates)} rows in {project_id}.{dataset_id}.{table_id}"
+        )
+
+        # Criar a lista de STRUCTs
+        struct_list = []
+        for update in updates:
+            struct_list.append(
+                f"""STRUCT(
+                    '{update['id_denuncia']}' as id_denuncia,
+                    {update['latitude']} as latitude,
+                    {update['longitude']} as longitude,
+                    DATETIME('{update['timestamp_insercao']}') as timestamp_insercao
+                )"""
+            )
+
+        structs = ",\n".join(struct_list)
+
+        # Prepare the MERGE query
+        merge_query = f"""
+        MERGE `{project_id}.{dataset_id}.{table_id}` AS target
+        USING (
+            SELECT * FROM UNNEST([
+                {structs}
+            ])
+        ) AS source
+        ON target.id_denuncia = source.id_denuncia
+        WHEN MATCHED THEN
+            UPDATE SET
+                target.latitude = source.latitude,
+                target.longitude = source.longitude,
+                target.timestamp_insercao = source.timestamp_insercao
+        """
+
+        # Execute the MERGE query
+        try:
+            bq_client.query(merge_query).result()
+            log(f"Successfully updated latitude and longitude for {len(updates)} rows.")
+            updated_rows = len(updates)
+
+        except Exception as e:
+            log(f"Error updating latitude and longitude for {len(updates)} rows: {e}")
+            updated_rows = 0
+
+    return updated_rows
+
+
+@task
+def task_get_secret_folder(
+    secret_path: str = "/",
+    secret_name: str = None,
+    type: Literal["shared", "personal"] = "personal",
+    environment: str = None,
+    client: InfisicalClient = None,
+) -> dict:
+    """
+    Fetches secrets from Infisical. If passing only `secret_path` and
+    no `secret_name`, returns all secrets inside a folder.
+
+    Args:
+        secret_name (str, optional): _description_. Defaults to None.
+        secret_path (str, optional): _description_. Defaults to '/'.
+        environment (str, optional): _description_. Defaults to 'dev'.
+
+    Returns:
+        _type_: _description_
+    """
+    log(
+        f"Getting secrets from Infisical: secret_path={secret_path}, secret_name={secret_name}, type={type}, environment={environment}"
+    )
+    secrets = get_secret_folder(
+        secret_path=secret_path,
+        secret_name=secret_name,
+        type=type,
+        environment=environment,
+        client=client,
+    )
+    return secrets
+
+
+@task
+def task_get_date_execution(utc: bool = False) -> str:
+    if utc:
+        date_execution = datetime.now(tz=timezone("UTC")).strftime("%Y-%m-%d %H:%M:%S")
+    else:
+        date_execution = datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M:%S")
+
+    return date_execution
