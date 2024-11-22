@@ -6,7 +6,7 @@ Tasks include:
 - Retrieving reports from a REST API
 - Saving reports as XML files
 - Parsing and normalizing XML data
-- Transforming XML data into structured CSV files
+- Transforming XML data into structured CSV files.
 """
 
 
@@ -112,7 +112,7 @@ def get_occurrences(
     # First request to get the total page number
     initial_url = base_url.format(page=1)
     log(msg="Loop 0: Getting data from API.", level="info")
-    response = requests.get(initial_url, headers=headers, params=params)
+    response = requests.get(initial_url, headers=headers, params=params, verify=False)
     response.raise_for_status()
     initial_data = response.json()
     total_pages = initial_data["pageMeta"]["pageCount"]
@@ -122,7 +122,7 @@ def get_occurrences(
     for page in range(2, total_pages + 1):
         url = base_url.format(page=page)
         log_mod(msg=f"Loop {page}: Getting data from API.", level="info", index=page, mod=10)
-        response = requests.get(url, headers=headers, params=params)
+        response = requests.get(url, headers=headers, params=params, verify=False)
         response.raise_for_status()
         data = response.json()
         occurrences.extend(data["data"])
