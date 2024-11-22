@@ -35,7 +35,7 @@ from pipelines.disque_denuncia.extract.tasks import (
     loop_transform_report_data,
     task_get_date_execution,
     task_get_secret_folder,
-    update_missing_coordinates,
+    update_missing_coordinates_in_bigquery,
 )
 
 # Define the Prefect Flow for data extraction and transformation
@@ -50,23 +50,34 @@ with Flow(
 
     # Parâmetros
     project_id = Parameter("project_id", default="")
-    start_date = Parameter("start_date", default="2021-01-01")
-    dataset_id = Parameter("dataset_id", default="disque_denuncia")
-    table_id = Parameter("table_id", default="denuncias")
-    dump_mode = Parameter("dump_mode", default="append")
-    biglake_table = Parameter("biglake_table", default=True)
-    materialize_after_dump = Parameter("materialize_after_dump", default=True)
-    materialize_reports_dd_after_dump = Parameter("materialize_reports_dd_after_dump", default=True)
-    dbt_alias = Parameter("dbt_alias", default=False)
+    dataset_id = Parameter("dataset_id", default="")
+    table_id = Parameter("table_id", default="")
+    start_date = Parameter("start_date", default="")
+    tipo_difusao = Parameter("tipo_difusao", default="")
     loop_limiter = Parameter("loop_limiter", default=False)
-    tipo_difusao = Parameter("tipo_difusao", default="interesse")
+    dump_mode = Parameter("dump_mode", default="")
+    biglake_table = Parameter("biglake_table", default=True)
     mod = Parameter("mod", default=100)
+
+    materialize_after_dump = Parameter("materialize_after_dump", default=True)
+    dbt_alias = Parameter("dbt_alias", default=False)
+
+    materialize_reports_dd_after_dump = Parameter("materialize_reports_dd_after_dump", default=True)
+
+    # Georeference reports
+    georeference_reports = Parameter("georeference_reports", default=True)
     mode = Parameter("mode", default="")
+    address_columns = Parameter("address_columns", default=[])
+    lat_lon_columns = Parameter("lat_lon_columns", default={})
+    id_column_name = Parameter("id_column_name", default="")
+    timestamp_creation_column_name = Parameter("timestamp_creation_column_name", default=None)
+    start_date_geocoding = Parameter("start_date_geocoding", default=None)
+    date_column_name_geocoding = Parameter("date_column_name_geocoding", default=None)
 
     api_key = task_get_secret_folder(secret_path="/api-keys")
-
+    # import os
+    # api_key = os.getenv("GOOGLE_MAPS_API_KEY")
     date_execution = task_get_date_execution(utc=True)
-
 
     # Task to get reports from the specified start date
     reports_response = get_reports_from_start_date(
@@ -103,22 +114,12 @@ with Flow(
     )
     create_table.set_upstream(csv_path_list)
 
-    # Atualiza coordenadas ausentes usando a API do Google Maps
-    update_coordinates_task = update_missing_coordinates(
-        project_id=project_id,
-        dataset_id=dataset_id,
-        table_id=table_id,
-        api_key=api_key,
-        mode=mode,
-    )
-    update_coordinates_task.set_upstream(create_table)
-
-    # Get TEMPLATE flow name
-    materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
-    materialization_labels = task_get_current_flow_run_labels()
-    current_flow_project_name = get_current_flow_project_name()
-
     with case(task=materialize_after_dump, value=True):
+        # Get TEMPLATE flow name
+        materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
+        materialization_labels = task_get_current_flow_run_labels()
+        current_flow_project_name = get_current_flow_project_name()
+
         dump_prod_tables_to_materialize_parameters = [
             {"dataset_id": "disque_denuncia", "table_id": "denuncias", "dbt_alias": False}
         ]
@@ -130,7 +131,7 @@ with Flow(
             labels=unmapped(materialization_labels),
         )
 
-        dump_prod_materialization_flow_runs.set_upstream(update_coordinates_task)
+        dump_prod_materialization_flow_runs.set_upstream(create_table)
 
         dump_prod_wait_for_flow_run = wait_for_flow_run.map(
             flow_run_id=dump_prod_materialization_flow_runs,
@@ -161,12 +162,30 @@ with Flow(
 
             reports_dd_materialization_flow_runs.set_upstream(dump_prod_materialization_flow_runs)
 
-            reports_dd_wait_for_flow_run = wait_for_flow_run.map(
-                flow_run_id=reports_dd_materialization_flow_runs,
-                stream_states=unmapped(True),
-                stream_logs=unmapped(True),
-                raise_final_state=unmapped(True),
-            )
+            # reports_dd_wait_for_flow_run = wait_for_flow_run.map(
+            #     flow_run_id=reports_dd_materialization_flow_runs,
+            #     stream_states=unmapped(True),
+            #     stream_logs=unmapped(True),
+            #     raise_final_state=unmapped(True),
+            # )
+
+    # Atualiza coordenadas ausentes usando a API do Google Maps
+    with case(task=georeference_reports, value=True):
+        update_coordinates_task = update_missing_coordinates_in_bigquery(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=table_id,
+            id_column_name=id_column_name,
+            address_columns_names=address_columns,
+            lat_lon_columns_names=lat_lon_columns,
+            api_key=api_key,
+            mode=mode,
+            date_execution=date_execution,
+            start_date=start_date_geocoding,
+            date_column_name=date_column_name_geocoding,
+            timestamp_creation_column_name=timestamp_creation_column_name,
+        )
+        update_coordinates_task.set_upstream(dump_prod_materialization_flow_runs)
 
 extracao_disque_denuncia.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
 extracao_disque_denuncia.run_config = KubernetesRun(
@@ -177,3 +196,6 @@ extracao_disque_denuncia.run_config = KubernetesRun(
 )
 
 extracao_disque_denuncia.schedule = disque_denuncia_etl_minutely_update_schedule
+
+if __name__ == "__main__":
+    extracao_disque_denuncia.run()
