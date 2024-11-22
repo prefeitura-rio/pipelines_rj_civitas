@@ -156,6 +156,7 @@ def task_get_chats(
 
         else:
             log(f"No chat found for username: {username}")
+            log(f"""get_chats query API: 'username: ("{username}")'""")
 
     log(f"Found {len(chats)} new chats")
     return chats

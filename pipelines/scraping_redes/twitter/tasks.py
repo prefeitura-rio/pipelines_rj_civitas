@@ -144,7 +144,6 @@ def task_get_chats(
             source_name="twitter", query=f'c_username: ("{username}")', page=1, page_size=1
         )
         if chat:
-            log(f"Found chat for username: {username} - chat: {chat}")
             chat[0].update({"username": username})
             chats.extend(chat)
 
@@ -157,7 +156,7 @@ def task_get_chats(
 
         else:
             log(f"No chat found for username: {username}")
-            log(f"get_chats query: {query}")
+            log(f"""get_chats query API: 'c_username: ("{username}")'""")
 
     log(f"Found {len(chats)} new chats")
     return chats

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 from typing import Dict, List, Literal
 
 import requests
@@ -37,10 +38,6 @@ class Palver:
         chat_id: str = None,
         group_name: str = None,
     ) -> dict:
-
-        # if not cls.check_token_expired():
-        #     raise Exception('Authentication failed')
-
         url = f"{cls.__base_url}/{source_name}/chats"
         params = {
             "query": query,
@@ -54,10 +51,23 @@ class Palver:
         headers = {"Authorization": f"Bearer {cls.__token}"}
 
         try:
+            # Awaits 1 second before the request
+            time.sleep(1)
+
             response = requests.get(url, params=params, headers=headers)
             response.raise_for_status()
             response_data = response.json().get("data", [])
 
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 429:
+                log("Rate limit reached. Awaiting 15 seconds before trying again...")
+                time.sleep(15)
+                response = requests.get(url, params=params, headers=headers)
+                response.raise_for_status()
+                response_data = response.json().get("data", [])
+            else:
+                log(f"Error getting chats: {e}")
+                raise e
         except Exception as e:
             log(f"Error getting chats: {e}")
             raise e
@@ -92,25 +102,56 @@ class Palver:
         }
         headers = {"Authorization": f"Bearer {cls.__token}"}
 
+        data = []
+
         # first request
         try:
             response = requests.get(url, params=params, headers=headers)
             response.raise_for_status()
             total_pages = response.json().get("meta", {}).get("totalPages", 1)
-            data = response.json().get("data", [])
+            data.extend(response.json().get("data", []))
 
+            # Awaits 1 second between requests
+            time.sleep(1)
+
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 429:
+                log("Rate limit reached. Awaiting 15 seconds before trying again...")
+                time.sleep(15)
+                response = requests.get(url, params=params, headers=headers)
+                response.raise_for_status()
+                total_pages = response.json().get("meta", {}).get("totalPages", 1)
+                data.extend(response.json().get("data", []))
+            else:
+                log(f"Error getting messages: {e}")
+                raise e
         except Exception as e:
-            log(f"Error getting chats: {e}")
+            log(f"Error getting messages: {e}")
             raise e
 
         for i in range(2, total_pages + 1):
-            params["page"] = i
             try:
+                params["page"] = i
                 response = requests.get(url, params=params, headers=headers)
                 response.raise_for_status()
                 data.extend(response.json().get("data", []))
+
+                time.sleep(1)
+
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 429:
+                    log(
+                        f"Rate limit reached on page {i}. Awaiting 15 seconds before trying again..."
+                    )
+                    time.sleep(15)
+                    response = requests.get(url, params=params, headers=headers)
+                    response.raise_for_status()
+                    data.extend(response.json().get("data", []))
+                else:
+                    log(f"Error getting messages on page {i}: {e}")
+                    raise e
             except Exception as e:
-                log(f"Error getting chats: {e}")
+                log(f"Error getting messages on page {i}: {e}")
                 raise e
 
         return data
