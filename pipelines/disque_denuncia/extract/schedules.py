@@ -15,7 +15,7 @@ from pipelines.constants import constants
 disque_denuncia_minutely_parameters = {
     "project_id": "rj-civitas",
     "dataset_id": "disque_denuncia",
-    "table_id": "denuncias_staging",
+    "table_id": "denuncias",
     "start_date": "2021-01-01",
     "tipo_difusao": "interesse",
     "loop_limiter": False,
@@ -26,7 +26,7 @@ disque_denuncia_minutely_parameters = {
     "dbt_alias": False,
     "materialize_reports_dd_after_dump": True,
     "georeference_reports": True,
-    "mode": "staging",
+    "mode": "prod",
     "id_column_name": "id_denuncia",
     "address_columns": [
         "tipo_logradouro",

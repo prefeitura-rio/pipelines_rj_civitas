@@ -77,7 +77,7 @@ with Flow(
     api_key = task_get_secret_folder(secret_path="/api-keys")
     # import os
     # api_key = os.getenv("GOOGLE_MAPS_API_KEY")
-    date_execution = task_get_date_execution(utc=True)
+    date_execution = task_get_date_execution(utc=False)
 
     # Task to get reports from the specified start date
     reports_response = get_reports_from_start_date(
