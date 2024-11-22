@@ -141,7 +141,7 @@ def task_get_chats(
 
     for i, username in enumerate(chat_usernames):
         chat = Palver.get_chats(
-            source_name="telegram", query=f"username: ('{username}')", page=1, page_size=1
+            source_name="telegram", query=f'username: ("{username}")', page=1, page_size=1
         )
         if chat:
             chat[0].update({"username": username})
@@ -218,7 +218,7 @@ def task_get_messages(
     log(f"Getting messages from Palver for chat IDs: {chats_ids}")
 
     for chat in chats_ids:
-        query_message = f"chat_id: ('{chat}')"
+        query_message = f'chat_id: ("{chat}")'
 
         if last_dates.get(chat, None):
             last_date = last_dates[chat]
