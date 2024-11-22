@@ -87,7 +87,12 @@ def task_get_channels_names_from_bq(project_id: str, dataset_id: str, table_id: 
     )
     query = rf"""
         SELECT DISTINCT
-            TRIM(REGEXP_REPLACE(twitter, r'^@', '')) AS chat_username
+            TRIM(
+                REGEXP_EXTRACT(
+                    REGEXP_REPLACE(twitter, r'^@', ''),
+                    r'[^/]+$'
+                )
+            ) AS chat_username
         FROM
             `{project_id}.{dataset_id}.{table_id}`
         WHERE
@@ -136,7 +141,7 @@ def task_get_chats(
 
     for i, username in enumerate(chat_usernames):
         chat = Palver.get_chats(
-            source_name="twitter", query=f"c_username: ({username})", page=1, page_size=1
+            source_name="twitter", query=f"c_username: ('{username}')", page=1, page_size=1
         )
         if chat:
             log(f"Found chat for username: {username} - chat: {chat}")
@@ -213,7 +218,7 @@ def task_get_messages(
     messages = []
     log(f"Getting messages from Palver for chat IDs: {chats_ids}")
     for chat in chats_ids:
-        query_message = f"chat_id: ({chat})"
+        query_message = f"chat_id: ('{chat}')"
 
         if last_dates.get(chat, None):
             last_date = last_dates[chat]
