@@ -486,7 +486,6 @@ def task_geocode_localities(
     project_id: str,
     dataset_id: str,
     table_id: str,
-    date_execution: str = None,
     mode: Literal["prod", "staging"] = "staging",
     api_key: str = None,
 ) -> List[Dict]:
@@ -539,8 +538,7 @@ def task_geocode_localities(
             AND a.locality != ''"""
 
     # keep only news related messages
-    query += f"""
-        AND a.date_execution = '{date_execution}'
+    query += """
         AND a.is_news_related = True"""
 
     log(f"QUERY GEOREF: \n{query}")
@@ -577,6 +575,20 @@ def task_geocode_localities(
                         "longitude": location["lng"],
                         "formatted_address": result["formatted_address"],
                         "state": state if state else "",
+                        "is_news_related": row["is_news_related"],
+                    }
+                )
+            else:
+                log(f"No geocoding result for {row['locality']}")
+                geocoded_data.append(
+                    {
+                        "id": row["id"],
+                        "text": row["text"],
+                        "locality": row["locality"],
+                        "latitude": 0.0,
+                        "longitude": 0.0,
+                        "formatted_address": "",
+                        "state": "",
                         "is_news_related": row["is_news_related"],
                     }
                 )

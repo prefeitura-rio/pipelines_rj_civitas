@@ -164,7 +164,6 @@ with Flow(
         project_id=project_id,
         dataset_id=dataset_id,
         table_id=table_id_enriquecido,
-        date_execution=date_execution,
         mode=mode,
         api_key=api_key["GOOGLE_MAPS_API_KEY"],
     )
