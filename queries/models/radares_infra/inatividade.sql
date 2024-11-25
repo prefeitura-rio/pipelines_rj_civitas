@@ -21,6 +21,7 @@ WITH distinct_cameras AS (
     {{ source('ocr_radar', 'readings_2024') }}
   WHERE
     datahora > '2024-05-30'
+    AND datahora_captura >= datahora
   GROUP BY
     camera_numero, empresa
 ),
@@ -41,12 +42,13 @@ camera_data AS (
     r.datahora
   FROM
     dates d
-  LEFT JOIN
+  JOIN
     {{ source('ocr_radar', 'readings_2024') }} r
   ON
     d.camera_numero = r.camera_numero
     AND d.empresa = r.empresa
     AND DATE(r.datahora) = d.date
+    AND r.datahora_captura >= r.datahora
 ),
 RadarActivity AS (
   SELECT
@@ -108,6 +110,8 @@ latency_stats_per_day AS (
     APPROX_QUANTILES(TIMESTAMP_DIFF(datahora_captura, datahora, SECOND), 100)[OFFSET(50)] AS median_latency
   FROM
     {{ source('ocr_radar', 'readings_2024') }}
+  WHERE
+    datahora_captura >= datahora
   GROUP BY
     empresa, camera_numero, DATE(datahora)
 )
