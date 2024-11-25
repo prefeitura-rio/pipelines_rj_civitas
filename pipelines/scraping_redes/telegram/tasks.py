@@ -390,7 +390,6 @@ def task_get_llm_reponse_and_update_table(
 ) -> None:
     dataset_id += "_staging" if mode == "staging" else ""
 
-    # query = f"SELECT * FROM `{project_id}.{dataset_id}.telegram_messages` WHERE timestamp_creation > '{date_execution}'"
     table_enriquecimento_exists = check_if_table_exists(
         dataset_id=dataset_id, table_id=table_id, mode="prod"
     )
@@ -487,6 +486,7 @@ def task_geocode_localities(
     project_id: str,
     dataset_id: str,
     table_id: str,
+    date_execution: str = None,
     mode: Literal["prod", "staging"] = "staging",
     api_key: str = None,
 ) -> List[Dict]:
@@ -496,6 +496,7 @@ def task_geocode_localities(
         project_id (str): BigQuery project ID
         dataset_id (str): BigQuery dataset ID
         table_id (str): BigQuery table ID containing enriched data
+        date_execution (str): Date of execution
         mode (Literal["prod", "staging"]): Execution mode. Defaults to "staging".
 
     Returns:
@@ -534,11 +535,12 @@ def task_geocode_localities(
     else:
         query += """
         WHERE
-            locality IS NOT NULL
-            AND locality != ''"""
+            a.locality IS NOT NULL
+            AND a.locality != ''"""
 
     # keep only news related messages
-    query += """
+    query += f"""
+        AND a.date_execution = '{date_execution}'
         AND a.is_news_related = True"""
 
     log(f"QUERY GEOREF: \n{query}")
