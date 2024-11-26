@@ -53,6 +53,7 @@ final_data AS (
     ON r.camera_numero = c.camera_numero
   WHERE
     DATETIME(r.datahora, 'America/Sao_Paulo') > '2024-05-30'
+    AND r.datahora_captura >= r.datahora
 )
 -- Final query
 SELECT

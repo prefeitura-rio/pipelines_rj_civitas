@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Schedules for the "CIVITAS: radares_infra - Materialização das tabelas" pipeline.
+Schedules for the "CIVITAS: radares_infra - Materialização das tabelas" pipeline..
 """
 
 from datetime import datetime, timedelta

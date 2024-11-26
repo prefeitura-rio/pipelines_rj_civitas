@@ -15,6 +15,8 @@ WITH ocrs AS (
   SELECT DISTINCT
     *
   FROM {{ source('ocr_radar', 'readings_2024') }}
+  WHERE
+    datahora_captura >= datahora
 ),
 -- Convert datahora to date for partitioning
 final_data AS (
