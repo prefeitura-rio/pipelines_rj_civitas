@@ -87,7 +87,12 @@ def task_get_channels_names_from_bq(project_id: str, dataset_id: str, table_id: 
     )
     query = rf"""
         SELECT DISTINCT
-            TRIM(REGEXP_REPLACE(twitter, r'^@', '')) AS chat_username
+            TRIM(
+                REGEXP_EXTRACT(
+                    REGEXP_REPLACE(twitter, r'^@', ''),
+                    r'[^/]+$'
+                )
+            ) AS chat_username
         FROM
             `{project_id}.{dataset_id}.{table_id}`
         WHERE
@@ -136,10 +141,9 @@ def task_get_chats(
 
     for i, username in enumerate(chat_usernames):
         chat = Palver.get_chats(
-            source_name="twitter", query=f"c_username: ({username})", page=1, page_size=1
+            source_name="twitter", query=f'c_username: ("{username}")', page=1, page_size=1
         )
         if chat:
-            log(f"Found chat for username: {username} - chat: {chat}")
             chat[0].update({"username": username})
             chats.extend(chat)
 
@@ -152,6 +156,7 @@ def task_get_chats(
 
         else:
             log(f"No chat found for username: {username}")
+            log(f"""get_chats query API: 'c_username: ("{username}")'""")
 
     log(f"Found {len(chats)} new chats")
     return chats
@@ -213,7 +218,7 @@ def task_get_messages(
     messages = []
     log(f"Getting messages from Palver for chat IDs: {chats_ids}")
     for chat in chats_ids:
-        query_message = f"chat_id: ({chat})"
+        query_message = f'chat_id: ("{chat}")'
 
         if last_dates.get(chat, None):
             last_date = last_dates[chat]
@@ -488,6 +493,7 @@ def task_geocode_localities(
         project_id (str): BigQuery project ID
         dataset_id (str): BigQuery dataset ID
         table_id (str): BigQuery table ID containing enriched data
+        date_execution (str): Date of execution
         mode (Literal["prod", "staging"]): Execution mode. Defaults to "staging".
 
     Returns:
@@ -526,8 +532,8 @@ def task_geocode_localities(
     else:
         query += """
         WHERE
-            locality IS NOT NULL
-            AND locality != ''"""
+            a.locality IS NOT NULL
+            AND a.locality != ''"""
 
     # keep only news related messages
     query += """
@@ -569,6 +575,20 @@ def task_geocode_localities(
                         "longitude": location["lng"],
                         "formatted_address": result["formatted_address"],
                         "state": state if state else "",
+                        "is_news_related": row["is_news_related"],
+                    }
+                )
+            else:
+                log(f"No geocoding result for {row['locality']}")
+                geocoded_data.append(
+                    {
+                        "id": row["id"],
+                        "text": row["text"],
+                        "locality": row["locality"],
+                        "latitude": 0.0,
+                        "longitude": 0.0,
+                        "formatted_address": "",
+                        "state": "",
                         "is_news_related": row["is_news_related"],
                     }
                 )

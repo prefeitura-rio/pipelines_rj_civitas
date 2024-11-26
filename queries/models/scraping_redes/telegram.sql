@@ -49,6 +49,8 @@ SELECT
   timestamp_creation
 FROM
   query
+WHERE
+  UPPER(state) = 'RJ'
 {% if is_incremental() %}
-  WHERE timestamp_creation > (SELECT MAX(timestamp_creation) FROM {{ this }})
+AND timestamp_creation > (SELECT MAX(timestamp_creation) FROM {{ this }})
 {% endif %}
