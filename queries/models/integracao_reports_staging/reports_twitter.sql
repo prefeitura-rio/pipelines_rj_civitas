@@ -14,7 +14,8 @@
 
 WITH messages AS (
   SELECT
-    *
+    *,
+    ROW_NUMBER() OVER (PARTITION BY id ORDER BY timestamp_creation DESC) AS rn
   FROM
     {{ source('scraping_redes', 'twitter') }}
 
@@ -25,6 +26,7 @@ WITH messages AS (
       DATETIME('1900-01-01 00:00:00')
     )
   {% endif %}
+  QUALIFY rn = 1
 )
 SELECT
   'twitter' AS id_source,

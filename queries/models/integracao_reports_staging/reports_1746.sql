@@ -13,9 +13,11 @@
 
 WITH chamados AS (
   SELECT
-    *
+    *,
+    ROW_NUMBER() OVER (PARTITION BY id_chamado ORDER BY data_inicio DESC) AS rn
   FROM
     {{ source('chamados_1746', 'chamado') }}
+  QUALIFY rn = 1
 ),
 orgaos_agg AS (
   SELECT
