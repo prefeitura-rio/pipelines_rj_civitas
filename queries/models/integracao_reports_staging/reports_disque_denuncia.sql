@@ -13,14 +13,16 @@
 }}
 WITH denuncias AS (
   SELECT
-    *
+    *,
+    ROW_NUMBER() OVER (PARTITION BY id_denuncia ORDER BY timestamp_insercao DESC) AS rn
   FROM
     {{ source('disque_denuncia', 'denuncias') }}
 
   {% if is_incremental() %}
     WHERE
-      timestamp_insercao >= (select max(timestamp_insercao) from {{ this }})
+      timestamp_insercao > (select max(timestamp_insercao) from {{ this }})
   {% endif %}
+  QUALIFY rn = 1
 ),
 -- Expand the organs associated with each report and aggregate organ names into an array
 orgaos_expanded AS (

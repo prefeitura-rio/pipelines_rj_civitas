@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 This module defines a Prefect workflow for materializing tables using DBT.
-related to 'adm_central_atendimento_1746.chamado'...
+related to 'adm_central_atendimento_1746.chamado'..
 """
 
 
