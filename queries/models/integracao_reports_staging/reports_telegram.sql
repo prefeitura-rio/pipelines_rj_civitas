@@ -41,8 +41,8 @@ SELECT
   text AS descricao,
   locality AS logradouro,
   '' AS numero_logradouro,
-  latitude,
-  longitude,
+  IF (LOWER(locality) = 'rio de janeiro', 0.0, latitude) AS latitude,
+  IF (LOWER(locality) = 'rio de janeiro', 0.0, longitude) AS longitude,
   DATETIME(timestamp_creation) AS timestamp_creation
 FROM
   messages
