@@ -2,7 +2,8 @@
 import asyncio
 import io
 import os
-import re
+
+# import re
 from os import environ
 
 import aiohttp
@@ -46,13 +47,13 @@ async def send_discord_message(
 def notify_on_failure(task: Task, old_state: state.State, new_state: state.State):
     if isinstance(new_state, state.Failed):
         # Capture all error messages and logs
-        error_dict = new_state.result
-        log(f"error_dict: {dir(error_dict)}")
-        log(f"new state results: {new_state.result}")
-        log(f"new state: {type(new_state)}")
+        # error_dict = new_state.result
+        # log(f"error_dict: {dir(error_dict)}")
+        # log(f"new state results: {new_state.result}")
+        # log(f"new state: {type(new_state)}")
 
-        error_state = list(error_dict.values())[0]  # get first value from dictionary
-        error_logs = str(error_state.result)  # get exception text
+        # error_state = list(error_dict.values())[0]  # get first value from dictionary
+        # error_logs = str(error_state.result)  # get exception text
 
         # Get current flow name
         flow_name = context.get("flow_name", "Unknown flow name")
@@ -60,21 +61,22 @@ def notify_on_failure(task: Task, old_state: state.State, new_state: state.State
         project_name = context.get("project_name", "default")  # Project/team name
         server_url = context.get("server_url", "not found")
 
-        pattern = r"<(.*?)>"
+        # pattern = r"<(.*?)>"
 
-        new_state_results = re.findall(pattern, str(new_state.result))
-        log(f"new_state_results: {new_state_results}")
+        # new_state_results = re.findall(pattern, str(new_state.result))
+        # log(f"new_state_results: {new_state_results}")
         # Get Prefect server base URL
 
         # Build flow run URL using context information
-        flow_run_url = f"{server_url}/{project_name}/flow-run/{flow_run_id}?logs"
+        flow_run_url = f"https://{server_url}/{project_name}/flow-run/{flow_run_id}?logs"
 
-        new_state_message = f"**Fluxo:** {flow_name}\n"
+        new_state_message = f"{new_state.message}\n"
+        new_state_message += f"**Fluxo:** {flow_name}\n"
         new_state_message += f"**ID:** {flow_run_id}\n"
         new_state_message += f"**URL:** {flow_run_url}\n"
 
-        new_state_message += new_state_results[0]
-        new_state_message += """```bash\n""" + error_logs + """\n```"""
+        # new_state_message += new_state_results[0]
+        # new_state_message += """```bash\n""" + error_logs + """\n```"""
 
         log(new_state_message)
 
