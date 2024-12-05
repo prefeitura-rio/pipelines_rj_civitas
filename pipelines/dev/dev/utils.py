@@ -59,8 +59,7 @@ def notify_on_failure(task: Task, old_state: state.State, new_state: state.State
         flow_name = context.get("flow_name", "Unknown flow name")
         flow_run_id = context.get("flow_run_id", "Unknown ID")
         project_name = context.get("project_name", "default")  # Project/team name
-        server_url = context.get("server_url", "not found")
-
+        server_url = os.getenv("PREFECT_UI_URL")
         # pattern = r"<(.*?)>"
 
         # new_state_results = re.findall(pattern, str(new_state.result))
@@ -68,7 +67,7 @@ def notify_on_failure(task: Task, old_state: state.State, new_state: state.State
         # Get Prefect server base URL
 
         # Build flow run URL using context information
-        flow_run_url = f"https://{server_url}/{project_name}/flow-run/{flow_run_id}?logs"
+        flow_run_url = f"{server_url}/{project_name}/flow-run/{flow_run_id}?logs"
 
         new_state_message = f"{new_state.message}\n"
         new_state_message += f"**Fluxo:** {flow_name}\n"
