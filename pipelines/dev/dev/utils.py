@@ -43,9 +43,7 @@ async def send_discord_message(
             await webhook.send(content=message)
 
 
-def notify_on_failure(
-    task: Task, old_state: state.State, new_state: state.State, discord_webhook_url: str
-):
+def notify_on_failure(task: Task, old_state: state.State, new_state: state.State):
     if isinstance(new_state, state.Failed):
         # Capture all error messages and logs
         error_dict = new_state.result
