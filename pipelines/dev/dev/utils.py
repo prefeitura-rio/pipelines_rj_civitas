@@ -48,6 +48,8 @@ def notify_on_failure(task: Task, old_state: state.State, new_state: state.State
         # Capture all error messages and logs
         error_dict = new_state.result
         log(f"error_dict: {dir(error_dict)}")
+        log(f"new state results: {new_state.result}")
+        log(f"new state: {type(new_state)}")
 
         error_state = list(error_dict.values())[0]  # get first value from dictionary
         error_logs = str(error_state.result)  # get exception text
