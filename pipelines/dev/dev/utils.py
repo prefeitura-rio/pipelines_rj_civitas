@@ -59,8 +59,7 @@ def notify_on_failure(task: Task, old_state: state.State, new_state: state.State
         flow_name = context.get("flow_name", "Unknown flow name")
         flow_run_id = context.get("flow_run_id", "Unknown ID")
         project_name = context.get("project_name", "default")  # Project/team name
-        server_url = context.get("server_url", "not found")
-
+        server_url = os.getenv("PREFECT_UI_URL")
         # pattern = r"<(.*?)>"
 
         # new_state_results = re.findall(pattern, str(new_state.result))
