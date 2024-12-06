@@ -25,6 +25,8 @@ from pipelines.constants import constants
 from pipelines.radares_infra.materialize.schedules import (
     radares_infra_twice_daily_update_schedule,
 )
+from pipelines.utils.state_handlers import handler_notify_on_failure
+from pipelines.utils.tasks import task_get_secret_folder
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
@@ -33,11 +35,13 @@ with Flow(
         handler_inject_bd_credentials,
         handler_initialize_sentry,
         handler_skip_if_running,
+        handler_notify_on_failure,
     ],
 ) as materialize_radares_infra:
 
-    dataset_id = Parameter("dataset_id", default="radares_infra")
+    secrets = task_get_secret_folder(secret_path="/discord", inject_env=True)
 
+    dataset_id = Parameter("dataset_id", default="radares_infra")
     materialization_labels = task_get_current_flow_run_labels()
     materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
     dump_prod_tables_to_materialize_parameters = [

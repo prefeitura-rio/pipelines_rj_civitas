@@ -34,9 +34,10 @@ from pipelines.disque_denuncia.extract.tasks import (
     get_reports_from_start_date,
     loop_transform_report_data,
     task_get_date_execution,
-    task_get_secret_folder,
     update_missing_coordinates_in_bigquery,
 )
+from pipelines.utils.state_handlers import handler_notify_on_failure
+from pipelines.utils.tasks import task_get_secret_folder
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
@@ -45,6 +46,7 @@ with Flow(
         handler_inject_bd_credentials,
         handler_initialize_sentry,
         handler_skip_if_running,
+        handler_notify_on_failure,
     ],
 ) as extracao_disque_denuncia:
 
@@ -75,6 +77,8 @@ with Flow(
     date_column_name_geocoding = Parameter("date_column_name_geocoding", default=None)
 
     api_key = task_get_secret_folder(secret_path="/api-keys")
+    secrets = task_get_secret_folder(secret_path="/discord", inject_env=True)
+
     date_execution = task_get_date_execution(utc=False)
 
     # Task to get reports from the specified start date
@@ -88,7 +92,6 @@ with Flow(
         mod=mod,
     )
     reports_response.set_upstream(table_id)
-
     # Task to check report quantity
     report_qty_check = check_report_qty(reports_response)
     report_qty_check.set_upstream(reports_response)
