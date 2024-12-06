@@ -18,13 +18,18 @@ from pipelines.g20.alertas_reports_llm.tasks import (
     task_get_date_execution,
     task_get_llm_reponse_and_update_table,
     task_get_new_alerts,
-    task_get_secret_folder,
     task_send_discord_messages,
 )
+from pipelines.utils.state_handlers import handler_notify_on_failure
+from pipelines.utils.tasks import task_get_secret_folder
 
 with Flow(
     name="CIVITAS: G20 - Alertas",
-    state_handlers=[handler_inject_bd_credentials, handler_initialize_sentry],
+    state_handlers=[
+        handler_inject_bd_credentials,
+        handler_initialize_sentry,
+        handler_notify_on_failure,
+    ],
 ) as g20_alerts:
 
     project_id = Parameter("project_id", default="rj-civitas")
@@ -128,7 +133,7 @@ with Flow(
         reports_relacao.set_upstream(relations)
 
     with case(generate_alerts, True):
-        secrets = task_get_secret_folder(secret_path="/discord")
+        secrets = task_get_secret_folder(secret_path="/discord", inject_env=True)
         secrets.set_upstream(reports_relacao)
 
         new_alerts = task_get_new_alerts(

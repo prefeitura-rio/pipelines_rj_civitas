@@ -16,20 +16,25 @@ from pipelines.alertas_discord.fogo_cruzado.tasks import (
     task_generate_message,
     task_generate_png_maps,
     task_get_newest_occurrences,
-    task_get_secret_folder,
     task_send_discord_messages,
     task_set_config,
 )
 from pipelines.constants import constants
+from pipelines.utils.state_handlers import handler_notify_on_failure
+from pipelines.utils.tasks import task_get_secret_folder
 
 with Flow(
     name="CIVITAS: ALERTA DISCORD - Fogo Cruzado",
-    state_handlers=[handler_inject_bd_credentials, handler_initialize_sentry],
+    state_handlers=[
+        handler_inject_bd_credentials,
+        handler_initialize_sentry,
+        handler_notify_on_failure,
+    ],
 ) as alerta_fogo_cruzado:
     start_datetime = Parameter("start_datetime", default="")
     reasons = Parameter("reasons", default=[])
 
-    webhook_url = task_get_secret_folder(secret_path="/discord")
+    webhook_url = task_get_secret_folder(secret_path="/discord", inject_env=True)
 
     config = task_set_config(
         start_datetime=start_datetime, webhook_url=webhook_url, reasons=reasons

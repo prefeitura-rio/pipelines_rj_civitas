@@ -25,10 +25,8 @@ from prefeitura_rio.pipelines_utils.tasks import (  # task_run_dbt_model_task,
 )
 
 from pipelines.constants import constants
-
-# from pipelines.integracao_reports_staging.materialize_disque_denuncia.schedules import (
-#     integracao_reports_disque_denuncia_minutely_update_schedule,
-# )
+from pipelines.utils.state_handlers import handler_notify_on_failure
+from pipelines.utils.tasks import task_get_secret_folder
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
@@ -37,8 +35,11 @@ with Flow(
         handler_inject_bd_credentials,
         handler_initialize_sentry,
         handler_skip_if_running,
+        handler_notify_on_failure,
     ],
 ) as materialize_integracao_reports_disque_denuncia:
+
+    secrets = task_get_secret_folder(secret_path="/discord", inject_env=True)
 
     dataset_id = Parameter("dataset_id", default="integracao_reports_staging")
     table_id = Parameter("table_id", default="reports_disque_denuncia")
