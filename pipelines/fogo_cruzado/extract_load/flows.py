@@ -31,9 +31,10 @@ from pipelines.fogo_cruzado.extract_load.tasks import (
     get_current_timestamp,
     load_to_table,
     task_check_max_document_number,
-    task_get_secret_folder,
     task_update_max_document_number_on_redis,
 )
+from pipelines.utils.state_handlers import handler_notify_on_failure
+from pipelines.utils.tasks import task_get_secret_folder
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
@@ -42,6 +43,7 @@ with Flow(
         handler_inject_bd_credentials,
         handler_initialize_sentry,
         handler_skip_if_running,
+        handler_notify_on_failure,
     ],
 ) as extracao_fogo_cruzado:
 
@@ -55,6 +57,7 @@ with Flow(
     prefix = Parameter("prefix", default="FULL_REFRESH_")
     send_discord_alerts = Parameter("send_discord_alerts", default=True)
 
+    discord_secrets = task_get_secret_folder(secret_path="/discord", inject_env=True)
     secrets = task_get_secret_folder(secret_path="/api-fogo-cruzado")
     redis_password = task_get_secret_folder(secret_path="/redis")
 

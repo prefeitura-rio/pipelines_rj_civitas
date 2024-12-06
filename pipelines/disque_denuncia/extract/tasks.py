@@ -21,12 +21,10 @@ import pandas as pd
 import requests
 import xmltodict
 from google.cloud import bigquery
-from infisical import InfisicalClient
 from prefect import task
 from prefect.engine.runner import ENDRUN
 from prefect.engine.state import Skipped
 from prefeitura_rio.pipelines_utils.bd import get_project_id
-from prefeitura_rio.pipelines_utils.infisical import get_secret_folder
 from prefeitura_rio.pipelines_utils.logging import log, log_mod
 from prefeitura_rio.pipelines_utils.prefect import get_flow_run_mode
 from pytz import timezone
@@ -934,39 +932,6 @@ def update_missing_coordinates_in_bigquery(
             updated_rows = 0
 
     return updated_rows
-
-
-@task
-def task_get_secret_folder(
-    secret_path: str = "/",
-    secret_name: str = None,
-    type: Literal["shared", "personal"] = "personal",
-    environment: str = None,
-    client: InfisicalClient = None,
-) -> dict:
-    """
-    Fetches secrets from Infisical. If passing only `secret_path` and
-    no `secret_name`, returns all secrets inside a folder.
-
-    Args:
-        secret_name (str, optional): _description_. Defaults to None.
-        secret_path (str, optional): _description_. Defaults to '/'.
-        environment (str, optional): _description_. Defaults to 'dev'.
-
-    Returns:
-        _type_: _description_
-    """
-    log(
-        f"Getting secrets from Infisical: secret_path={secret_path}, secret_name={secret_name}, type={type}, environment={environment}"
-    )
-    secrets = get_secret_folder(
-        secret_path=secret_path,
-        secret_name=secret_name,
-        type=type,
-        environment=environment,
-        client=client,
-    )
-    return secrets
 
 
 @task

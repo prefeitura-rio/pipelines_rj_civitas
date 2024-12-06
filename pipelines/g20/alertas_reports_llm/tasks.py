@@ -5,17 +5,15 @@ This module contains tasks for appending new data to Google Sheets.
 import asyncio
 import time
 from datetime import datetime, timedelta
-from typing import List, Literal
+from typing import List
 
 import basedosdados as bd
 import pandas as pd
 import pytz
 from google.cloud import bigquery
-from infisical import InfisicalClient
 from prefect import task
 from prefect.engine.runner import ENDRUN
 from prefect.engine.state import Skipped
-from prefeitura_rio.pipelines_utils.infisical import get_secret_folder
 from prefeitura_rio.pipelines_utils.logging import log
 
 from pipelines.g20.alertas_reports_llm.model import (
@@ -29,7 +27,8 @@ from pipelines.g20.alertas_reports_llm.utils import (  # ml_generate_text,; quer
     get_delay_time_string,
     load_data_from_dataframe,
 )
-from pipelines.utils import generate_png_map, send_discord_message
+from pipelines.utils.maps import generate_png_map
+from pipelines.utils.notifications import send_discord_message
 
 bd.config.billing_project_id = "rj-civitas"
 bd.config.from_file = True
@@ -728,13 +727,14 @@ def task_send_discord_messages(
 
             # Send text chunks sequentially without image
             for i in range(len(chunks) - 1):
-                await send_discord_message(
-                    webhook_url=webhook_url, message=chunks[i], image_data=None
-                )
+                await send_discord_message(webhook_url=webhook_url, message=chunks[i])
 
             # Send the last chunk with image
             await send_discord_message(
-                webhook_url=webhook_url, message=chunks[-1], image_data=message_data["image_data"]
+                webhook_url=webhook_url,
+                message=chunks[-1],
+                file=message_data["image_data"],
+                file_format="png",
             )
 
             # Save alert history after successful send
@@ -744,33 +744,3 @@ def task_send_discord_messages(
         log("Messages sent to discord and history saved successfully.")
 
     asyncio.run(main())
-
-
-@task
-def task_get_secret_folder(
-    secret_path: str = "/",
-    secret_name: str = None,
-    type: Literal["shared", "personal"] = "personal",
-    environment: str = None,
-    client: InfisicalClient = None,
-) -> dict:
-    """
-    Fetches secrets from Infisical. If passing only `secret_path` and
-    no `secret_name`, returns all secrets inside a folder.
-
-    Args:
-        secret_name (str, optional): _description_. Defaults to None.
-        secret_path (str, optional): _description_. Defaults to '/'.
-        environment (str, optional): _description_. Defaults to 'dev'.
-
-    Returns:
-        _type_: _description_
-    """
-    secrets = get_secret_folder(
-        secret_path=secret_path,
-        secret_name=secret_name,
-        type=type,
-        environment=environment,
-        client=client,
-    )
-    return secrets

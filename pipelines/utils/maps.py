@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
-import io
 from typing import List
 
-import aiohttp
 import basedosdados as bd
-import discord
 import folium
 import geopandas as gpd
 import pandas as pd
@@ -172,24 +169,3 @@ def plot_nearby_cameras(
         )
 
     return cameras_markers
-
-
-async def send_discord_message(
-    webhook_url: str,
-    message: str,
-    image_data: bytes = None,
-):
-    """Sends a message to a Discord webhook.
-
-    Args:
-        webhook_url (str): The URL of the webhook.
-        message (str): The message to send.
-        image_data (bytes, optional): The PNG image data to embed.
-    """
-    async with aiohttp.ClientSession() as session:
-        webhook = discord.Webhook.from_url(webhook_url, session=session)
-        if image_data:
-            file = discord.File(io.BytesIO(image_data), filename="image.png")
-            await webhook.send(content=message, file=file)
-        else:
-            await webhook.send(content=message)
