@@ -9,7 +9,6 @@
     cluster_by = ["date", "empresa", "camera_numero"]
     )
 }}
-
 SELECT
     camera_numero,
     empresa,

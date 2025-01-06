@@ -9,7 +9,6 @@
     cluster_by = ["camera_numero", "date"]
     )
 }}
-
 -- CTE to generate a list of dates
 WITH distinct_cameras AS (
   SELECT DISTINCT
