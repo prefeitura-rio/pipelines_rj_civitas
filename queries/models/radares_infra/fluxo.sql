@@ -17,8 +17,9 @@ SELECT
     COUNT(*) AS total_leituras,
 	COUNTIF(velocidade = 0) AS total_velocidade_zero -- Contagem de leituras com velocidade = 0
 FROM
-    {{ source('ocr_radar', 'readings_2024') }}
+    {{ source('ocr_radar', 'all_readings') }}
 WHERE
-    datahora_captura >= datahora
+    EXTRACT(YEAR FROM datahora) >= 2024
+    AND datahora_captura >= datahora
 GROUP BY
     empresa, camera_numero, DATE(datahora)

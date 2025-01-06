@@ -19,9 +19,10 @@ WITH datas_fuso AS (
     TIMESTAMP(DATETIME(datahora_captura, 'America/Sao_Paulo')) AS datahora_captura,
     TIMESTAMP(DATETIME(datahora, 'America/Sao_Paulo')) AS datahora
   FROM
-    {{ source('ocr_radar', 'readings_2024') }}
+    {{ source('ocr_radar', 'all_readings') }}
   WHERE
-    datahora_captura >= datahora
+    EXTRACT(YEAR FROM datahora) >= 2024
+    AND datahora_captura >= datahora
 )
 -- Final query
 SELECT
