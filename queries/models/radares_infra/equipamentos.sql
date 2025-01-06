@@ -48,7 +48,7 @@ final_data AS (
     r.placa,
     r.tipoveiculo,
     r.velocidade
-  FROM {{ source('ocr_radar', 'readings_2024') }}r
+  FROM {{ source('ocr_radar', 'all_readings') }} r
   LEFT JOIN cameras_cetrio c
     ON r.camera_numero = c.camera_numero
   WHERE
