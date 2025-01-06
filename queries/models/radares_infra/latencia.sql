@@ -9,7 +9,6 @@
     cluster_by = ["data", "empresa"]
     )
 }}
-
 -- CTE to process datetime data
 WITH datas_fuso AS (
   SELECT DISTINCT
