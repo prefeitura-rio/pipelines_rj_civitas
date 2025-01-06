@@ -9,7 +9,6 @@
     cluster_by = ["camera_numero", "empresa", "datahora"]
     )
 }}
-
 -- CTE to join equipment information with camera numbers
 WITH cameras_cetrio AS (
   SELECT

@@ -9,7 +9,6 @@
     cluster_by = ["datahora", "empresa", "camera_numero"]
     )
 }}
-
 -- (CTE) named to aggregate data from multiple tables.
 WITH ocrs AS (
   SELECT DISTINCT
