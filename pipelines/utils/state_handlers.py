@@ -16,24 +16,33 @@ def handler_save_traceback_on_failure(obj, old_state, new_state):
         exc_info = (type(new_state.result), new_state.result, new_state.result.__traceback__)
         full_traceback = ''.join(traceback.format_exception(*exc_info))
         
+        if "raise signals.TRIGGERFAIL" in full_traceback:
+            return None
+        
+        task_name = obj.name if isinstance(obj, Task) else "Flow-level failure"
         task_message = str(new_state.message)
         task_cached_inputs = str(new_state.cached_inputs)
         
+        trigger = obj.trigger
         error_description = dedent(f"""\
+            
+            :x: **Task name:** {task_name}
+            **Trigger:** {trigger.__name__}
+
             **Task message:**
             {task_message}
 
             **Task cached inputs:**
             {task_cached_inputs}
             """
-        )       
+        )   
         error_description += f"\n```bash\n{full_traceback}\n```"
         
         file_dir = Path('/tmp/pipelines/error_logs')
         file_dir.mkdir(parents=True, exist_ok=True)
         file_name = f'{context.get("flow_run_id")}.txt'
         
-        with open(file_dir / file_name, 'w') as f:
+        with open(file_dir / file_name, 'a') as f:
             f.write(str(error_description))
 
         
