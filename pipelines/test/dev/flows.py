@@ -17,7 +17,7 @@ from pipelines.test.dev.tasks import (
 from pipelines.test.dev.utils import handler_notify_on_failure
 
 with Flow(
-    name="example-flow",
+    name="CIVITAS: example-flow",
     state_handlers=[
         handler_inject_bd_credentials,
         handler_initialize_sentry,
