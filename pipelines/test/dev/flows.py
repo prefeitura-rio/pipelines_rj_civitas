@@ -25,7 +25,10 @@ with Flow(
     ],
 ) as test_flow:
     secrets = task_inject_env(
-        secret_name="PIPELINES_RESULTS", environment="staging", path="/discord/", inject_env=True
+        secret_name="PIPELINES_RESULTS",
+        environment="staging",
+        secret_path="/discord/",
+        inject_env=True,
     )
 
     success = task_that_succeeds()
