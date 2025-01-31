@@ -8,13 +8,13 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 )
 
 from pipelines.constants import constants
-from pipelines.test.dev.tasks import (
+from pipelines.pipeline_test.dev.tasks import (
     task_inject_env,
     task_that_fails,
     task_that_fails_2,
     task_that_succeeds,
 )
-from pipelines.test.dev.utils import handler_notify_on_failure
+from pipelines.pipeline_test.dev.utils import handler_notify_on_failure
 
 with Flow(
     name="CIVITAS: example-flow",
