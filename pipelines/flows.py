@@ -8,6 +8,7 @@ from pipelines.fogo_cruzado import *  # noqa
 from pipelines.g20 import *  # noqa
 from pipelines.integracao_reports import *  # noqa
 from pipelines.integracao_reports_staging import *  # noqa
+from pipelines.pipeline_test.dev import *  # noqa
 from pipelines.radar_readings import *  # noqa
 from pipelines.radares_infra import *  # noqa
 from pipelines.scraping_redes import *  # noqa
