@@ -66,26 +66,26 @@ def handler_notify_on_failure(obj: Flow | Task, old_state: state.State, new_stat
     Returns:
         state.State: The new state unchanged
     """
-    if isinstance(new_state, state.Failed):
-        if isinstance(obj, Flow):
+    if isinstance(new_state, state.Failed) and isinstance(obj, Flow):
 
-            flow_run_id = context.get("flow_run_id")
-            flow_name = context.get("flow_name")
-            log(f"flow_run_id: {flow_run_id}")
-            log(f"flow_name: {flow_name}")
+        flow_run_id = context.get("flow_run_id")
+        flow_name = context.get("flow_name")
+        log(f"flow_run_id: {flow_run_id}")
+        log(f"flow_name: {flow_name}")
 
-            new_state_message = f"**Flow:** {flow_name}\n"
-            new_state_message += f"flow_run_id: {flow_run_id}\n"
+        new_state_message = f"**Flow:** {flow_name}\n"
+        new_state_message += f"flow_run_id: {flow_run_id}\n"
 
-            flow_run = FlowRunView.from_flow_run_id(flow_run_id)
+        flow_run = FlowRunView.from_flow_run_id(flow_run_id)
 
-            logs = flow_run.get_logs()
+        logs = flow_run.get_logs()
+        log(f"logs: {logs}")
 
-            logs_message = [f"level:{log.level}\nmensagem: {log.message}" for log in logs]
-            final_log_message = "\n".join(logs_message)
+        logs_message = [f"level:{log.level}\nmensagem: {log.message}" for log in logs]
+        final_log_message = "\n".join(logs_message)
 
-            if logs:
-                new_state_message += f"\n```bash\n{final_log_message}\n```"
+        if logs:
+            new_state_message += f"\n```bash\n{final_log_message}\n```"
 
         asyncio.run(
             send_discord_message(
