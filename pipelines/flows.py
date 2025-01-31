@@ -12,4 +12,5 @@ from pipelines.radar_readings import *  # noqa
 from pipelines.radares_infra import *  # noqa
 from pipelines.scraping_redes import *  # noqa
 from pipelines.templates import *  # noqa
+from pipelines.test.dev import *  # noqa
 from pipelines.update_sheets import *  # noqa
