@@ -3,7 +3,7 @@
 This module imports functions and classes from the 'pipelines.pipeline_test.dev'
 module.
 """
-from prefect import Flow
+from prefect import Flow, Parameter
 from prefect.run_configs import KubernetesRun
 from prefect.storage import GCS
 from prefeitura_rio.pipelines_utils.state_handlers import (
@@ -28,11 +28,17 @@ with Flow(
         handler_notify_on_failure,
     ],
 ) as test_flow:
+
+    infisical_secret_name = Parameter("infisical_secret_name", default="PIPELINES_RESULTS")
+    infisical_environment = Parameter("infisical_environment", default="staging")
+    infisical_secret_path = Parameter("infisical_secret_path", default="/discord/")
+    infisical_inject_env = Parameter("infisical_inject_env", default=True)
+
     secrets = task_inject_env(
-        secret_name="PIPELINES_RESULTS",
-        environment="staging",
-        secret_path="/discord/",
-        inject_env=True,
+        secret_name=infisical_secret_name,
+        environment=infisical_environment,
+        secret_path=infisical_secret_path,
+        inject_env=infisical_inject_env,
     )
 
     success = task_that_succeeds()
