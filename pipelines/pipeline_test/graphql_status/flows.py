@@ -19,7 +19,7 @@ from pipelines.pipeline_test.graphql_status.tasks import (
 from pipelines.utils.state_handlers import handler_notify_on_failure
 
 with Flow(
-    name="CIVITAS: example-flow",
+    name="CIVITAS: flow-run-logs",
     state_handlers=[
         handler_inject_bd_credentials,
         handler_initialize_sentry,
