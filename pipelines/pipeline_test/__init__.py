@@ -5,3 +5,4 @@ module.
 """
 
 from pipelines.pipeline_test.dev.flows import *  # noqa
+from pipelines.pipeline_test.graphql_status.flows import *  # noqa
