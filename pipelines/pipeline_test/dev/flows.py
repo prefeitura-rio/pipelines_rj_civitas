@@ -15,7 +15,6 @@ from pipelines.constants import constants
 from pipelines.pipeline_test.dev.tasks import (
     task_inject_env,
     task_that_fails,
-    task_that_fails_2,
     task_that_succeeds,
 )
 from pipelines.utils.state_handlers import handler_notify_on_failure
@@ -44,9 +43,6 @@ with Flow(
 
     fail = task_that_fails()
     fail.set_upstream(secrets)
-
-    fail_2 = task_that_fails_2()
-    fail_2.set_upstream(secrets)
 
 test_flow.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
 test_flow.run_config = KubernetesRun(
