@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This module imports functions and classes from the 'pipelines.pipeline_test.dev'.
+This module imports functions and classes from the 'pipelines.pipeline_test.dev'..
 module.
 """
 from prefect import Flow, Parameter
@@ -32,13 +32,12 @@ with Flow(
     infisical_secret_name = Parameter("infisical_secret_name", default="PIPELINES_RESULTS")
     infisical_environment = Parameter("infisical_environment", default="staging")
     infisical_secret_path = Parameter("infisical_secret_path", default="/discord/")
-    infisical_inject_env = Parameter("infisical_inject_env", default=True)
 
     secrets = task_inject_env(
         secret_name=infisical_secret_name,
         environment=infisical_environment,
         secret_path=infisical_secret_path,
-        inject_env=infisical_inject_env,
+        inject_env=True,
     )
 
     success = task_that_succeeds()
