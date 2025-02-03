@@ -37,7 +37,6 @@ with Flow(
         secret_name=infisical_secret_name,
         environment=infisical_environment,
         secret_path=infisical_secret_path,
-        inject_env=True,
     )
 
     success = task_that_succeeds()

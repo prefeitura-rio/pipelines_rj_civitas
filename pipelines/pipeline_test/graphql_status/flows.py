@@ -27,7 +27,7 @@ with Flow(
     ],
 ) as test_flow:
 
-    infisical_secret_name = Parameter("infisical_secret_name", default="")
+    infisical_secret_name = Parameter("infisical_secret_name", default="PIPELINES_RESULTS")
     infisical_environment = Parameter("infisical_environment", default="staging")
     infisical_secret_path = Parameter("infisical_secret_path", default="/discord/")
     infisical_inject_env = Parameter("infisical_inject_env", default=True)

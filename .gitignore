@@ -15,6 +15,7 @@ pipelines/reports_disque_denuncia/data/*.csv
 pipelines/reports_disque_denuncia/data/*.xml
 tmp/*
 queries/tmp*
+.cursor/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
