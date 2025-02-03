@@ -25,7 +25,7 @@ with Flow(
         handler_initialize_sentry,
         handler_notify_on_failure,
     ],
-) as test_flow:
+) as flow_run_logs:
 
     infisical_secret_name = Parameter("infisical_secret_name", default="PIPELINES_RESULTS")
     infisical_environment = Parameter("infisical_environment", default="staging")
@@ -45,8 +45,8 @@ with Flow(
     get_flow_run_logs.set_upstream(secrets)
 
 
-test_flow.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
-test_flow.run_config = KubernetesRun(
+flow_run_logs.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
+flow_run_logs.run_config = KubernetesRun(
     image=constants.DOCKER_IMAGE.value,
     labels=[
         constants.RJ_CIVITAS_AGENT_LABEL.value,
