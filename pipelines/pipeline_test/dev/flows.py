@@ -18,7 +18,7 @@ from pipelines.pipeline_test.dev.tasks import (
     task_that_fails_2,
     task_that_succeeds,
 )
-from pipelines.pipeline_test.dev.utils import handler_notify_on_failure
+from pipelines.utils.state_handlers import handler_notify_on_failure
 
 with Flow(
     name="CIVITAS: example-flow",
