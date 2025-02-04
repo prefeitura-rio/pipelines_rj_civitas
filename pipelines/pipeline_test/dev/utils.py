@@ -2,6 +2,7 @@
 
 import asyncio
 import io
+import logging
 import os
 import traceback
 from pathlib import Path
@@ -82,7 +83,11 @@ def handler_notify_on_failure(obj: Flow | Task, old_state: state.State, new_stat
         logs = flow_run.get_logs(end_time=pendulum.now(tz=pendulum.UTC))
         log(f"logs: {logs}")
 
-        logs_message = [f"level:{log.level}\nmensagem: {log.message}" for log in logs]
+        logs_message = [
+            f"level:{logging.getLevelName(log.level)}\nmensagem: {log.message}"
+            for log in logs
+            if log.level in [30, 40, 50]
+        ]
         final_log_message = "\n".join(logs_message)
 
         if logs:
