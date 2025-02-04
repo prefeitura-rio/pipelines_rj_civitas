@@ -4,6 +4,7 @@ import asyncio
 import io
 import logging
 import os
+import time
 import traceback
 from pathlib import Path
 from textwrap import dedent
@@ -84,6 +85,7 @@ def handler_notify_on_failure(obj: Flow | Task, old_state: state.State, new_stat
         new_state_message += f"flow_run_id: {flow_run_id}\n"
         new_state_message += f"**URL:** {flow_run_url}\n"
 
+        time.sleep(10)  # Await for all logs to be available
         flow_run = FlowRunView.from_flow_run_id(flow_run_id)
 
         logs = flow_run.get_logs(end_time=pendulum.now(tz=pendulum.UTC))
@@ -94,6 +96,7 @@ def handler_notify_on_failure(obj: Flow | Task, old_state: state.State, new_stat
             for i in logs
             if i.level in [30, 40, 50]
         ]
+        log(f"LOGS_MESSAGE: {logs_message}")
 
         final_log_message = "\n".join(logs_message)
 
