@@ -10,6 +10,7 @@ from typing import Any
 
 import aiohttp
 import discord
+import pendulum
 from prefect import Flow, Task, context
 
 # from prefect.triggers import all_finished
@@ -78,7 +79,7 @@ def handler_notify_on_failure(obj: Flow | Task, old_state: state.State, new_stat
 
         flow_run = FlowRunView.from_flow_run_id(flow_run_id)
 
-        logs = flow_run.get_logs()
+        logs = flow_run.get_logs(end_time=pendulum.now(tz=pendulum.UTC))
         log(f"logs: {logs}")
 
         logs_message = [f"level:{log.level}\nmensagem: {log.message}" for log in logs]

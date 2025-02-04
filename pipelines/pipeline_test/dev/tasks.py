@@ -9,10 +9,12 @@ from prefeitura_rio.pipelines_utils.infisical import get_secret
 from prefeitura_rio.pipelines_utils.logging import log
 
 from pipelines.utils.environment_vars import inject_env_vars
-from pipelines.utils.state_handlers import handler_save_traceback_on_failure
+
+# from pipelines.utils.state_handlers import handler_save_traceback_on_failure
 
 
-@task(state_handlers=[handler_save_traceback_on_failure])
+# @task(state_handlers=[handler_save_traceback_on_failure])
+@task
 def task_inject_env(
     secret_name: str = None,
     environment: str = None,
@@ -50,7 +52,8 @@ def task_inject_env(
     return secret
 
 
-@task(state_handlers=[handler_save_traceback_on_failure])
+# @task(state_handlers=[handler_save_traceback_on_failure])
+@task
 def task_that_fails():
     a = 1
     b = 0
@@ -62,7 +65,8 @@ def task_that_fails():
         raise ZeroDivisionError("Simulated task failure") from e
 
 
-@task(state_handlers=[handler_save_traceback_on_failure], trigger=all_finished)
+# @task(state_handlers=[handler_save_traceback_on_failure], trigger=all_finished)
+@task(trigger=all_finished)
 def task_that_fails_2():
     a: int = "asdad"
 
