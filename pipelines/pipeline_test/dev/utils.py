@@ -70,13 +70,19 @@ def handler_notify_on_failure(obj: Flow | Task, old_state: state.State, new_stat
     """
     if isinstance(new_state, state.Failed) and isinstance(obj, Flow):
 
-        flow_run_id = context.get("flow_run_id")
-        flow_name = context.get("flow_name")
+        server_url = os.getenv("PREFECT_UI_URL")
+        project_name = context.get("project_name", "default")
+        flow_run_id = context.get("flow_run_id", "Unknown flow run ID")
+        flow_name = context.get("flow_name", "Unknown flow name")
+        flow_run_url = f"{server_url}/{project_name}/flow-run/{flow_run_id}?logs"
+
         log(f"flow_run_id: {flow_run_id}")
         log(f"flow_name: {flow_name}")
+        log(f"flow_run_url: {flow_run_url}")
 
         new_state_message = f"**Flow:** {flow_name}\n"
         new_state_message += f"flow_run_id: {flow_run_id}\n"
+        new_state_message += f"**URL:** {flow_run_url}\n"
 
         flow_run = FlowRunView.from_flow_run_id(flow_run_id)
 
@@ -84,10 +90,11 @@ def handler_notify_on_failure(obj: Flow | Task, old_state: state.State, new_stat
         log(f"logs: {logs}")
 
         logs_message = [
-            f"level:{logging.getLevelName(log.level)}\nmensagem: {log.message}"
-            for log in logs
-            if log.level in [30, 40, 50]
+            f"level: {logging.getLevelName(i.level)}\n" f"mensagem: {i.message}"
+            for i in logs
+            if i.level in [30, 40, 50]
         ]
+
         final_log_message = "\n".join(logs_message)
 
         if logs:

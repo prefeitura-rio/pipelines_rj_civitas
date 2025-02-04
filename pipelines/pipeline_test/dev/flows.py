@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This module imports functions and classes from the 'pipelines.pipeline_test.dev'.
+This module imports functions and classes from the 'pipelines.pipeline_test.dev'
 module.
 """
 from prefect import Flow, Parameter
