@@ -71,6 +71,9 @@ with Flow(
         email=secrets["FOGOCRUZADO_USERNAME"],
         password=secrets["FOGOCRUZADO_PASSWORD"],
         initial_date=start_date,
+        dataset_id=dataset_id,
+        table_id=table_id,
+        redis_password=redis_password["REDIS_PASSWORD"],
     )
 
     # Task to check report quantity

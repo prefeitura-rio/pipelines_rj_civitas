@@ -24,9 +24,11 @@ from pytz import timezone
 
 from pipelines.fogo_cruzado.extract_load.utils import (
     get_on_redis,
+    is_token_valid,
     safe_float_conversion,
     save_data_in_bq,
     save_on_redis,
+    update_token_on_redis,
 )
 
 tz = timezone("America/Sao_Paulo")
@@ -57,8 +59,46 @@ def auth(email: str, password: str) -> str:
 
     response = requests.post(host + endpoint, json=payload, headers=headers, verify=False)
     response.raise_for_status()
-    data = response.json()
-    return data["data"]["accessToken"]
+    return response
+
+
+def get_valid_token(email: str, password: str, redis_password: str) -> str:
+    """
+    Gets a valid authentication token, either from cache or by requesting a new one.
+
+    Args:
+        email: The email for authentication
+        password: The password for authentication
+        redis_password: The password for the Redis connection.
+
+    Returns:
+        Valid authentication token
+
+    Raises:
+        Exception: If unable to obtain a valid token
+    """
+    try:
+        token_data = get_on_redis(
+            dataset_id="fogo_cruzado",
+            table_id="ocorrencias",
+            name="api_token",
+            redis_password=redis_password,
+        )
+
+        if is_token_valid(token_data):
+            log("Using cached token", level="info")
+            return token_data["accessToken"]
+
+        log("Token expired or invalid. Requesting new token...", level="info")
+        response = auth(email, password)
+        update_token_on_redis(response, redis_password=redis_password)
+        log("Token updated successfully", level="info")
+
+        return response.json().get("data", {}).get("accessToken")
+
+    except Exception as e:
+        log(f"Error obtaining valid token: {e}", level="error")
+        raise
 
 
 def get_occurrences(
@@ -131,7 +171,14 @@ def get_occurrences(
 
 
 @task(max_retries=5, retry_delay=timedelta(seconds=30))
-def fetch_occurrences(email: str, password: str, initial_date: Optional[str] = None) -> List[Dict]:
+def fetch_occurrences(
+    email: str,
+    password: str,
+    initial_date: Optional[str] = None,
+    dataset_id: str = None,
+    table_id: str = None,
+    redis_password: str = None,
+) -> List[Dict]:
     """
     Task that Fetches occurrences from the Fogo Cruzado API.
 
@@ -143,14 +190,26 @@ def fetch_occurrences(email: str, password: str, initial_date: Optional[str] = N
         The password to use for authentication.
     initial_date : str
         The initial date to fetch occurrences from.
+    dataset_id : str
+        The dataset ID to use for the occurrence data.
+    table_id : str
+        The table ID to use for the occurrence data.
+    redis_password : str
+        The password to use for the Redis connection.
 
     Returns
     -------
     List
         A list of dictionaries containing the occurrence data.
+
+    Raises
+    ------
+    Exception
+        If unable to fetch data or authenticate
     """
 
-    token = auth(email=email, password=password)
+    token = get_valid_token(email=email, password=password, redis_password=redis_password)
+
     log(msg="Fetching data...", level="info")
     occurrences = get_occurrences(token=token, initial_date=initial_date)
 
