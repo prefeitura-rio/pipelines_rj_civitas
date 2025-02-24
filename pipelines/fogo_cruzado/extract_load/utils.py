@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 # import json
-from datetime import datetime
-from typing import Any, Dict, List, Literal
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Literal, Optional
 
+import pandas as pd
 import pytz
+import requests
 from google.cloud import bigquery
 from redis_pal import RedisPal
 
@@ -157,7 +159,6 @@ def save_on_redis(
     """
     redis_client = get_redis_client(password=redis_password)
     key = build_redis_key(dataset_id, table_id, name, mode)
-    print(">>>> save on redis files ", data)
     redis_client.set(key, data)
 
 
@@ -178,3 +179,61 @@ def safe_float_conversion(str_value):
     except ValueError:
         # Return None or a default value if conversion fails
         return None
+
+
+def is_token_valid(token_data: Optional[Dict[str, Any]]) -> bool:
+    """
+    Checks if the API token is still valid.
+
+    Args:
+        token_data: Dictionary containing 'accessToken' and 'expiresAt'
+
+    Returns:
+        bool: True if token exists and is still valid, False otherwise
+    """
+    if not token_data:
+        return False
+
+    access_token = token_data.get("accessToken")
+    expires_at_str = token_data.get("expiresAt")
+
+    if not all([access_token, expires_at_str]):
+        return False
+
+    try:
+        expires_at = datetime.strptime(expires_at_str, "%Y-%m-%d %H:%M:%S").replace(
+            tzinfo=timezone.utc
+        )
+        current_time = datetime.now(tz=timezone.utc)
+        return expires_at > current_time
+    except ValueError as e:
+        raise Exception(f"Error parsing expiration date: {e}")
+
+
+def update_token_on_redis(data: requests.Response, redis_password: str) -> None:
+    """
+    Updates the token on Redis with the new expiration date.
+
+    Args:
+        data (requests.Response): The response from the /auth/login endpoint.
+        redis_password (str): The password for the Redis connection.
+    """
+    request_date_str: str = data.headers.get("Date")
+    request_date_obj: datetime = pd.to_datetime(request_date_str)
+    request_date_obj
+
+    expires_at: datetime = request_date_obj + timedelta(
+        seconds=data.json().get("data", {}).get("expiresIn", 0)
+    )
+    expires_at_str: str = expires_at.strftime("%Y-%m-%d %H:%M:%S")
+
+    data: dict = data.json().get("data", {})
+    data.update({"expiresAt": expires_at_str})
+
+    save_on_redis(
+        dataset_id="fogo_cruzado",
+        table_id="ocorrencias",
+        name="api_token",
+        data=data,
+        redis_password=redis_password,
+    )
