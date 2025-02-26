@@ -22,7 +22,8 @@ from prefeitura_rio.pipelines_utils.tasks import (
 )
 
 from pipelines.constants import constants
-from pipelines.scraping_redes.twitter.schedules import twitter_update_schedule
+
+# from pipelines.scraping_redes.twitter.schedules import twitter_update_schedule
 from pipelines.scraping_redes.twitter.tasks import (
     task_geocode_localities,
     task_get_channels_names_from_bq,
@@ -236,4 +237,4 @@ extracao_palver_twitter.run_config = KubernetesRun(
     ],
 )
 
-extracao_palver_twitter.schedule = twitter_update_schedule
+# extracao_palver_twitter.schedule = twitter_update_schedule
