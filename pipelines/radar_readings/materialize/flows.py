@@ -22,9 +22,10 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
 from pipelines.constants import constants
-from pipelines.radar_readings.materialize.schedules import (
-    radar_readings_twice_daily_update_schedule,
-)
+
+# from pipelines.radar_readings.materialize.schedules import (
+# radar_readings_twice_daily_update_schedule,
+# )
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
@@ -71,4 +72,4 @@ materialize_radar_readings.run_config = KubernetesRun(
     ],
 )
 
-materialize_radar_readings.schedule = radar_readings_twice_daily_update_schedule
+# materialize_radar_readings.schedule = radar_readings_twice_daily_update_schedule

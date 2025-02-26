@@ -12,7 +12,8 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 )
 
 from pipelines.constants import constants
-from pipelines.update_sheets.g20.schedules import g20_etl_update_schedule
+
+# from pipelines.update_sheets.g20.schedules import g20_etl_update_schedule
 from pipelines.update_sheets.g20.tasks import (
     task_append_new_data_to_google_sheets,
     task_get_disque_denuncia_newest_data,
@@ -84,4 +85,4 @@ update_g20_sheets.run_config = KubernetesRun(
     ],
 )
 
-update_g20_sheets.schedule = g20_etl_update_schedule
+# update_g20_sheets.schedule = g20_etl_update_schedule
