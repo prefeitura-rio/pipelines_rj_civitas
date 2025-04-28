@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: licenciamento_veiculos
+    description: |
+      **Descrição**: Tabela histórica de dados cadastrais dos veículos que operam o sistema de transporte rodoviário, considerando tanto os licenciados no Sistema de Transporte Urbano (STU) quanto as solicitações válidas em andamento para ingresso no sistema
+      **Frequência de atualização**: Diária
+      **Origem**: rj-smtr.veiculo.licenciamento
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: modo
+        description: "Tipo de transporte [Ônibus, Van, BRT]"
+        tests:
+          - not_null
+
+      - name: ano_fabricacao
+        description: "Ano de fabricação do veículo [chassi]"
+
+      - name: carroceria
+        description: "Descrição do modelo da carroceria"
+
+      - name: nome_chassi
+        description: "Descrição do modelo do chassi"
+
+      - name: placa
+        description: "Placa do veículo"
+        tests:
+          - not_null
+          - unique
+
+      - name: tipo_combustivel
+        description: "Tipo de combustível utilizado"
+
+      - name: tipo_veiculo
+        description: "Tipo de veículo"
+
+      - name: datetime_ultima_atualizacao
+        description: "Última atualização no dataset de origem [GMT-3]"
