@@ -29,4 +29,7 @@ WITH base_query AS (
   {% endif %}
   QUALIFY rn = 1
 )
-SELECT * EXCEPT(rn) FROM base_query
+SELECT
+  * EXCEPT(rn)
+FROM
+  base_query
