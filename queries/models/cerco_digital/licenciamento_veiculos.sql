@@ -8,7 +8,7 @@
         }
     )
 }}
-
+-- CTE base
 WITH base_query AS (
   SELECT
     modo,
@@ -22,6 +22,7 @@ WITH base_query AS (
     ROW_NUMBER() OVER(PARTITION BY placa ORDER BY datetime_ultima_atualizacao DESC) rn
   FROM
     {{ source('smtr_veiculo', 'licenciamento') }}
+
   {% if is_incremental() %}
   WHERE
     datetime_ultima_atualizacao > (SELECT MAX(datetime_ultima_atualizacao) FROM {{ this }})
