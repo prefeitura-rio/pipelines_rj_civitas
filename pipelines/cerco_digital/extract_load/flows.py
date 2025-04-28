@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 This module defines a Prefect workflow for materializing tables using DBT.
-related to 'cerco_digital.licenciamento_veiculos'..
+related to 'cerco_digital.licenciamento_veiculos'.
 """
 from prefect import Parameter
 from prefect.run_configs import KubernetesRun
