@@ -104,3 +104,9 @@ sources:
     tables:
       - name: telegram
       - name: twitter
+
+  - name: smtr_veiculo
+    database: rj-smtr
+    schema: veiculo
+    tables:
+      - name: licenciamento

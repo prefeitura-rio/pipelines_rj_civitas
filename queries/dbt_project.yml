@@ -45,3 +45,6 @@ models:
     scraping_redes:
       +materialized: table
       +schema: scraping_redes
+    cerco_digital:
+      +materialized: table
+      +schema: cerco_digital
