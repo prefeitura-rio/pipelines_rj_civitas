@@ -8,7 +8,7 @@
         "data_type": "timestamp",
         "granularity": "month",
     },
-    cluster_by = ["timestamp_creation"]
+    cluster_by = ["updated_at"]
     )
 }}
 
@@ -43,7 +43,7 @@ SELECT
   '' AS numero_logradouro,
   IF (LOWER(locality) = 'rio de janeiro', NULL, latitude) AS latitude,
   IF (LOWER(locality) = 'rio de janeiro', NULL, longitude) AS longitude,
-  DATETIME(timestamp_creation) AS timestamp_creation
+  DATETIME(timestamp_creation) AS updated_at
 FROM
   messages
 WHERE

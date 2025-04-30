@@ -8,7 +8,7 @@
         "data_type": "timestamp",
         "granularity": "month",
     },
-    cluster_by = ["timestamp_insercao"]
+    cluster_by = ["updated_at"]
     )
 }}
 WITH denuncias AS (
@@ -92,7 +92,7 @@ SELECT
     l.id_denuncia IS NOT NULL,
     NULL,
     d.longitude) AS longitude,
-  d.timestamp_insercao
+  d.timestamp_insercao AS updated_at
 FROM denuncias d
 LEFT JOIN orgaos_expanded o ON d.id_denuncia = o.id_denuncia
 LEFT JOIN assuntos_expanded a ON d.id_denuncia = a.id_denuncia
