@@ -21,7 +21,7 @@ WITH ocorrencias AS (
 
   {% if is_incremental() %}
   WHERE
-    timestamp_update > (SELECT max(timestamp_update) FROM {{ this }})
+    timestamp_update > (SELECT max(updated_at) FROM {{ this }})
   {% endif %}
   QUALIFY rn = 1
 ),

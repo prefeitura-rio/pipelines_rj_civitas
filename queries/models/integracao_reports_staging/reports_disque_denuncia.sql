@@ -20,7 +20,7 @@ WITH denuncias AS (
 
   {% if is_incremental() %}
     WHERE
-      timestamp_insercao > (select max(timestamp_insercao) from {{ this }})
+      timestamp_insercao > (select max(updated_at) from {{ this }})
   {% endif %}
   QUALIFY rn = 1
 ),

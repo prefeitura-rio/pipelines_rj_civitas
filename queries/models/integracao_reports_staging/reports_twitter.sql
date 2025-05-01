@@ -22,7 +22,7 @@ WITH messages AS (
   {% if is_incremental() %}
   WHERE
     DATETIME(timestamp_creation) > COALESCE(
-      (SELECT max(timestamp_creation) FROM {{ this }}),
+      (SELECT max(updated_at) FROM {{ this }}),
       DATETIME('1900-01-01 00:00:00')
     )
   {% endif %}
