@@ -20,7 +20,7 @@ WITH denuncias AS (
 
   {% if is_incremental() %}
     WHERE
-      timestamp_insercao > (select max(updated_at) from {{ this }})
+      timestamp_insercao > (select DATETIME(max(updated_at), 'America/Sao_Paulo') from {{ this }})
   {% endif %}
   QUALIFY rn = 1
 ),
@@ -92,7 +92,7 @@ SELECT
     l.id_denuncia IS NOT NULL,
     NULL,
     d.longitude) AS longitude,
-  d.timestamp_insercao AS updated_at
+  TIMESTAMP(d.timestamp_insercao, 'America/Sao_Paulo') AS updated_at
 FROM denuncias d
 LEFT JOIN orgaos_expanded o ON d.id_denuncia = o.id_denuncia
 LEFT JOIN assuntos_expanded a ON d.id_denuncia = a.id_denuncia
