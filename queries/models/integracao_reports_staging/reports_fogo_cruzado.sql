@@ -8,7 +8,7 @@
         "data_type": "timestamp",
         "granularity": "month",
     },
-    cluster_by = ["timestamp_update"]
+    cluster_by = ["updated_at"]
     )
 }}
 
@@ -21,7 +21,7 @@ WITH ocorrencias AS (
 
   {% if is_incremental() %}
   WHERE
-    timestamp_update > (SELECT max(timestamp_update) FROM {{ this }})
+    timestamp_update > (SELECT max(updated_at) FROM {{ this }})
   {% endif %}
   QUALIFY rn = 1
 ),
@@ -63,7 +63,7 @@ subtipo_agg AS (
     '' AS numero_logradouro,
     latitude,
     longitude,
-    timestamp_update
+    timestamp_update AS updated_at
   FROM ocorrencias c
   LEFT JOIN orgaos_agg o ON c.id_ocorrencia = o.id_report_original
   LEFT JOIN subtipo_agg t ON c.id_ocorrencia = t.id_report_original

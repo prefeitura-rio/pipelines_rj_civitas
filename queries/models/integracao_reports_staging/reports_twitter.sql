@@ -8,7 +8,7 @@
         "data_type": "timestamp",
         "granularity": "month",
     },
-    cluster_by = ["timestamp_creation"]
+    cluster_by = ["updated_at"]
     )
 }}
 
@@ -22,7 +22,7 @@ WITH messages AS (
   {% if is_incremental() %}
   WHERE
     DATETIME(timestamp_creation) > COALESCE(
-      (SELECT max(timestamp_creation) FROM {{ this }}),
+      (SELECT max(updated_at) FROM {{ this }}),
       DATETIME('1900-01-01 00:00:00')
     )
   {% endif %}
@@ -43,7 +43,7 @@ SELECT
   '' AS numero_logradouro,
   IF (LOWER(locality) = 'rio de janeiro', NULL, latitude) AS latitude,
   IF (LOWER(locality) = 'rio de janeiro', NULL, longitude) AS longitude,
-  DATETIME(timestamp_creation) AS timestamp_creation
+  DATETIME(timestamp_creation) AS updated_at
 FROM
   messages
 WHERE
