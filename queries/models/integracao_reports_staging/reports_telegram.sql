@@ -21,9 +21,9 @@ WITH messages AS (
 
   {% if is_incremental() %}
   WHERE
-    DATETIME(timestamp_creation) > COALESCE(
+    timestamp_creation > COALESCE(
       (SELECT max(updated_at) FROM {{ this }}),
-      DATETIME('1900-01-01 00:00:00')
+      TIMESTAMP('1900-01-01 00:00:00')
     )
   {% endif %}
   QUALIFY rn = 1
@@ -43,7 +43,7 @@ SELECT
   '' AS numero_logradouro,
   IF (LOWER(locality) = 'rio de janeiro', NULL, latitude) AS latitude,
   IF (LOWER(locality) = 'rio de janeiro', NULL, longitude) AS longitude,
-  DATETIME(timestamp_creation) AS updated_at
+  timestamp_creation AS updated_at
 FROM
   messages
 WHERE
