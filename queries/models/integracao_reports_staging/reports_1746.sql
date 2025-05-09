@@ -1,6 +1,7 @@
 {{
   config(
-    materialized = 'table',
+    materialized = 'incremental',
+    incremental_strategy = 'insert_overwrite',
     unique_key = 'id_report_original',
     partition_by={
         "field": "data_report",
