@@ -24,6 +24,7 @@ google-cloud-resource-manager = "^1.13.0"
 vertexai = "^1.71.1"
 googlemaps = "^4.10.0"
 tenacity = "^9.0.0"
+marshmallow = "3.20.2"
 
 [tool.poetry.group.dev]
 optional = true
