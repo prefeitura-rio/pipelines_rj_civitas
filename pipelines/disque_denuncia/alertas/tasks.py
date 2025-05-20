@@ -19,9 +19,6 @@ from prefeitura_rio.pipelines_utils.prefect import get_flow_run_mode
 from pipelines.utils.cache import get_on_redis, save_on_redis
 from pipelines.utils.notifications import get_delay_time_string, send_discord_message
 
-bd.config.billing_project_id = "rj-civitas"
-bd.config.from_file = True
-
 MAX_DATETIME_REPORT = ""
 
 
@@ -89,7 +86,7 @@ def task_get_new_reports(
 
     log(f"Query: {query}", level="info")
     log("Executing query...", level="info")
-    reports_response = bd.read_sql(query)
+    reports_response = bd.read_sql(query, billing_project_id=project_id, from_file=True)
 
     if reports_response.empty:
         log("There is no new reports, finishing the flow.", level="info")
