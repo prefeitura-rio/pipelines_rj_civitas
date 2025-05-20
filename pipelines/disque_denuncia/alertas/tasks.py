@@ -137,7 +137,6 @@ def task_send_discord_messages(messages: List[str]):
     """
     log("Getting Discord webhook URL...", level="info")
     webhook_url = os.getenv("DD_CASO_CDD_WEBHOOK_URL")
-    log(f"Discord webhook URL: {webhook_url}", level="info")
 
     async def main():
         log("Sending messages to the Discord channel...", level="info")
