@@ -139,7 +139,6 @@ def task_send_discord_messages(messages: List[str]):
     async def main():
         log("Sending messages to the Discord channel...", level="info")
         for message in messages:
-            log(f"Sending message to the Discord channel: {message}", level="info")
             await send_discord_message(
                 webhook_url=webhook_url, message=message, username="Disque Denúncia"
             )
