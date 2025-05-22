@@ -74,7 +74,7 @@ SELECT
   CAST(numero_logradouro AS STRING) AS numero_logradouro,
   latitude,
   longitude,
-  CURRENT_TIMESTAMP() AS updated_at
+  TIMESTAMP(COALESCE(data_fim, data_inicio), 'America/Sao_Paulo') AS updated_at
 FROM chamados c
 LEFT JOIN orgaos_agg o ON c.id_chamado = o.id_report_original
 LEFT JOIN tipo_subtipo_agg t ON c.id_chamado = t.id_report_original
