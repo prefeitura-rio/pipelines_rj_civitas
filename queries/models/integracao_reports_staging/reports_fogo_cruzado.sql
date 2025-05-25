@@ -63,7 +63,7 @@ subtipo_agg AS (
     '' AS numero_logradouro,
     latitude,
     longitude,
-    TIMESTAMP(timestamp_update, 'America/Sao_Paulo') AS updated_at
+    TIMESTAMP(timestamp_insercao, 'America/Sao_Paulo') AS updated_at
   FROM ocorrencias c
   LEFT JOIN orgaos_agg o ON c.id_ocorrencia = o.id_report_original
   LEFT JOIN subtipo_agg t ON c.id_ocorrencia = t.id_report_original
