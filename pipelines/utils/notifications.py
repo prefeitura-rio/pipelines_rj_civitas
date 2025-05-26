@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 import io
+from datetime import datetime, timedelta
 
 import aiohttp
 import discord
+import pandas as pd
 from discord.utils import MISSING
+from pytz import timezone
 
 
 def split_by_newline(text: str, limit: int = 2000) -> list[str]:
@@ -91,3 +94,57 @@ async def send_discord_message(
 
         else:
             await webhook.send(content=message, file=file, username=username, avatar_url=avatar_url)
+
+
+def get_delay_time_string(df: pd.DataFrame, column_name: str, column_tz: str = "America/Sao_Paulo"):
+    """
+    Returns a string with the time difference between the current datetime and the datetime
+    in the 'column_name' column of the given dataframe.
+
+    Args:
+        df (pd.DataFrame): The dataframe with the 'column_name' column.
+        column_name (str): The name of the column to get the time difference from.
+        column_tz (str, optional): The timezone of the column. Defaults to "America/Sao_Paulo".
+
+    Returns:
+        str: A string with the time difference (e.g. "3 dias, 2 horas, 1 minuto e 2 segundos").
+    """
+    tz = timezone(column_tz)
+    datetime_column = pd.to_datetime(df[column_name])
+    if datetime_column.tz is None:
+        # if the column is not timezone aware, convert it to the specified timezone
+        delta: timedelta = datetime.now(tz=tz) - datetime_column.tz_localize(tz)
+    else:
+        # if the column is timezone aware, convert it to the specified timezone
+        delta: timedelta = datetime.now(tz=tz) - datetime_column.dt.tz_convert(tz)
+
+    days = delta.days
+    hours, remainder = divmod(delta.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    # Creating a list to store parts of the time string
+    time_parts = []
+
+    # Function to add time parts to the list
+    def add_time_part(value, singular, plural):
+        if value == 1:
+            time_parts.append(f"{value} {singular}")
+        elif value > 1:
+            time_parts.append(f"{value} {plural}")
+
+    # Adding parts for days, hours, minutes, and seconds
+    add_time_part(days, "dia", "dias")
+    add_time_part(hours, "hora", "horas")
+    add_time_part(minutes, "minuto", "minutos")
+    add_time_part(seconds, "segundo", "segundos")
+
+    # Joining parts with commas and "and" for the last element
+    if time_parts:
+        if len(time_parts) == 1:
+            time_string = time_parts[0]  # Only one element
+        else:
+            time_string = ", ".join(time_parts[:-1]) + " e " + time_parts[-1]
+    else:
+        time_string = "0 segundos"
+
+    return time_string
