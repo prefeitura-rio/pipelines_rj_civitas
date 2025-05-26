@@ -14,9 +14,10 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
 )
 
 from pipelines.constants import constants
-from pipelines.disque_denuncia.alertas.schedules import (
-    alertas_disque_denuncia_etl_minutely_update_schedule,
-)
+
+# from pipelines.disque_denuncia.alertas.schedules import (
+#     alertas_disque_denuncia_etl_minutely_update_schedule,
+# )
 from pipelines.disque_denuncia.alertas.tasks import (
     task_create_messages,
     task_get_new_reports,
@@ -74,4 +75,4 @@ alertas_disque_denuncia.run_config = KubernetesRun(
     ],
 )
 
-alertas_disque_denuncia.schedule = alertas_disque_denuncia_etl_minutely_update_schedule
+# alertas_disque_denuncia.schedule = alertas_disque_denuncia_etl_minutely_update_schedule
