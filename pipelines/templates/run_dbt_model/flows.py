@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-MATERIALIZA MODELOS DO DBT............
+MATERIALIZA MODELOS DO DBT......................
 
 """
 
