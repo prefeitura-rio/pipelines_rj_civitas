@@ -82,7 +82,7 @@ def get_reports(
     params = {"fromdata": start_date}
 
     log_mod(msg="Sending request to API", level="info", index=iter_counter, mod=mod)
-    response = requests.get(url, params=params, timeout=600)
+    response = requests.get(url, params=params, timeout=600, verify=False)
     response.raise_for_status()
 
     log_mod(msg="Processing API response", level="info", index=iter_counter, mod=mod)
