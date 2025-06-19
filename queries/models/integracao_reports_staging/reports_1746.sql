@@ -7,7 +7,8 @@
         "field": "data_report",
         "data_type": "timestamp",
         "granularity": "month",
-    }
+    },
+    cluster_by = ["updated_at"]
     )
 }}
 
@@ -72,7 +73,8 @@ SELECT
   l.nome_completo AS logradouro,
   CAST(numero_logradouro AS STRING) AS numero_logradouro,
   latitude,
-  longitude
+  longitude,
+  TIMESTAMP(COALESCE(data_fim, data_inicio), 'America/Sao_Paulo') AS updated_at
 FROM chamados c
 LEFT JOIN orgaos_agg o ON c.id_chamado = o.id_report_original
 LEFT JOIN tipo_subtipo_agg t ON c.id_chamado = t.id_report_original
