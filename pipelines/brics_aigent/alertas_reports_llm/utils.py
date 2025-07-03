@@ -219,24 +219,9 @@ def montar_prompt_relevancia(row: pd.Series, contexto: pd.Series, prompt_templat
     people = ", ".join(row.get("people", [])) if isinstance(row.get("people"), list) else ""
 
     # Preparar dados do contexto
-    objetivos_monitoramento = (
-        ", ".join(contexto.get("objetivos_monitoramento", []))
-        if isinstance(contexto.get("objetivos_monitoramento"), list)
-        else ""
-    )
     locais_importantes = (
         ", ".join(contexto.get("locais_importantes", []))
         if isinstance(contexto.get("locais_importantes"), list)
-        else ""
-    )
-    entidades_envolvidas = (
-        ", ".join(contexto.get("entidades_envolvidas", []))
-        if isinstance(contexto.get("entidades_envolvidas"), list)
-        else ""
-    )
-    possiveis_riscos = (
-        ", ".join(contexto.get("possiveis_riscos", []))
-        if isinstance(contexto.get("possiveis_riscos"), list)
         else ""
     )
 
@@ -256,10 +241,7 @@ def montar_prompt_relevancia(row: pd.Series, contexto: pd.Series, prompt_templat
         .replace("__contexto_local__", str(contexto.get("local", "")))
         .replace("__contexto_endereco__", str(contexto.get("endereco", "")))
         .replace("__contexto_raio__", str(contexto.get("raio_de_busca", "")))
-        .replace("__objetivos_monitoramento__", objetivos_monitoramento)
         .replace("__locais_importantes__", locais_importantes)
-        .replace("__entidades_envolvidas__", entidades_envolvidas)
-        .replace("__possiveis_riscos__", possiveis_riscos)
     )
 
 
@@ -295,6 +277,9 @@ def gerar_prompts_relevancia(
                     }
                 )
 
+    if prompts:
+        log(f"Prompt relevância - contextos geográficos: {prompts[0]}")  # TODO: remove
+
     # Parte 2: Prompts adicionais para contextos cidade_inteira
     for contexto_id in contextos_cidade_inteira.index:
         for idx, row in df_eventos.iterrows():
@@ -306,6 +291,9 @@ def gerar_prompts_relevancia(
                     "prompt_llm": montar_prompt_relevancia(row, contexto, prompt_template),
                 }
             )
+
+    if prompts:
+        log(f"Prompt relevância - contextos cidade_inteira: {prompts[0]}")  # TODO: remove
 
     df_prompts = pd.DataFrame(prompts)
 

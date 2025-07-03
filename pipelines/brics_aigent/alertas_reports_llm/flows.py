@@ -98,7 +98,9 @@ with Flow(
     # load_dotenv()  # TODO: remover
 
     # Injetar secrets do Infisical
-    task_get_secret_folder(secret_path="/aigents", inject_env=True, environment="dev")
+    task_get_secret_folder(
+        secret_path="/aigents", inject_env=True, environment="dev"
+    )  # TODO: trocar o environment para o ambiente correto
 
     # with case(get_llm_ocorrencias, True):
 
@@ -177,6 +179,7 @@ with Flow(
     with case(use_entity_extraction, True):
         extracted_entities = task_extract_entities(
             occurrences=clean_events,
+            safety_relevant_events=classified_events_safety,
             dspy_config=dspy_config,  # Pass the config
             api_key=api_key,
             model_name=model_name,
@@ -201,6 +204,7 @@ with Flow(
         context_relevance_results = task_analyze_context_relevance(
             events_df=clean_events,  # Use clean_events which has latitude/longitude for geographical analysis
             contexts_df=contexts,
+            df_events_types=extracted_entities,
             dspy_config=dspy_config,  # Pass the config
             api_key=api_key,
             model_name=model_name,

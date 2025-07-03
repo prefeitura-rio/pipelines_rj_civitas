@@ -572,11 +572,6 @@ Agora, aplique EXATAMENTE o mesmo protocolo de avaliação para os dados de entr
   <local>__contexto_local__</local>
   <endereco>__contexto_endereco__</endereco>
   <raio_de_busca_metros>__contexto_raio__</raio_de_busca_metros>
-  <foco_do_monitoramento>
-    <objetivos>__objetivos_monitoramento__</objetivos>
-    <entidades_de_interesse>__entidades_envolvidas__</entidades_de_interesse>
-    <riscos_potenciais>__possiveis_riscos__</riscos_potenciais>
-  </foco_do_monitoramento>
 </contexto>
 
 <ocorrencia>

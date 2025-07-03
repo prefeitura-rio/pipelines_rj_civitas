@@ -124,7 +124,7 @@ def task_get_events(
         )
 
     # Query execution
-    log(f"Executing query with {len(query)} characters", level="debug")
+    log(f"Executing query with {len(query)} characters")
     df = bd.read_sql(query)
 
     if df.empty:
@@ -226,7 +226,7 @@ def task_get_contexts(
     FROM `rj-civitas.integracao_reports.contextos`
     """
 
-    log(f"Query to get contexts:\n\n{query}", level="debug")
+    log(f"Query to get contexts:\n\n{query}")
     df = bd.read_sql(query)
 
     if df.empty:
@@ -422,6 +422,7 @@ def task_classify_events_fixed_categories(
 @task
 def task_extract_entities(
     occurrences: pd.DataFrame,
+    safety_relevant_events: pd.DataFrame,
     dspy_config: dict,
     api_key: str,
     model_name: str = "gpt-4o",
@@ -452,6 +453,13 @@ def task_extract_entities(
         log("No occurrences to process for entity extraction")
         return pd.DataFrame()
 
+    safety_relevant_events = safety_relevant_events[safety_relevant_events["is_related"]]
+    if safety_relevant_events.empty:
+        log("No safety relevant events found")
+
+    safety_relevant_occurrences = occurrences[
+        occurrences["id_report"].isin(safety_relevant_events["id_report"])
+    ]
     # Log that we're using existing DSPy config
     log(f"Using existing DSPy configuration: {dspy_config}")
 
@@ -467,7 +475,7 @@ def task_extract_entities(
 
         # Process the DataFrame
         results_df = classifier.classify_dataframe(
-            occurrences,
+            safety_relevant_occurrences,
             use_threading=use_threading,
             max_workers=max_workers,
             progress_interval=10,
@@ -508,9 +516,7 @@ def task_extract_entities(
         # Add id_report column for merging
         results_df["id_report"] = occurrences.reset_index()["id_report"]
 
-        log(
-            f"extract_entities df columns: {results_df.columns}", level="debug"
-        )  # TODO: remove this
+        log(f"extract_entities df columns: {results_df.columns}")  # TODO: remove this
 
         selected_columns = [
             "id_report",
@@ -534,6 +540,7 @@ def task_extract_entities(
 def task_analyze_context_relevance(
     events_df: pd.DataFrame,
     contexts_df: pd.DataFrame,
+    df_events_types: pd.DataFrame,
     dspy_config: dict,
     api_key: str,
     model_name: str = "gpt-4o",
@@ -565,13 +572,20 @@ def task_analyze_context_relevance(
     """
     log(f"Starting context relevance analysis for {len(events_df)} events")
 
-    if events_df.empty:
+    if events_df.empty:  # TODO: END OR SKIP FLOW RUN
         log("No events to analyze for context relevance")
         return pd.DataFrame()
 
-    if contexts_df.empty:
+    if contexts_df.empty:  # TODO: END OR SKIP FLOW RUN
         log("No contexts available for analysis")
         return pd.DataFrame()
+
+    if df_events_types.empty:  # TODO: END OR SKIP FLOW RUN
+        log("No events types available for analysis")
+        return pd.DataFrame()
+
+    events_df = events_df[events_df["id_report"].isin(df_events_types["id_report"])]
+    events_df = pd.merge(events_df, df_events_types, on="id_report", how="left")
 
     # Log that we're using existing DSPy config
     log(f"Using existing DSPy configuration: {dspy_config}")
@@ -614,7 +628,7 @@ def task_analyze_context_relevance(
             f"Context relevance analysis completed. Analyzed {len(results_df)} event-context pairs."
         )
 
-        return results_df
+        return results_df  # TODO: adicionar prompt no df e subir no bq
 
     except Exception as e:
         log(f"Error in context relevance analysis: {str(e)}", level="error")
