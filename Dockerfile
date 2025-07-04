@@ -4,9 +4,9 @@ ARG PYTHON_VERSION=3.10-slim
 # Start Python image
 FROM python:${PYTHON_VERSION}
 
-# Install git and firefox
+# Install git, firefox and build tools
 RUN apt-get update && \
-    apt-get install -y git firefox-esr && \
+    apt-get install -y git firefox-esr build-essential && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
