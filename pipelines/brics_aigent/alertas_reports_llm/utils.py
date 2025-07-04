@@ -7,6 +7,7 @@ import re
 from datetime import datetime
 from typing import Tuple
 
+import basedosdados as bd
 import farmhash
 import googlemaps
 import numpy as np
@@ -14,12 +15,15 @@ import pandas as pd
 import pytz
 from geopy.distance import geodesic
 from google.cloud import bigquery
+from google.cloud.exceptions import NotFound
 from prefeitura_rio.pipelines_utils.logging import log
 from shapely import wkt
 
 from pipelines.brics_aigent.alertas_reports_llm.classifiers.base import BaseClassifier
 from pipelines.utils.environment_vars import getenv_or_action
 
+bd.config.billing_project_id = "rj-civitas"
+bd.config.from_file = True
 # from shapely.geometry import Point
 
 
@@ -157,7 +161,9 @@ def associar_contextos_proximos(
     # Preparar contextos
     df_contextos = df_contextos.copy()
     df_contextos["_geom"] = df_contextos["geometria"].apply(carregar_geom)
-    df_contextos = df_contextos[df_contextos["_geom"].notnull()]  # remove os inválidos
+    df_contextos = df_contextos[
+        (df_contextos["_geom"].notnull()) | (df_contextos["cidade_inteira"].fillna(False))
+    ]  # remove os inválidos
 
     log(f"Processing {len(df_eventos)} events against {len(df_contextos)} valid contexts")
 
@@ -169,6 +175,10 @@ def associar_contextos_proximos(
         # Skip events without coordinates
         if lat == 0 or lon == 0:
             contextos_processados.append({"contextos_proximos": [], "distancia_contexto": []})
+            log(
+                f"Event {evento['id_report']} has no coordinates. Skipping context association.",
+                level="warning",
+            )
             continue
 
         # ponto = Point(lon, lat)
@@ -176,11 +186,27 @@ def associar_contextos_proximos(
         distancias = []
 
         for contexto_id, contexto in df_contextos.iterrows():
+            if contexto["_geom"] is None:
+                log(
+                    f"Context {contexto_id} has no geometry. Skipping context association.",
+                    level="warning",
+                )
+                continue
+
             centro = contexto["_geom"].centroid
             raio = contexto["raio_de_busca"]
             distancia_metros = geodesic((lat, lon), (centro.y, centro.x)).meters
 
+            log(
+                f"Context {contexto_id} has distance {distancia_metros} meters from event {evento['id_report']}. Limit is {raio + raio_buffer} meters",
+                level="info",
+            )
+
             if distancia_metros <= raio + raio_buffer:
+                log(
+                    f"Context {contexto_id} is within the buffer. Adding to match list.",
+                    level="info",
+                )
                 contextos_match.append(contexto_id)
                 distancias.append(round(distancia_metros))
 
@@ -263,9 +289,15 @@ def gerar_prompts_relevancia(
         DataFrame com prompts para análise
     """
     prompts = []
+    if df_eventos.empty:
+        log(
+            "No events to analyze for context relevance. Skipping context relevance analysis.",
+            level="warning",
+        )
+        return pd.DataFrame()
 
     # Filtrar contextos cidade inteira
-    contextos_cidade_inteira = df_contextos[df_contextos["cidade_inteira"] == "Sim"]
+    contextos_cidade_inteira = df_contextos[df_contextos["cidade_inteira"].fillna(False)]
 
     # Parte 1: Prompts normais (para eventos com contextos geográficos)
     for idx, row in df_eventos.iterrows():
@@ -299,6 +331,13 @@ def gerar_prompts_relevancia(
         log(f"Prompt relevância - contextos cidade_inteira: {prompts[0]}")  # TODO: remove
 
     df_prompts = pd.DataFrame(prompts)
+
+    if df_prompts.empty:
+        log(
+            "No prompts generated for relevance analysis. No event-context pairs found.",
+            level="warning",
+        )
+        return pd.DataFrame()
 
     # Remove duplicatas (evento pode estar associado a contexto cidade_inteira e geográfico)
     df_prompts = df_prompts.drop_duplicates(subset=["id_report", "contexto_id"])
@@ -382,3 +421,55 @@ def assign_id_and_dspy_signature(
     dataframe["dspy_signature"] = [signature_desc] * len(dataframe)
 
     return dataframe
+
+
+def get_new_events_ids(
+    dataframe: pd.DataFrame,
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    id_column: str = "id",
+) -> pd.DataFrame:
+    """
+    Get new events from a table in BigQuery.
+
+    Args:
+        dataframe: pd.DataFrame
+        project_id: str
+        dataset_id: str
+        table_id: str
+        id_column: str
+
+    Returns:
+        list: List of new events ids
+    """
+
+    query = f"""
+    SELECT DISTINCT {id_column} FROM `{project_id}.{dataset_id}.{table_id}`
+    """
+    df_new_events = bd.read_sql(query)
+
+    df_new_events = dataframe[~dataframe[id_column].isin(df_new_events[id_column])]
+    return df_new_events[id_column].unique()
+
+
+def check_if_table_exists(project_id: str, dataset_id: str, table_id: str) -> bool:
+    """
+    Check if a table exists in BigQuery.
+
+    Args:
+        project_id: str
+        dataset_id: str
+        table_id: str
+
+    Returns:
+        bool: True if the table exists, False otherwise
+    """
+    client = bigquery.Client(project=project_id)
+    table_ref = client.dataset(dataset_id).table(table_id)
+
+    try:
+        client.get_table(table_ref)
+        return True
+    except NotFound:
+        return False

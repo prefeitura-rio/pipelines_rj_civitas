@@ -12,16 +12,20 @@ import numpy as np
 import pandas as pd
 import pytz
 from prefect import task
+from prefect.engine.runner import ENDRUN
+from prefect.engine.state import Skipped
 from prefeitura_rio.pipelines_utils.logging import log
 
 from pipelines.brics_aigent.alertas_reports_llm.classifiers import ClassifierFactory
 from pipelines.brics_aigent.alertas_reports_llm.utils import (
     assign_id_and_dspy_signature,
     associar_contextos_proximos,
+    check_if_table_exists,
     format_address,
     geocode_address,
     gerar_prompts_relevancia,
     get_delay_time_string,
+    get_new_events_ids,
     hash_string,
     load_data_from_dataframe,
 )
@@ -249,6 +253,9 @@ def task_classify_events_public_safety(
     model_name: str,
     temperature: float,
     max_tokens: int,
+    destination_project_id: str,
+    destination_dataset_id: str,
+    destination_table_id: str,
     use_threading: bool = True,
     max_workers: int = 10,
     api_key: str | None = None,
@@ -284,6 +291,43 @@ def task_classify_events_public_safety(
         temperature=temperature,
         max_tokens=max_tokens,
     )
+
+    if check_if_table_exists(
+        project_id=destination_project_id,
+        dataset_id=destination_dataset_id,
+        table_id=destination_table_id,
+    ):
+        log("Table already exists, checking for new events", level="warning")
+
+        # Add id_report column for merging
+        occurrences["id_report"] = occurrences.reset_index()["id_report"]
+
+        # Add id and dspy_signature columns
+        occurrences = assign_id_and_dspy_signature(occurrences, classifier)
+
+        new_events_ids = get_new_events_ids(
+            dataframe=occurrences,
+            project_id=destination_project_id,
+            dataset_id=destination_dataset_id,
+            table_id=destination_table_id,
+        )
+
+        log(f"Found {len(new_events_ids)} new events to classify")
+        log(f"new events ids: {new_events_ids}")
+
+        occurrences = occurrences[occurrences["id"].isin(new_events_ids)]
+
+        if occurrences.empty:
+            log("No new events to classify. Skipping public safety classification.", level="info")
+            return pd.DataFrame()
+
+        log(f"Found {len(occurrences)} new events to classify")
+    else:
+        log(
+            f"Table {destination_project_id}.{destination_dataset_id}.{destination_table_id} does not exist",
+            level="warning",
+        )
+        pass
 
     # Classify events
     results_df = classifier.classify_dataframe(
@@ -372,7 +416,9 @@ def task_classify_events_fixed_categories(
         DataFrame with fixed categories classification results
     """
     if occurrences.empty:
-        log("No occurrences to classify", level="warning")
+        log(
+            "No occurrences to classify. Skipping fixed categories classification.", level="warning"
+        )
         return pd.DataFrame()
 
     # Create fixed categories classifier
@@ -463,7 +509,14 @@ def task_extract_entities(
     log(f"Starting entity extraction for {len(occurrences)} occurrences")
 
     if occurrences.empty:
-        log("No occurrences to process for entity extraction")
+        log(
+            "No occurrences to process for entity extraction. Skipping entity extraction.",
+            level="warning",
+        )
+        return pd.DataFrame()
+
+    if safety_relevant_events.empty:
+        log("No safety relevant events found. Skipping entity extraction.", level="warning")
         return pd.DataFrame()
 
     safety_relevant_events = safety_relevant_events[safety_relevant_events["is_related"]]
@@ -583,15 +636,24 @@ def task_analyze_context_relevance(
     log(f"Starting context relevance analysis for {len(events_df)} events")
 
     if events_df.empty:  # TODO: END OR SKIP FLOW RUN
-        log("No events to analyze for context relevance")
+        log(
+            "No events to analyze for context relevance. Skipping context relevance analysis.",
+            level="warning",
+        )
         return pd.DataFrame()
 
     if contexts_df.empty:  # TODO: END OR SKIP FLOW RUN
-        log("No contexts available for analysis")
+        log(
+            "No contexts available for analysis. Skipping context relevance analysis.",
+            level="warning",
+        )
         return pd.DataFrame()
 
     if df_events_types.empty:  # TODO: END OR SKIP FLOW RUN
-        log("No events types available for analysis")
+        log(
+            "No events types available for analysis. Skipping context relevance analysis.",
+            level="warning",
+        )
         return pd.DataFrame()
 
     events_df = events_df[events_df["id_report"].isin(df_events_types["id_report"])]
@@ -683,6 +745,9 @@ def task_generate_messages(
     events_df: pd.DataFrame,
     context_relevance_df: pd.DataFrame,
     contexts_df: pd.DataFrame,
+    destination_project_id: str,
+    destination_dataset_id: str,
+    destination_table_id: str,
 ) -> pd.DataFrame:
     """
     Generate formatted messages from relevant context analysis results.
@@ -697,11 +762,17 @@ def task_generate_messages(
     """
 
     if context_relevance_df.empty:
-        log("No context relevance data to process for message generation")
+        log(
+            "No context relevance data to process for message generation. Skipping message generation.",
+            level="warning",
+        )
         return pd.DataFrame()
 
     if contexts_df.empty:
-        log("No contexts data available for message generation")
+        log(
+            "No contexts data available for message generation. Skipping message generation.",
+            level="warning",
+        )
         return pd.DataFrame()
 
     # Filter only relevant events - handle NaN values explicitly
@@ -709,8 +780,10 @@ def task_generate_messages(
     relevant_events = context_relevance_df[mask].copy()
 
     if relevant_events.empty:
-        log("No relevant events found for message generation")
-        return pd.DataFrame()
+        msg = "No relevant events found for message generation"
+        log(msg, level="info")
+        skip = Skipped(message=msg)
+        raise ENDRUN(state=skip)
 
     log(f"Found {len(relevant_events)} relevant event-context pairs for message generation")
 
@@ -758,6 +831,8 @@ def task_generate_messages(
         risk_level = "Alto Risco" if "tiroteio" in event_type.lower() else "Risco Potencial"
 
         description = event_row.get("descricao_y", "Não Informado")
+        if description.strip() == "":
+            description = "Não Informado"
 
         address = event_row.get("logradouro", "") or (
             event_row.get("locations", [""])[0]
@@ -832,6 +907,20 @@ def task_generate_messages(
 
     df_msgs["id"] = [hash_string(s) for s in combined]
 
+    if check_if_table_exists(
+        project_id=destination_project_id,
+        dataset_id=destination_dataset_id,
+        table_id=destination_table_id,
+    ):
+        new_events_ids = get_new_events_ids(
+            dataframe=df_msgs,
+            project_id=destination_project_id,
+            dataset_id=destination_dataset_id,
+            table_id=destination_table_id,
+        )
+
+        df_msgs = df_msgs[df_msgs["id"].isin(new_events_ids)]
+
     log(
         f"Generated {len(df_msgs)} messages for {df_msgs['solicitante'].nunique()} unique solicitantes"
     )
@@ -862,7 +951,9 @@ def task_send_discord_messages(df_messages: pd.DataFrame):
     async def main():
         log("Start sending messages to discord.")
         for _, message in df_messages.iterrows():
-            url = os.getenv("DISCORD_WEBHOOK_URL")
+            # url = os.getenv("DISCORD_WEBHOOK_URL")
+            requestor: str = message.get("solicitante")
+            url = os.getenv(f"DISCORD_WEBHOOK_URL_{requestor.upper()}")
 
             await send_discord_message(
                 webhook_url=url,

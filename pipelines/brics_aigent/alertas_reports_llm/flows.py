@@ -42,19 +42,27 @@ with Flow(
 ) as brics_alerts:
 
     # Data source parameters
-    source_project_id = Parameter("source_project_id", default="rj-civitas")
-    source_dataset_id = Parameter("source_dataset_id", default="integracao_reports")
-    source_table_id = Parameter("source_table_id", default="reports")
+    source_project_id = Parameter("source_project_id", default=None)
+    source_dataset_id = Parameter("source_dataset_id", default=None)
+    source_table_id = Parameter("source_table_id", default=None)
 
     # Data destination parameters
     # TODO: change to default="rj-civitas"
-    destination_project_id = Parameter("destination_project_id", default="rj-civitas-dev")
-    destination_dataset_id = Parameter("destination_dataset_id", default="brics")
+    destination_project_id = Parameter("destination_project_id", default=None)
+    destination_dataset_id = Parameter("destination_dataset_id", default=None)
+
+    classified_events_safety_table_id = Parameter("classified_events_safety_table_id", default=None)
+    classified_events_categories_table_id = Parameter(
+        "classified_events_categories_table_id", default=None
+    )
+    extracted_entities_table_id = Parameter("extracted_entities_table_id", default=None)
+    context_relevance_table_id = Parameter("context_relevance_table_id", default=None)
+    messages_table_id = Parameter("messages_table_id", default=None)
 
     # Time filtering parameters
     start_datetime = Parameter("start_datetime", default=None)
     end_datetime = Parameter("end_datetime", default=None)
-    minutes_interval = Parameter("minutes_interval", default=3600)
+    minutes_interval = Parameter("minutes_interval", default=None)
 
     # Query parameters
     query_events = Parameter("query_events", default="")
@@ -132,6 +140,9 @@ with Flow(
             model_name=model_name,
             temperature=temperature,
             max_tokens=max_tokens,
+            destination_project_id=destination_project_id,
+            destination_dataset_id=destination_dataset_id,
+            destination_table_id=classified_events_safety_table_id,
             use_threading=use_threading,
             max_workers=max_workers,
         )
@@ -142,7 +153,7 @@ with Flow(
             df=classified_events_safety,
             project_id=destination_project_id,
             dataset_id=destination_dataset_id,
-            table_id="eventos_classificados_seguranca_publica",
+            table_id=classified_events_safety_table_id,
         )
         save_safety_result.set_upstream(classified_events_safety)
 
@@ -186,7 +197,7 @@ with Flow(
             df=extracted_entities,
             project_id=destination_project_id,
             dataset_id=destination_dataset_id,
-            table_id="eventos_entidades_extraidas",
+            table_id=extracted_entities_table_id,
         )
         save_entities_result.set_upstream(extracted_entities)
 
@@ -210,7 +221,7 @@ with Flow(
             df=context_relevance_results,
             project_id=destination_project_id,
             dataset_id=destination_dataset_id,
-            table_id="eventos_relevancia_contextual",
+            table_id=context_relevance_table_id,
         )
         save_context_relevance_result.set_upstream(context_relevance_results)
 
@@ -220,6 +231,9 @@ with Flow(
             events_df=clean_events,
             context_relevance_df=context_relevance_results,
             contexts_df=contexts,
+            destination_project_id=destination_project_id,
+            destination_dataset_id=destination_dataset_id,
+            destination_table_id=messages_table_id,
         )
         messages.set_upstream(context_relevance_results)
 
@@ -228,7 +242,7 @@ with Flow(
             df=messages,
             project_id=destination_project_id,
             dataset_id=destination_dataset_id,
-            table_id="mensagens_geradas",
+            table_id=messages_table_id,
         )
         save_messages_result.set_upstream(messages)
 

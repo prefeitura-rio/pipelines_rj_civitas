@@ -7,11 +7,12 @@ from datetime import datetime, timedelta
 
 import pytz
 from prefect.schedules import Schedule
-from prefect.schedules.clocks import DatesClock  # , IntervalClock
+from prefect.schedules.clocks import IntervalClock  # , DatesClock
+
+from pipelines.constants import constants
 
 # from prefeitura_rio.pipelines_utils.io import untuple_clocks as untuple
 
-# from pipelines.constants import constants
 
 #####################################
 #
@@ -627,20 +628,29 @@ Gere sua análise no formato e ordem exatos abaixo, sem nenhum texto ou tag adic
 # ]
 
 brics_report_clocks = [
-    DatesClock(
-        dates=[
-            datetime.now(tz=pytz.timezone("America/Sao_Paulo"))
-            + timedelta(seconds=10)  # TODO: use IntervalClock
+    IntervalClock(
+        interval=timedelta(minutes=10),
+        start_date=datetime(2024, 1, 1, 0, 0, tzinfo=pytz.timezone("America/Sao_Paulo")),
+        labels=[
+            constants.RJ_CIVITAS_AGENT_LABEL.value,
         ],
-        # labels=[
-        # constants.RJ_CIVITAS_AGENT_LABEL.value, # TODO: Uncomment this
-        # ],
         parameter_defaults={
             "model_name": "gemini/gemini-2.0-flash",
             "temperature": 0.5,
             "max_tokens": 1024,
             "query_events": query_events,
             "prompt_context_relevance": prompt_context_relevance,
+            "minutes_interval": 360,
+            "source_project_id": "rj-civitas",
+            "source_dataset_id": "integracao_reports",
+            "source_table_id": "reports",
+            "destination_project_id": "rj-civitas",
+            "destination_dataset_id": "brics",
+            "classified_events_safety_table_id": "eventos_classificados_seguranca_publica",
+            "classified_events_categories_table_id": "eventos_classificados_categorias_fixas",
+            "extracted_entities_table_id": "eventos_entidades_extraidas",
+            "context_relevance_table_id": "eventos_relevancia_contextual",
+            "messages_table_id": "mensagens_geradas",
         },
     )
 ]
