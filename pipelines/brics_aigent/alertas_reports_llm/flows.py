@@ -103,7 +103,7 @@ with Flow(
 
     # Injetar secrets do Infisical
     task_get_secret_folder(
-        secret_path="/aigents", inject_env=True, environment="dev"
+        secret_path="/aigents", inject_env=True
     )  # TODO: trocar o environment para o ambiente correto
 
     # with case(get_llm_ocorrencias, True):
