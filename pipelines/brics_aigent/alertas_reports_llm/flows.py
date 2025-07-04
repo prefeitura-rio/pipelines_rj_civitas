@@ -131,6 +131,7 @@ with Flow(
         temperature=temperature,
         max_tokens=max_tokens,
     )
+    dspy_config.set_upstream(task_get_secret_folder)
 
     # Public Safety Classification
     with case(use_public_safety_classification, True):
