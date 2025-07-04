@@ -7,7 +7,9 @@ import re
 from datetime import datetime
 from typing import Tuple
 
+import farmhash
 import googlemaps
+import numpy as np
 import pandas as pd
 import pytz
 from geopy.distance import geodesic
@@ -15,6 +17,7 @@ from google.cloud import bigquery
 from prefeitura_rio.pipelines_utils.logging import log
 from shapely import wkt
 
+from pipelines.brics_aigent.alertas_reports_llm.classifiers.base import BaseClassifier
 from pipelines.utils.environment_vars import getenv_or_action
 
 # from shapely.geometry import Point
@@ -352,3 +355,30 @@ def get_delay_time_string(date_event: pd.Timestamp, tz: pytz.timezone):
         time_string = "0 segundos"
 
     return time_string
+
+
+def hash_string(string):
+    return np.uint64(farmhash.fingerprint64(string)).astype("int64")
+
+
+def assign_id_and_dspy_signature(
+    dataframe: pd.DataFrame, classifier: BaseClassifier, id_column: str = "id_report"
+) -> pd.DataFrame:
+    """Assign unique ID and DSPy signature to each row in the dataframe.
+
+    Args:
+        dataframe: DataFrame to process
+        classifier: Classifier instance to extract signature from
+        id_column: Column name for the ID
+
+    Returns:
+        DataFrame with added ID and DSPy signature columns
+    """
+    signature_desc = classifier.get_input_and_output_descriptions()
+    id_values = dataframe[id_column].astype(str).values
+    combined = np.char.add(str(signature_desc), id_values)
+
+    dataframe["id"] = [hash_string(s) for s in combined]
+    dataframe["dspy_signature"] = [signature_desc] * len(dataframe)
+
+    return dataframe

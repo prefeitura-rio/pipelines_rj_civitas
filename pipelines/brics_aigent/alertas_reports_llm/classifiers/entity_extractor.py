@@ -405,3 +405,23 @@ class EntityExtractionClassifier(BaseClassifier):
                 else 0
             ),
         }
+
+    def get_input_and_output_descriptions(self):
+        """Get descriptions of input and output fields from the DSPy signature."""
+        try:
+            signature = self.extractor.extract.signature
+
+            descriptions = {
+                "inputs": {
+                    name: field.json_schema_extra.get("desc", "")
+                    for name, field in signature.input_fields.items()
+                },
+                "outputs": {
+                    name: field.json_schema_extra.get("desc", "")
+                    for name, field in signature.output_fields.items()
+                },
+            }
+
+            return descriptions
+        except Exception as e:
+            return {"error": f"Could not extract signature descriptions: {str(e)}"}

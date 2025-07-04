@@ -4435,6 +4435,18 @@ google-auth-oauthlib = {version = ">=0.4.0", markers = "python_version >= \"3.6\
 setuptools = "*"
 
 [[package]]
+name = "pyfarmhash"
+version = "0.4.0"
+description = "Google FarmHash Bindings for Python"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "pyfarmhash-0.4.0-cp310-cp310-win_amd64.whl", hash = "sha256:b12355879cb0bdb3bdff72af2f29f45a370e81b2a2d3ef0ec12c6eb17bf93068"},
+    {file = "pyfarmhash-0.4.0.tar.gz", hash = "sha256:f350327057de3c8912b227dc22794e0dd11c767fc9db6070ae84c49a96934865"},
+]
+
+[[package]]
 name = "pyflakes"
 version = "3.1.0"
 description = "passive checker of Python programs"
@@ -6591,4 +6603,4 @@ test = ["big-O", "importlib-resources ; python_version < \"3.9\"", "jaraco.funct
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.11"
-content-hash = "bc03e54b64db7d730e7aaf975a73a4830eeacee39a6367b1c6cea19bd16089f5"
+content-hash = "d9744d4390b5d1443c0040701a15d2dcd16e8e13d4c1498518793fdbf923b7be"

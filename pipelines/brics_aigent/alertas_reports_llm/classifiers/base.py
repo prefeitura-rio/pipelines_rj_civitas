@@ -342,3 +342,13 @@ class BaseClassifier(ABC):
             "model": self.model_name,
             "temperature": self.temperature,
         }
+
+    @abstractmethod
+    def get_input_and_output_descriptions(self):
+        """
+        Get descriptions of input and output fields.
+
+        Returns:
+            Dictionary with input and output field descriptions
+        """
+        pass

@@ -8,6 +8,7 @@ from datetime import datetime
 
 import basedosdados as bd
 import dspy
+import numpy as np
 import pandas as pd
 import pytz
 from prefect import task
@@ -15,11 +16,13 @@ from prefeitura_rio.pipelines_utils.logging import log
 
 from pipelines.brics_aigent.alertas_reports_llm.classifiers import ClassifierFactory
 from pipelines.brics_aigent.alertas_reports_llm.utils import (
+    assign_id_and_dspy_signature,
     associar_contextos_proximos,
     format_address,
     geocode_address,
     gerar_prompts_relevancia,
     get_delay_time_string,
+    hash_string,
     load_data_from_dataframe,
 )
 from pipelines.utils.environment_vars import getenv_or_action
@@ -327,6 +330,17 @@ def task_classify_events_public_safety(
     # Add id_report column for merging
     results_df["id_report"] = occurrences.reset_index()["id_report"]
 
+    # Add id and dspy_signature columns
+    results_df = assign_id_and_dspy_signature(results_df, classifier)
+
+    # signature_desc = classifier.get_input_and_output_descriptions()
+
+    # id_reports = results_df["id_report"].astype(str).values
+    # combined = np.char.add(str(signature_desc), id_reports)
+
+    # results_df["id"] = [hash_string(s) for s in combined]
+    # results_df["dspy_signature"] = [signature_desc] * len(results_df)
+
     return results_df
 
 
@@ -414,6 +428,7 @@ def task_classify_events_fixed_categories(
 
     # Add id_report column for merging
     results_df["id_report"] = occurrences.reset_index()["id_report"]
+    results_df = assign_id_and_dspy_signature(results_df, classifier)
 
     return results_df
 
@@ -524,6 +539,7 @@ def task_extract_entities(
             "extraction_type",
         ]
         results_df = results_df[selected_columns]
+        results_df = assign_id_and_dspy_signature(results_df, classifier)
 
         return results_df
 
@@ -618,7 +634,7 @@ def task_analyze_context_relevance(
         log(
             f"Context relevance analysis completed. Analyzed {len(results_df)} event-context pairs."
         )
-
+        results_df = assign_id_and_dspy_signature(results_df, classifier)
         return results_df  # TODO: adicionar prompt no df e subir no bq
 
     except Exception as e:
@@ -728,6 +744,7 @@ def task_generate_messages(
     log(f"Processing messages for {len(df_merged)} solicitante-event combinations")
 
     mensagens = []
+    timestamp_creation = datetime.now(tz=pytz.timezone("America/Sao_Paulo"))
     # Group by (solicitante, id_report) to generate messages
     for (requestor, report_id), grupo in df_merged.groupby(["solicitante", "id_report"]):
         # Get the first row for event data (all rows in group have same event data)
@@ -787,7 +804,7 @@ def task_generate_messages(
                 "solicitante": requestor,
                 "id_report": report_id,
                 "mensagem": message,
-                "timestamp_creation": date_event,
+                "timestamp_creation": timestamp_creation,
                 "contextos_relacionados": contexts_list,
                 "tipo_evento": event_type,
                 "nivel_risco": risk_level,
@@ -797,6 +814,23 @@ def task_generate_messages(
 
     # Convert to DataFrame
     df_msgs = pd.DataFrame(mensagens)
+
+    # add id column to df_msgs
+    id_reports = df_msgs["id_report"].astype(str).values
+    solicitantes = df_msgs["solicitante"].astype(str).values
+
+    # Convert list to string in a more controlled way
+    contextos = (
+        df_msgs["contextos_relacionados"]
+        .apply(lambda x: ",".join(x) if isinstance(x, list) else str(x))
+        .values
+    )
+
+    # Combine all three components
+    combined = np.char.add(solicitantes, id_reports)
+    combined = np.char.add(combined, contextos)
+
+    df_msgs["id"] = [hash_string(s) for s in combined]
 
     log(
         f"Generated {len(df_msgs)} messages for {df_msgs['solicitante'].nunique()} unique solicitantes"
