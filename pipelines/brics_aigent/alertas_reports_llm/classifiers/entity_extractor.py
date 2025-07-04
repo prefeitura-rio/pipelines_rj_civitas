@@ -90,11 +90,11 @@ class EntityExtractionClassifier(BaseClassifier):
 
     def __init__(
         self,
-        api_key: str | None = None,
-        model_name: str = "gemini/gemini-2.5-flash",
-        temperature: float = 0.3,
-        max_tokens: int = 1024,
+        model_name: str,
+        temperature: float,
+        max_tokens: int,
         use_existing_dspy_config: bool = True,
+        api_key: str | None = None,
     ):
         """
         Initialize the entity extraction classifier.
@@ -263,10 +263,12 @@ class EntityExtractionClassifier(BaseClassifier):
 
         # Choose processing method based on threading preference
         if use_threading and len(df) > 10:
+            safe_log("Using threading for entity extraction", level="info")
             extraction_results_df = self._extract_with_threading(
                 df, max_workers, progress_interval, extract_single_with_logging
             )
         else:
+            safe_log("Using sequential entity extraction", level="info")
             extraction_results_df = self._extract_sequential(
                 df, progress_interval, extract_single_with_logging
             )

@@ -31,9 +31,6 @@ from pipelines.constants import constants
 from pipelines.utils.state_handlers import handler_notify_on_failure
 from pipelines.utils.tasks import task_get_secret_folder
 
-# from prefect.executors import LocalDaskExecutor  # TODO: remover
-
-
 with Flow(
     name="CIVITAS: BRICS - Alertas",
     state_handlers=[
@@ -71,10 +68,9 @@ with Flow(
     use_context_relevance_analysis = Parameter("use_context_relevance_analysis", default=True)
 
     # LLM parameters
-    api_key = Parameter("api_key", default=None)
-    model_name = Parameter("model_name", default="gemini/gemini-2.5-flash")
-    temperature = Parameter("temperature", default=0.5)
-    max_tokens = Parameter("max_tokens", default=1024)
+    model_name = Parameter("model_name", default=None)
+    temperature = Parameter("temperature", default=None)
+    max_tokens = Parameter("max_tokens", default=None)
 
     prompt_context_relevance = Parameter("prompt_context_relevance", default=None)
 
@@ -123,7 +119,6 @@ with Flow(
 
     # Configure DSPy once at the beginning
     dspy_config = task_configure_dspy(
-        api_key=api_key,
         model_name=model_name,
         temperature=temperature,
         max_tokens=max_tokens,
@@ -134,7 +129,6 @@ with Flow(
         classified_events_safety = task_classify_events_public_safety(
             occurrences=clean_events,
             dspy_config=dspy_config,  # Pass the config
-            api_key=api_key,
             model_name=model_name,
             temperature=temperature,
             max_tokens=max_tokens,
@@ -156,7 +150,6 @@ with Flow(
     # with case(use_fixed_categories_classification, True):
     #     classified_events_categories = task_classify_events_fixed_categories(
     #         occurrences=clean_events,
-    #         api_key=api_key,
     #         model_name=model_name,
     #         temperature=temperature,
     #         max_tokens=max_tokens,
@@ -180,10 +173,8 @@ with Flow(
         extracted_entities = task_extract_entities(
             occurrences=clean_events,
             safety_relevant_events=classified_events_safety,
-            dspy_config=dspy_config,  # Pass the config
-            api_key=api_key,
             model_name=model_name,
-            temperature=0.3,
+            temperature=temperature,
             max_tokens=max_tokens,
             use_threading=use_threading,
             max_workers=max_workers,
@@ -205,8 +196,6 @@ with Flow(
             events_df=clean_events,  # Use clean_events which has latitude/longitude for geographical analysis
             contexts_df=contexts,
             df_events_types=extracted_entities,
-            dspy_config=dspy_config,  # Pass the config
-            api_key=api_key,
             model_name=model_name,
             temperature=temperature,
             max_tokens=max_tokens,
@@ -255,6 +244,8 @@ brics_alerts.run_config = KubernetesRun(
         constants.RJ_CIVITAS_AGENT_LABEL.value,
     ],
 )
+
+# from prefect.executors import LocalDaskExecutor  # TODO: remover
 
 # brics_alerts.executor = LocalDaskExecutor(num_workers=1)
 brics_alerts.schedule = brics_reports_schedule

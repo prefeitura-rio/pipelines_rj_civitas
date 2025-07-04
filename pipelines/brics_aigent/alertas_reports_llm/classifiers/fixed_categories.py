@@ -6,13 +6,12 @@ Multi-category classifier for incident classification into predefined categories
 Includes training with few-shot examples for improved accuracy.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import dspy
 from dspy.teleprompt import LabeledFewShot
-from prefeitura_rio.pipelines_utils.logging import log
 
-from .base import BaseClassifier
+from .base import BaseClassifier, safe_log
 
 
 class FixedCategoriesSignature(dspy.Signature):
@@ -67,12 +66,12 @@ class FixedCategoriesClassifier(BaseClassifier):
 
     def __init__(
         self,
-        api_key: str = None,
-        model_name: str = "gemini/gemini-2.5-flash",
-        temperature: float = 0.5,
-        max_tokens: int = 1024,
-        fixed_categories: Optional[List[str]] = None,
+        model_name: str,
+        temperature: float,
+        max_tokens: int,
+        fixed_categories: list[str] | None = None,
         use_existing_dspy_config: bool = True,
+        api_key: str | None = None,
     ):
         """
         Initialize the fixed categories classifier.
@@ -90,11 +89,13 @@ class FixedCategoriesClassifier(BaseClassifier):
 
     def _setup_classifier(self):
         """Setup the fixed categories classifier with training."""
-        log(f"Setting up Fixed Categories Classifier with {len(self.fixed_categories)} categories")
-        log(f"Categories: {', '.join(self.fixed_categories)}")
+        safe_log(
+            f"Setting up Fixed Categories Classifier with {len(self.fixed_categories)} categories"
+        )
+        safe_log(f"Categories: {', '.join(self.fixed_categories)}")
 
         self._train_classifier()
-        log(f"Fixed Categories Classifier initialized with {self.model_name}")
+        safe_log(f"Fixed Categories Classifier initialized with {self.model_name}")
 
     def _create_training_examples(self):
         """
@@ -163,11 +164,11 @@ class FixedCategoriesClassifier(BaseClassifier):
         training_examples = self._create_training_examples()
 
         if not training_examples:
-            log("No valid training examples found, using base classifier", level="warning")
+            safe_log("No valid training examples found, using base classifier", level="warning")
             self.classificador_tunado = FixedCategoriesModule()
             return
 
-        log(f"Training classifier with {len(training_examples)} examples")
+        safe_log(f"Training classifier with {len(training_examples)} examples")
 
         # Use LabeledFewShot optimizer for training
         optimizer = LabeledFewShot(
@@ -179,9 +180,9 @@ class FixedCategoriesClassifier(BaseClassifier):
             self.classificador_tunado = optimizer.compile(
                 student=base_module, trainset=training_examples
             )
-            log("Classifier training completed successfully")
+            safe_log("Classifier training completed successfully")
         except Exception as e:
-            log(f"Error during training, using base classifier: {e}", level="warning")
+            safe_log(f"Error during training, using base classifier: {e}", level="warning")
             self.classificador_tunado = base_module
 
     def classify_single(self, descricao: str) -> Dict[str, Any]:
@@ -218,10 +219,7 @@ class FixedCategoriesClassifier(BaseClassifier):
 
         except Exception as e:
             # Use try-catch for logging to avoid Prefect context issues
-            try:
-                log(f"Error classifying description: {str(e)}", level="error")
-            except Exception as e:
-                print(f"Error classifying description: {str(e)}")
+            safe_log(f"Error classifying description: {str(e)}", level="error")
             return self._get_error_result(str(e))
 
     def _get_error_result(self, error_msg: str) -> Dict[str, Any]:

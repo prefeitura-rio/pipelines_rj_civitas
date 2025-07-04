@@ -57,10 +57,10 @@ class BaseClassifier(ABC):
 
     def __init__(
         self,
-        api_key: str = None,
-        model_name: str = "gemini/gemini-2.5-flash",
-        temperature: float = 0.5,
-        max_tokens: int = 1024,
+        model_name: str,
+        temperature: float,
+        max_tokens: int,
+        api_key: str | None = None,
         use_existing_dspy_config: bool = True,
     ):
         """
@@ -219,7 +219,7 @@ class BaseClassifier(ABC):
     def classify_dataframe(
         self,
         df: pd.DataFrame,
-        use_threading: bool = False,
+        use_threading: bool = True,
         max_workers: int = 10,
         progress_interval: int = 50,
     ) -> pd.DataFrame:
@@ -247,8 +247,10 @@ class BaseClassifier(ABC):
 
         # Choose processing method based on threading preference
         if use_threading and len(df) > 10:  # Only use threading for larger datasets
+            safe_log("Using threading for classification", level="info")
             result_df = self._classify_with_threading(df, max_workers, progress_interval)
         else:
+            safe_log("Using sequential classification", level="info")
             result_df = self._classify_sequential(df, progress_interval)
 
         # Log final statistics

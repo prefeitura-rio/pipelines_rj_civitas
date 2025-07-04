@@ -636,6 +636,9 @@ brics_report_clocks = [
         # constants.RJ_CIVITAS_AGENT_LABEL.value, # TODO: Uncomment this
         # ],
         parameter_defaults={
+            "model_name": "gemini/gemini-2.0-flash",
+            "temperature": 0.5,
+            "max_tokens": 1024,
             "query_events": query_events,
             "prompt_context_relevance": prompt_context_relevance,
         },

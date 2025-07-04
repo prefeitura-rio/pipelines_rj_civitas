@@ -7,9 +7,8 @@ from typing import Any, Dict
 
 import dspy
 import pandas as pd
-from prefeitura_rio.pipelines_utils.logging import log
 
-from .base import BaseClassifier
+from .base import BaseClassifier, safe_log
 
 
 class ContextRelevanceSignature(dspy.Signature):
@@ -42,11 +41,11 @@ class ContextRelevanceClassifier(BaseClassifier):
 
     def __init__(
         self,
-        api_key: str | None = None,
-        model_name: str = "gemini/gemini-2.5-flash",
-        temperature: float = 0.3,
-        max_tokens: int = 1024,
+        model_name: str,
+        temperature: float,
+        max_tokens: int,
         use_existing_dspy_config: bool = True,
+        api_key: str | None = None,
     ):
         """
         Initialize the context relevance classifier.
@@ -88,7 +87,7 @@ class ContextRelevanceClassifier(BaseClassifier):
         except Exception as e:
             # Use try-catch for logging to avoid Prefect context issues
             try:
-                log(f"Error in context relevance analysis: {str(e)}", level="error")
+                safe_log(f"Error in context relevance analysis: {str(e)}", level="error")
             except Exception as e:
                 print(f"Error in context relevance analysis: {str(e)}")
             return self._get_error_result(str(e))
@@ -113,7 +112,7 @@ class ContextRelevanceClassifier(BaseClassifier):
             DataFrame with relevance analysis results
         """
         if df.empty:
-            log("Empty DataFrame provided for context relevance analysis", level="warning")
+            safe_log("Empty DataFrame provided for context relevance analysis", level="warning")
             return pd.DataFrame()
 
         # Verify required columns
@@ -126,7 +125,7 @@ class ContextRelevanceClassifier(BaseClassifier):
             f"Starting context relevance analysis for {len(df)} prompts using {self.__class__.__name__}\n"
             f"Settings: threading={use_threading}, max_workers={max_workers}"
         )
-        log(log_msg)
+        safe_log(log_msg)
 
         # Clear previous logs
         self.token_logs = []
@@ -176,15 +175,17 @@ class ContextRelevanceClassifier(BaseClassifier):
                 error_result = self._get_error_result(str(e))
                 error_result["id_report"] = row.get("id_report", "")
                 error_result["contexto_id"] = row.get("contexto_id", "")
-                log(f"Error in context relevance analysis: {str(e)}", level="error")
+                safe_log(f"Error in context relevance analysis: {str(e)}", level="error")
                 return error_result
 
         # Choose processing method based on threading preference
         if use_threading and len(df) > 10:
+            safe_log("Using threading for context relevance analysis", level="info")
             result_df = self._analyze_with_threading(
                 df, max_workers, progress_interval, analyze_single_with_logging
             )
         else:
+            safe_log("Using sequential context relevance analysis", level="info")
             result_df = self._analyze_sequential(df, progress_interval, analyze_single_with_logging)
 
         # Log final statistics
@@ -197,7 +198,7 @@ class ContextRelevanceClassifier(BaseClassifier):
             f"Relevant events found: {relevant_count}/{len(result_df)} ({relevant_count/len(result_df)*100:.1f}%)\n"
             f"Total tokens used: {total_tokens:,}, Estimated cost: ${total_cost:.6f}"
         )
-        log(log_msg)
+        safe_log(log_msg)
 
         return result_df
 
@@ -222,7 +223,7 @@ class ContextRelevanceClassifier(BaseClassifier):
 
         for i, (_, row) in enumerate(df.iterrows()):
             if i % progress_interval == 0 and i > 0:
-                log(f"Processing analysis {i}/{len(df)} ({i/len(df)*100:.1f}%)")
+                safe_log(f"Processing analysis {i}/{len(df)} ({i/len(df)*100:.1f}%)")
 
             results.append(analyze_func(row))
 
@@ -261,7 +262,7 @@ class ContextRelevanceClassifier(BaseClassifier):
                 # Log progress
                 if completed_count % progress_interval == 0:
                     progress = completed_count / len(df) * 100
-                    log(f"Completed {completed_count}/{len(df)} analyses ({progress:.1f}%)")
+                    safe_log(f"Completed {completed_count}/{len(df)} analyses ({progress:.1f}%)")
 
         return pd.DataFrame(results)
 

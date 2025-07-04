@@ -5,7 +5,6 @@ This module contains tasks for BRICS alerts and reports processing using LLM.
 import asyncio
 import os
 from datetime import datetime
-from typing import List, Optional
 
 import basedosdados as bd
 import dspy
@@ -33,10 +32,10 @@ tz = pytz.timezone("America/Sao_Paulo")
 
 @task
 def task_configure_dspy(
+    model_name: str,
+    temperature: float,
+    max_tokens: int,
     api_key: str | None = None,
-    model_name: str = "gemini/gemini-2.5-flash",
-    temperature: float = 0.5,
-    max_tokens: int = 1024,
 ) -> dict:
     """
     Configure DSPy globally for the flow execution.
@@ -244,12 +243,12 @@ def task_get_contexts(
 def task_classify_events_public_safety(
     occurrences: pd.DataFrame,
     dspy_config: dict,
-    api_key: str | None = None,
-    model_name: str = "gemini/gemini-2.5-flash",
-    temperature: float = 0.5,
-    max_tokens: int = 1024,
-    use_threading: bool = False,
+    model_name: str,
+    temperature: float,
+    max_tokens: int,
+    use_threading: bool = True,
     max_workers: int = 10,
+    api_key: str | None = None,
 ) -> pd.DataFrame:
     """
     Classify events for public safety relevance using binary classification.
@@ -334,13 +333,13 @@ def task_classify_events_public_safety(
 @task
 def task_classify_events_fixed_categories(
     occurrences: pd.DataFrame,
-    api_key: str | None = None,
-    model_name: str = "gemini/gemini-2.5-flash",
-    temperature: float = 0.5,
-    max_tokens: int = 1024,
-    fixed_categories: Optional[List[str]] = None,
-    use_threading: bool = False,
+    model_name: str,
+    temperature: float,
+    max_tokens: int,
+    fixed_categories: list[str] | None = None,
+    use_threading: bool = True,
     max_workers: int = 10,
+    api_key: str | None = None,
 ) -> pd.DataFrame:
     """
     Classify events into fixed categories.
@@ -423,26 +422,25 @@ def task_classify_events_fixed_categories(
 def task_extract_entities(
     occurrences: pd.DataFrame,
     safety_relevant_events: pd.DataFrame,
-    dspy_config: dict,
-    api_key: str,
-    model_name: str = "gpt-4o",
-    temperature: float = 0.7,
-    max_tokens: int = 500,
+    model_name: str,
+    temperature: float,
+    max_tokens: int,
     use_threading: bool = True,
     max_workers: int = 10,
+    api_key: str | None = None,
 ) -> pd.DataFrame:
     """
     Extract entities from event descriptions using LLM-based classification.
 
     Args:
         occurrences: DataFrame containing event data with columns like 'descricao'
-        dspy_config: DSPy configuration dictionary (ensures DSPy is configured)
-        api_key: OpenAI API key for LLM access
+        safety_relevant_events: DataFrame containing safety relevant events
         model_name: LLM model to use for entity extraction
         temperature: Temperature setting for LLM generation
         max_tokens: Maximum tokens for LLM response
         use_threading: Whether to use threading for parallel processing
         max_workers: Maximum number of threads for processing
+        api_key: OpenAI API key for LLM access
 
     Returns:
         DataFrame with extracted entities including event_types, locations, people, etc.
@@ -460,8 +458,6 @@ def task_extract_entities(
     safety_relevant_occurrences = occurrences[
         occurrences["id_report"].isin(safety_relevant_events["id_report"])
     ]
-    # Log that we're using existing DSPy config
-    log(f"Using existing DSPy configuration: {dspy_config}")
 
     try:
         # Create entity extraction classifier using existing DSPy config
@@ -541,15 +537,14 @@ def task_analyze_context_relevance(
     events_df: pd.DataFrame,
     contexts_df: pd.DataFrame,
     df_events_types: pd.DataFrame,
-    dspy_config: dict,
-    api_key: str,
-    model_name: str = "gpt-4o",
-    temperature: float = 0.3,
-    max_tokens: int = 300,
+    model_name: str,
+    temperature: float,
+    max_tokens: int,
     use_threading: bool = True,
     max_workers: int = 10,
     raio_buffer: int = 3000,
     prompt_template: str = None,
+    api_key: str | None = None,
 ) -> pd.DataFrame:
     """
     Analyze context relevance for events using LLM-based analysis.
@@ -557,16 +552,15 @@ def task_analyze_context_relevance(
     Args:
         events_df: DataFrame with event data
         contexts_df: DataFrame with context data
-        dspy_config: DSPy configuration dictionary (ensures DSPy is configured)
-        api_key: OpenAI API key for LLM access
+        df_events_types: DataFrame with event types
         model_name: LLM model to use
         temperature: Temperature setting for LLM generation
         max_tokens: Maximum tokens for LLM response
         use_threading: Whether to use threading for parallel processing
         max_workers: Maximum number of threads for processing
-        raio_buffer: Buffer radius for geographical analysis
+        raio_buffer: Buffer radius for geographical analysis.
         prompt_template: Custom prompt template
-
+        api_key: OpenAI API key for LLM access
     Returns:
         DataFrame with context relevance analysis results
     """
@@ -586,9 +580,6 @@ def task_analyze_context_relevance(
 
     events_df = events_df[events_df["id_report"].isin(df_events_types["id_report"])]
     events_df = pd.merge(events_df, df_events_types, on="id_report", how="left")
-
-    # Log that we're using existing DSPy config
-    log(f"Using existing DSPy configuration: {dspy_config}")
 
     try:
         # Create context relevance classifier using existing DSPy config
