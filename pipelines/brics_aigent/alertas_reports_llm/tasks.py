@@ -334,7 +334,7 @@ def task_classify_events_public_safety(
         occurrences,
         use_threading=use_threading,
         max_workers=max_workers,
-        progress_interval=10,
+        progress_interval=50,
     )
 
     # Get token logs for analysis
@@ -435,7 +435,7 @@ def task_classify_events_fixed_categories(
         occurrences,
         use_threading=use_threading,
         max_workers=max_workers,
-        progress_interval=10,
+        progress_interval=50,
     )
 
     # Get token logs for analysis
@@ -542,7 +542,7 @@ def task_extract_entities(
             safety_relevant_occurrences,
             use_threading=use_threading,
             max_workers=max_workers,
-            progress_interval=10,
+            progress_interval=50,
         )
 
         # Get token logs for analysis
