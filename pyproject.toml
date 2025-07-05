@@ -25,6 +25,10 @@ vertexai = "^1.71.1"
 googlemaps = "^4.10.0"
 tenacity = "^9.0.0"
 marshmallow = "3.20.2"
+infisical = {git = "https://github.com/gabriel-milan/infisical-python"}
+dspy = "^2.6.27"
+litellm = "^1.73.6"
+pyfarmhash = "^0.4.0"
 
 [tool.poetry.group.dev]
 optional = true
