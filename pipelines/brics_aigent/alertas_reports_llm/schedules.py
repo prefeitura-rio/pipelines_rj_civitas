@@ -521,6 +521,7 @@ query_events = """
     IFNULL(longitude, 0) AS longitude
     FROM `rj-civitas.integracao_reports.reports`
     WHERE id_source <> '1746'
+    AND data_report <= CURRENT_TIMESTAMP()
 """
 
 prompt_context_relevance = """
