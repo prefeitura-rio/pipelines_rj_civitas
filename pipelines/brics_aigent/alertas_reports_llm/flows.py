@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-BRICS - Alerts flow.......
+BRICS - Alerts flow..........
 """
 
 # from dotenv import load_dotenv  # TODO: remover
