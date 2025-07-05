@@ -1,17 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-BRICS - Alerts flow.......
+BRICS - Alerts flow.
 """
 
-# from dotenv import load_dotenv  # TODO: remover
+from dotenv import load_dotenv  # TODO: remover
 from prefect import Flow, Parameter, case
-from prefect.run_configs import KubernetesRun
-from prefect.storage import GCS
-from prefeitura_rio.pipelines_utils.state_handlers import (
-    handler_initialize_sentry,
-    handler_inject_bd_credentials,
-    handler_skip_if_running,
-)
 
 from pipelines.brics_aigent.alertas_reports_llm.schedules import brics_reports_schedule
 from pipelines.brics_aigent.alertas_reports_llm.tasks import (  # task_classify_events_fixed_categories,
@@ -21,47 +14,64 @@ from pipelines.brics_aigent.alertas_reports_llm.tasks import (  # task_classify_
     task_extract_entities,
     task_generate_messages,
     task_get_contexts,
+    task_get_date_execution,
     task_get_events,
     task_save_to_bigquery,
     task_send_discord_messages,
     task_transform_events,
 )
-from pipelines.constants import constants
-from pipelines.utils.state_handlers import handler_notify_on_failure
+
+# from pipelines.constants import constants
+# from pipelines.utils.state_handlers import handler_notify_on_failure
 from pipelines.utils.tasks import task_get_secret_folder
+
+# from prefect.run_configs import KubernetesRun
+# from prefect.storage import GCS
+# from prefeitura_rio.pipelines_utils.state_handlers import (
+#     handler_initialize_sentry,
+#     handler_inject_bd_credentials,
+#     handler_skip_if_running,
+# )
+
 
 with Flow(
     name="CIVITAS: BRICS - Alertas",
-    state_handlers=[
-        handler_skip_if_running,
-        handler_inject_bd_credentials,
-        handler_initialize_sentry,
-        handler_notify_on_failure,
-    ],
+    # state_handlers=[
+    #     handler_skip_if_running,
+    #     handler_inject_bd_credentials,
+    #     handler_initialize_sentry,
+    #     handler_notify_on_failure,
+    # ],
 ) as brics_alerts:
 
     # Data source parameters
-    source_project_id = Parameter("source_project_id", default=None)
-    source_dataset_id = Parameter("source_dataset_id", default=None)
-    source_table_id = Parameter("source_table_id", default=None)
+    source_project_id = Parameter("source_project_id", default="rj-civitas")
+    source_dataset_id = Parameter("source_dataset_id", default="integracao_reports")
+    source_table_id = Parameter("source_table_id", default="reports")
 
     # Data destination parameters
     # TODO: change to default="rj-civitas"
-    destination_project_id = Parameter("destination_project_id", default=None)
-    destination_dataset_id = Parameter("destination_dataset_id", default=None)
+    destination_project_id = Parameter("destination_project_id", default="rj-civitas-dev")
+    destination_dataset_id = Parameter("destination_dataset_id", default="brics")
 
-    classified_events_safety_table_id = Parameter("classified_events_safety_table_id", default=None)
-    classified_events_categories_table_id = Parameter(
-        "classified_events_categories_table_id", default=None
+    classified_events_safety_table_id = Parameter(
+        "classified_events_safety_table_id", default="eventos_classificados_seguranca_publica"
     )
-    extracted_entities_table_id = Parameter("extracted_entities_table_id", default=None)
-    context_relevance_table_id = Parameter("context_relevance_table_id", default=None)
-    messages_table_id = Parameter("messages_table_id", default=None)
+    classified_events_categories_table_id = Parameter(
+        "classified_events_categories_table_id", default="eventos_classificados_categorias_fixas"
+    )
+    extracted_entities_table_id = Parameter(
+        "extracted_entities_table_id", default="eventos_entidades_extraidas"
+    )
+    context_relevance_table_id = Parameter(
+        "context_relevance_table_id", default="eventos_relevancia_contextual"
+    )
+    messages_table_id = Parameter("messages_table_id", default="mensagens_geradas")
 
     # Time filtering parameters
     start_datetime = Parameter("start_datetime", default=None)
     end_datetime = Parameter("end_datetime", default=None)
-    minutes_interval = Parameter("minutes_interval", default=None)
+    minutes_interval = Parameter("minutes_interval", default=3600)
 
     # Query parameters
     query_events = Parameter("query_events", default="")
@@ -91,16 +101,19 @@ with Flow(
     # Processing parameters
     batch_size = Parameter("batch_size", default=10)
 
+    date_execution = task_get_date_execution()
+    date_execution.set_upstream(batch_size)
+
     # messages parameters
     send_context_relevance_messages = Parameter("send_context_relevance_messages", default=True)
 
     # Carregar variáveis do .env
-    # load_dotenv()  # TODO: remover
+    load_dotenv()  # TODO: remover
 
     # Injetar secrets do Infisical
-    secrets = task_get_secret_folder(
-        secret_path="/aigents", inject_env=True
-    )  # TODO: trocar o environment para o ambiente correto
+    # task_get_secret_folder(
+    #     secret_path="/aigents", inject_env=True, environment="dev"
+    # )  # TODO: trocar o environment para o ambiente correto
 
     # with case(get_llm_ocorrencias, True):
 
@@ -111,11 +124,11 @@ with Flow(
         start_datetime=start_datetime,
         end_datetime=end_datetime,
     )
-    raw_events.set_upstream(secrets)
+    raw_events.set_upstream(date_execution)
 
     # Get contexts
     contexts = task_get_contexts()
-    contexts.set_upstream(secrets)
+    contexts.set_upstream(date_execution)
 
     # Transform events
     clean_events = task_transform_events(raw_events)
@@ -127,7 +140,7 @@ with Flow(
         temperature=temperature,
         max_tokens=max_tokens,
     )
-    dspy_config.set_upstream(secrets)
+    dspy_config.set_upstream(task_get_secret_folder)
 
     # Public Safety Classification
     with case(use_public_safety_classification, True):
@@ -194,7 +207,7 @@ with Flow(
             df=extracted_entities,
             project_id=destination_project_id,
             dataset_id=destination_dataset_id,
-            table_id=extracted_entities_table_id,
+            table_id="eventos_entidades_extraidas",
         )
         save_entities_result.set_upstream(extracted_entities)
 
@@ -218,7 +231,7 @@ with Flow(
             df=context_relevance_results,
             project_id=destination_project_id,
             dataset_id=destination_dataset_id,
-            table_id=context_relevance_table_id,
+            table_id="eventos_relevancia_contextual",
         )
         save_context_relevance_result.set_upstream(context_relevance_results)
 
@@ -239,7 +252,7 @@ with Flow(
             df=messages,
             project_id=destination_project_id,
             dataset_id=destination_dataset_id,
-            table_id=messages_table_id,
+            table_id="mensagens_geradas",
         )
         save_messages_result.set_upstream(messages)
 
@@ -248,15 +261,15 @@ with Flow(
         messages_sent = task_send_discord_messages(df_messages=messages)
         messages_sent.set_upstream(save_messages_result)
 
-brics_alerts.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
-brics_alerts.run_config = KubernetesRun(
-    image=constants.DOCKER_IMAGE.value,
-    labels=[
-        constants.RJ_CIVITAS_AGENT_LABEL.value,
-    ],
-)
+# brics_alerts.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
+# brics_alerts.run_config = KubernetesRun(
+#     image=constants.DOCKER_IMAGE.value,
+#     labels=[
+#         constants.RJ_CIVITAS_AGENT_LABEL.value,
+#     ],
+# )
 
-# from prefect.executors import LocalDaskExecutor  # TODO: remover
+from prefect.executors import LocalDaskExecutor  # TODO: remover
 
-# brics_alerts.executor = LocalDaskExecutor(num_workers=1)
+brics_alerts.executor = LocalDaskExecutor(num_workers=1)
 brics_alerts.schedule = brics_reports_schedule

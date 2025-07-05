@@ -894,16 +894,8 @@ def task_generate_messages(
     id_reports = df_msgs["id_report"].astype(str).values
     solicitantes = df_msgs["solicitante"].astype(str).values
 
-    # Convert list to string in a more controlled way
-    contextos = (
-        df_msgs["contextos_relacionados"]
-        .apply(lambda x: ",".join(x) if isinstance(x, list) else str(x))
-        .values
-    )
-
     # Combine all three components
     combined = np.char.add(solicitantes, id_reports)
-    combined = np.char.add(combined, contextos)
 
     df_msgs["id"] = [hash_string(s) for s in combined]
 
