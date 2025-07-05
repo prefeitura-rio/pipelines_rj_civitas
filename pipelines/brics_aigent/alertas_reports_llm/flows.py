@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-BRICS - Alerts flow.....
+BRICS - Alerts flow..........
 """
 
 # from dotenv import load_dotenv  # TODO: remover
@@ -21,7 +21,6 @@ from pipelines.brics_aigent.alertas_reports_llm.tasks import (  # task_classify_
     task_extract_entities,
     task_generate_messages,
     task_get_contexts,
-    task_get_date_execution,
     task_get_events,
     task_save_to_bigquery,
     task_send_discord_messages,
@@ -92,9 +91,6 @@ with Flow(
     # Processing parameters
     batch_size = Parameter("batch_size", default=10)
 
-    date_execution = task_get_date_execution()
-    date_execution.set_upstream(batch_size)
-
     # messages parameters
     send_context_relevance_messages = Parameter("send_context_relevance_messages", default=True)
 
@@ -102,7 +98,7 @@ with Flow(
     # load_dotenv()  # TODO: remover
 
     # Injetar secrets do Infisical
-    task_get_secret_folder(
+    secrets = task_get_secret_folder(
         secret_path="/aigents", inject_env=True
     )  # TODO: trocar o environment para o ambiente correto
 
@@ -115,11 +111,11 @@ with Flow(
         start_datetime=start_datetime,
         end_datetime=end_datetime,
     )
-    raw_events.set_upstream(date_execution)
+    raw_events.set_upstream(secrets)
 
     # Get contexts
     contexts = task_get_contexts()
-    contexts.set_upstream(date_execution)
+    contexts.set_upstream(secrets)
 
     # Transform events
     clean_events = task_transform_events(raw_events)
@@ -131,7 +127,7 @@ with Flow(
         temperature=temperature,
         max_tokens=max_tokens,
     )
-    dspy_config.set_upstream(task_get_secret_folder)
+    dspy_config.set_upstream(secrets)
 
     # Public Safety Classification
     with case(use_public_safety_classification, True):
