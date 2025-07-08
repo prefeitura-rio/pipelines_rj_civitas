@@ -13,7 +13,7 @@ from prefeitura_rio.pipelines_utils.state_handlers import (
     handler_skip_if_running,
 )
 
-from pipelines.brics_aigent.alertas_reports_llm.schedules import brics_reports_schedule
+# from pipelines.brics_aigent.alertas_reports_llm.schedules import brics_reports_schedule
 from pipelines.brics_aigent.alertas_reports_llm.tasks import (  # task_classify_events_fixed_categories,
     task_analyze_context_relevance,
     task_classify_events_public_safety,
@@ -259,4 +259,4 @@ brics_alerts.run_config = KubernetesRun(
 # from prefect.executors import LocalDaskExecutor  # TODO: remover
 
 # brics_alerts.executor = LocalDaskExecutor(num_workers=1)
-brics_alerts.schedule = brics_reports_schedule
+# brics_alerts.schedule = brics_reports_schedule
