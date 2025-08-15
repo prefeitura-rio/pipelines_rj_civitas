@@ -20,11 +20,43 @@ models:
       - name: empresa
         description: "Empresa responsável pela câmera."
 
-      - name: camera_numero
+      - name: codcet
         description: "Identificador único da câmera."
 
       - name: medicoes
         description: "Contagem de leituras registradas pela câmera em uma determinada data."
+
+
+  - name: latencia_base
+    description: |
+      **Descrição**: Esta tabela fornece os dados de latência para leituras de câmeras,
+      calculadas com base no tempo de captura e no tempo registrado da leitura.
+      **Frequência de Atualização**: Diária.
+      **Publicado Por**: |
+        Amanda Amaro
+        Nicolas Evilasio
+      **Publicado Por (email)**: |
+        amanda.amaro@prefeitura.rio
+        nicolas.evilasio@prefeitura.rio
+
+    columns:
+      - name: empresa
+        description: "Empresa responsável pela câmera."
+
+      - name: data
+        description: "Data truncada para a hora mais próxima, fuso horário GTM-3."
+
+      - name: datahora_captura
+        description: "Data e hora da captura da leitura, no fuso horário GTM -3."
+
+      - name: datahora
+        description: "Data e hora da leitura, no fuso horário GTM -3."
+
+      - name: latencia_segundos
+        description: "Latência em segundos entre o tempo de captura e o tempo registrado da leitura."
+
+      - name: max_datahora_captura
+        description: "Data e hora da captura da leitura, no fuso horário GTM -3."
 
   - name: latencia
     description: |
@@ -37,7 +69,7 @@ models:
         Nicolas Evilasio
       **Publicado Por (email)**: |
         amanda.amaro@prefeitura.rio
-        nicolas.evilasio@prefeitura.rioo
+        nicolas.evilasio@prefeitura.rio
 
     columns:
       - name: empresa
@@ -103,55 +135,6 @@ models:
       - name: median_latency
         description: "Latência mediana em segundos entre o tempo de captura e o tempo registrado da leitura."
 
-  - name: equipamentos
-    description: |
-      **Descrição**: Esta tabela combina informações de equipamentos com dados das leituras das câmeras.
-      Inclui detalhes como localização, coordenadas geográficas e dados do veículo, além da data e hora das capturas.
-      **Frequência de Atualização**: Diária.
-      **Publicado Por**: |
-        Amanda Amaro
-        Nicolas Evilasio
-      **Publicado Por (email)**: |
-        amanda.amaro@prefeitura.rio
-        nicolas.evilasio@prefeitura.rio
-
-    columns:
-      - name: datahora
-        description: "Data e hora da leitura, no fuso horário GTM-3."
-
-      - name: camera_numero
-        description: "Número identificador da câmera."
-
-      - name: empresa
-        description: "Empresa responsável pela câmera."
-
-      - name: locequip
-        description: "Localização do equipamento."
-
-      - name: bairro
-        description: "Bairro onde o equipamento está localizado."
-
-      - name: latitude
-        description: "Latitude do equipamento ou câmera."
-
-      - name: longitude
-        description: "Longitude do equipamento ou câmera."
-
-      - name: geo_coordinates
-        description: "Coordenadas geográficas (ponto) criadas a partir da latitude e longitude."
-
-      - name: datahora_captura
-        description: "Data e hora da captura, no fuso horário GTM-3.."
-
-      - name: placa
-        description: "Placa do veículo registrado na captura."
-
-      - name: tipoveiculo
-        description: "Tipo de veículo registrado na captura."
-
-      - name: velocidade
-        description: "Velocidade do veículo registrada na captura."
-
   - name: fluxo
     description: |
       **Descrição**:
@@ -162,7 +145,7 @@ models:
         amanda.amaro@prefeitura.rio
 
     columns:
-      - name: camera_numero
+      - name: codcet
         description: ""
 
       - name: empresa
@@ -175,4 +158,7 @@ models:
         description: ""
 
       - name: total_velocidade_zero
+        description: ""
+
+      - name: max_datahora_captura
         description: ""

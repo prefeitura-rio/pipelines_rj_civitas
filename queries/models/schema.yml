@@ -69,6 +69,8 @@ sources:
       - name: readings_2024
         identifier: readings_2024_*
       - name: all_readings
+        identifier: vw_readings
+      - name: all_readings_raw
         identifier: readings_*
       - name: equipamento
       - name: equipamento_codcet_to_camera_numero
