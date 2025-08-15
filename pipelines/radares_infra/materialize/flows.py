@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This module defines a Prefect workflow for materializing tables using DBT.
+This module defines a Prefect workflow for materializing tables using DBT.....
 """
 
 
@@ -46,8 +46,7 @@ with Flow(
     materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
     dump_prod_tables_to_materialize_parameters = [
         {"dataset_id": dataset_id, "table_id": "inatividade", "dbt_alias": False},
-        {"dataset_id": dataset_id, "table_id": "latencia_base", "dbt_alias": False},
-        {"dataset_id": dataset_id, "table_id": "latencia", "dbt_alias": False},
+        {"dataset_id": dataset_id, "table_id": "latencia_base+", "dbt_alias": False},
         {"dataset_id": dataset_id, "table_id": "medicoes", "dbt_alias": False},
         {"dataset_id": dataset_id, "table_id": "fluxo", "dbt_alias": False},
     ]
