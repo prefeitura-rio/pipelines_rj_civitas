@@ -45,8 +45,8 @@ with Flow(
     materialization_labels = task_get_current_flow_run_labels()
     materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
     dump_prod_tables_to_materialize_parameters = [
-        {"dataset_id": dataset_id, "table_id": "equipamentos", "dbt_alias": False},
         {"dataset_id": dataset_id, "table_id": "inatividade", "dbt_alias": False},
+        {"dataset_id": dataset_id, "table_id": "latencia_base", "dbt_alias": False},
         {"dataset_id": dataset_id, "table_id": "latencia", "dbt_alias": False},
         {"dataset_id": dataset_id, "table_id": "medicoes", "dbt_alias": False},
         {"dataset_id": dataset_id, "table_id": "fluxo", "dbt_alias": False},
