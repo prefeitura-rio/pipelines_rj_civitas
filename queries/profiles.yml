@@ -3,12 +3,12 @@ queries:
     dev:
       dataset: dbt
       job_execution_timeout_seconds: 600
-      job_retries: 1
+      job_retries: 2
       keyfile: /tmp/credentials.json
       location: US
       method: service-account
       priority: interactive
       project: rj-civitas
-      threads: 1
+      threads: 8
       type: bigquery
   target: dev
