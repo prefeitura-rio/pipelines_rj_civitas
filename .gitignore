@@ -153,3 +153,6 @@ dmypy.json
 
 # Pycharm project settings
 .idea/
+
+# elementary
+edr_target/

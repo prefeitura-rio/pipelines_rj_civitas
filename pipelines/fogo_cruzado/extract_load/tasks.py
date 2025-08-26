@@ -104,7 +104,7 @@ def get_valid_token(email: str, password: str, redis_password: str) -> str:
 def get_occurrences(
     token: str,
     initial_date: Optional[str] = None,
-    take: int = 1000,
+    take: int = 100,
     id_state: str = "b112ffbe-17b3-4ad0-8f2a-2038745d1d14",
     id_city: str = "d1bf56cc-6d85-4e6a-a5f5-0ab3f4074be3",
 ) -> List[Dict]:
@@ -175,6 +175,7 @@ def fetch_occurrences(
     email: str,
     password: str,
     initial_date: Optional[str] = None,
+    take: int = 100,
     dataset_id: str = None,
     table_id: str = None,
     redis_password: str = None,
@@ -190,6 +191,8 @@ def fetch_occurrences(
         The password to use for authentication.
     initial_date : str
         The initial date to fetch occurrences from.
+    take : int
+        The number of occurrences to fetch per page. Defaults to 100.
     dataset_id : str
         The dataset ID to use for the occurrence data.
     table_id : str
@@ -211,7 +214,7 @@ def fetch_occurrences(
     token = get_valid_token(email=email, password=password, redis_password=redis_password)
 
     log(msg="Fetching data...", level="info")
-    occurrences = get_occurrences(token=token, initial_date=initial_date)
+    occurrences = get_occurrences(token=token, initial_date=initial_date, take=take)
 
     # Convert latitude and longitude to float
     for row in occurrences:

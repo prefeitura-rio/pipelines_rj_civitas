@@ -48,6 +48,7 @@ with Flow(
 ) as extracao_fogo_cruzado:
 
     start_date = Parameter("start_date", default=None)
+    take = Parameter("take", default=100)
     project_id = Parameter("project_id", default="rj-civitas")
     dataset_id = Parameter("dataset_id", default="fogo_cruzado")
     table_id = Parameter("table_id", default="ocorrencias")
@@ -71,6 +72,7 @@ with Flow(
         email=secrets["FOGOCRUZADO_USERNAME"],
         password=secrets["FOGOCRUZADO_PASSWORD"],
         initial_date=start_date,
+        take=take,
         dataset_id=dataset_id,
         table_id=table_id,
         redis_password=redis_password["REDIS_PASSWORD"],
