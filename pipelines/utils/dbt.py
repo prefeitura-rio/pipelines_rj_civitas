@@ -14,7 +14,6 @@ except ImportError:
 
 import pandas as pd
 from dbt.contracts.results import RunResult, SourceFreshnessResult
-
 from prefeitura_rio.pipelines_utils.io import get_root_path
 from prefeitura_rio.pipelines_utils.logging import log
 
@@ -236,24 +235,26 @@ def log_to_file(logs: pd.DataFrame, levels=None) -> str:
 
 def extract_table_info_from_compiled_code(compiled_code):
     """Extract database, schema and table from the compiled_code of the test"""
-    
+
     # Padrão para capturar: `database`.`schema`.`tabela`
-    pattern = r'`([^`]+)`\.`([^`]+)`\.`([^`]+)`'
-    
+    pattern = r"`([^`]+)`\.`([^`]+)`\.`([^`]+)`"
+
     match = re.search(pattern, compiled_code)
     if match:
         database = match.group(1)
         schema = match.group(2)
         tabela = match.group(3)
-        
+
         return {
-            'database': database,
-            'schema': schema,
-            'tabela': tabela,
-            'full_name': f"{database}.{schema}.{tabela}"
+            "database": database,
+            "schema": schema,
+            "tabela": tabela,
+            "full_name": f"{database}.{schema}.{tabela}",
         }
-    
+
     return None
+
+
 # =============================
 # SUMMARIZERS
 # =============================
@@ -290,16 +291,16 @@ class RunResultSummarizer:
     #     if relation:
     #         relation_query = f"\n   **Tabela:** `{relation['full_name']}`  \n"
     #         column_name = getattr(result.node, 'column_name', None)
-            
+
     #         if column_name:
     #             relation_query += f"   **Coluna:** `{column_name}`  \n"
     #     else:
     #         relation_query = f"\n   **Tabela:** `Tabela não disponível`  \n"
-        
+
     #     description = getattr(result.node, 'meta', {}).get('description')
     #     if description:
     #         relation_query += f"   **Descrição do teste:** `{description}`  \n"
-            
+
     #     return f"`{result.node.name}`\n   {result.message}: {relation_query}"  # noqa
 
     # def warn(self, result: RunResult):
@@ -307,40 +308,40 @@ class RunResultSummarizer:
     #     # if relation_name:
     #     #     relation_query = f"```select * from {relation_name.replace('`','')}```"
     #     relation = extract_table_info_from_compiled_code(getattr(result.node, 'compiled_code', None))
-        
+
     #     if relation:
     #         relation_query = f"\n   **Tabela:** `{relation['full_name']}`  \n"
-    #         column_name = getattr(result.node, 'column_name', None) 
-        
+    #         column_name = getattr(result.node, 'column_name', None)
+
     #         if column_name:
     #             relation_query += f"   **Coluna:** `{column_name}`  \n"
     #     else:
     #         relation_query = f"\n   **Tabela:** `Tabela não disponível`  \n"
-        
+
     #     description = getattr(result.node, 'meta', {}).get('description')
     #     if description:
     #         relation_query += f"   **Descrição do teste:** `{description}`  \n"
-        
+
     #     return f"`{result.node.name}`\n   {result.message}: {relation_query}"  # noqa
-    
+
     def _get_test_info(self, result: RunResult) -> str:
         """Extracts common information about the test (table, column, description)"""
-        relation = extract_table_info_from_compiled_code(getattr(result.node, 'compiled_code', ""))
-        
+        relation = extract_table_info_from_compiled_code(getattr(result.node, "compiled_code", ""))
+
         info_parts = []
-        
+
         if relation:
             info_parts.append(f"\n   **Tabela:** `{relation['full_name']}`  \n")
-            column_name = getattr(result.node, 'column_name', None)
+            column_name = getattr(result.node, "column_name", None)
             if column_name:
                 info_parts.append(f"   **Coluna:** `{column_name}`  \n")
         else:
             info_parts.append(f"\n   **Tabela:** `Tabela não disponível`  \n")
-        
-        description = getattr(result.node, 'meta', {}).get('description')
+
+        description = getattr(result.node, "meta", {}).get("description")
         if description:
             info_parts.append(f"   **Descrição:** `{description}`  \n")
-        
+
         return "".join(info_parts)
 
     def fail(self, result: RunResult):

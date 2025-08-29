@@ -2,6 +2,8 @@
 from prefect import Parameter, case
 from prefect.run_configs import KubernetesRun
 from prefect.storage import GCS
+from prefeitura_rio.pipelines_utils.custom import Flow
+from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
 from pipelines.constants import constants
 from pipelines.templates.dbt_transform.tasks import (
@@ -11,8 +13,6 @@ from pipelines.templates.dbt_transform.tasks import (
     get_target_from_environment,
     rename_current_flow_run_dbt,
 )
-from prefeitura_rio.pipelines_utils.custom import Flow
-from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
 with Flow(
     name=constants.FLOW_NAME_DBT_TRANSFORM.value,

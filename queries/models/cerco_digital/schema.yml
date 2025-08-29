@@ -47,19 +47,19 @@ models:
       - Remove leituras onde camera_numero contém letras (e.g. 'MGR24100202', são radares que não deveríamos receber dados.)
       - Aceita apenas placas vazias ('') ou com exatamente 7 caracteres
       - Exclui erros conhecidos de detecção (e.g. 'P0L1C14')
-      
+
       Transformações:
       - Substitui placas vazias por '-------'
       - Aplica mapeamento de tipos de veículos (tipoveiculo_mapping)
       - Converte coordenadas para valores negativos (hemisfério sul)
       - Associa camera_numero ao codcet via tabela de equipamentos
-      
+
       - Importante: As tabelas que originam essa view são particionadas por 'datahora' (HORA) e clusterizadas por 'placa', portanto, utilize essas colunas para otimizar as consultas.
-      
+
       Origem: rj-cetrio.ocr_radar.readings_*
       Publicado por: Nicolas Evilasio
       Publicado por (email): nicolas.evilasio@prefeitura.rio
-    
+
     tests:
       - dbt_expectations.expect_column_pair_values_A_to_be_greater_than_B:
           name: test_not_future_datahora
@@ -82,7 +82,7 @@ models:
             where: "datahora >= '{{ var('start_date') }}'"
           meta:
             description: "Verifica se datahora não é mais de 5 minutos no futuro em relação a datahora_captura."
-      
+
     columns:
       - name: datahora_captura
         description: "Timestamp UTC em que a leitura da placa foi recebida, podendo diferir do horário real da leitura da placa (datahora)."
@@ -130,7 +130,7 @@ models:
                 description: "Verifica se placa está no padrão brasileiro ou Mercosul."
               config:
                 severity: warn
-              
+
       - name: tipoveiculo
         description: "Tipo de veículo detectado pelo equipamento [tabela auxiliar em rj-civitas.cerco_digital.tipoveiculo_mapping]."
 
@@ -141,10 +141,10 @@ models:
         description: "Timestamp UTC em que a leitura da placa foi realizada pelo equipamento."
 
       - name: camera_numero
-        description: "Código identificador do equipamento utilizado pela empresa. [Código que a empresa atribui ao equipamento]." 
+        description: "Código identificador do equipamento utilizado pela empresa. [Código que a empresa atribui ao equipamento]."
 
       - name: codcet
-        description: "Código identificador do equipamento utilizado pela CETRIO. Composto por 10 números, sendo os três primeiros números o identificador do contrato, o 9º dígito indica o sentido da via e o 10º dígito indica a faixa de captura." 
+        description: "Código identificador do equipamento utilizado pela CETRIO. Composto por 10 números, sendo os três primeiros números o identificador do contrato, o 9º dígito indica o sentido da via e o 10º dígito indica a faixa de captura."
         tests:
           - dbt_expectations.expect_column_values_to_not_be_null:
               name: test_codcet_not_null

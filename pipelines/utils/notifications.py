@@ -94,7 +94,9 @@ async def send_discord_message(
             await webhook.send(content=chunks[-1], file=file, username=username, embeds=embeds)
 
         else:
-            await webhook.send(content=message, file=file, username=username, avatar_url=avatar_url, embeds=embeds)
+            await webhook.send(
+                content=message, file=file, username=username, avatar_url=avatar_url, embeds=embeds
+            )
 
 
 def get_delay_time_string(df: pd.DataFrame, column_name: str, column_tz: str = "America/Sao_Paulo"):
