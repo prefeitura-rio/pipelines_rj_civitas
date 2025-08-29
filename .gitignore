@@ -153,3 +153,7 @@ dmypy.json
 
 # Pycharm project settings
 .idea/
+
+# dbt
+edr_target/
+dbt_repository/

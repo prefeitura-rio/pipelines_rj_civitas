@@ -33,12 +33,12 @@ def split_by_newline(text: str, limit: int = 2000) -> list[str]:
             current_code_block_type = line.strip().strip("`")
 
         # If adding this line to the current chunk does not exceed the limit, we add it
-        if len(temp_chunk) + len(line) + 1 <= limit - 3:
-            temp_chunk += line + "\n"
+        if len(temp_chunk) + len(line) + 1 <= limit - 4:
+            temp_chunk += line + "\n\u200B"
         else:
             # If the chunk ends inside a code block, we close it temporarily
             if is_inside_code_block:
-                temp_chunk += "```"
+                temp_chunk += "```\u200B"
 
             chunks.append(temp_chunk.strip())
 
@@ -62,6 +62,7 @@ async def send_discord_message(
     file_format: str = None,
     username: str = MISSING,
     avatar_url: str = MISSING,
+    embeds: list[discord.Embed] = MISSING,
 ):
     """Sends a message to a Discord webhook.
 
@@ -90,10 +91,10 @@ async def send_discord_message(
                 await webhook.send(content=chunk, username=username)
 
             # Send the last chunk with file
-            await webhook.send(content=chunks[-1], file=file, username=username)
+            await webhook.send(content=chunks[-1], file=file, username=username, embeds=embeds)
 
         else:
-            await webhook.send(content=message, file=file, username=username, avatar_url=avatar_url)
+            await webhook.send(content=message, file=file, username=username, avatar_url=avatar_url, embeds=embeds)
 
 
 def get_delay_time_string(df: pd.DataFrame, column_name: str, column_tz: str = "America/Sao_Paulo"):
