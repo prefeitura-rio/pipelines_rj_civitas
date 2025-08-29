@@ -21,9 +21,9 @@ from prefeitura_rio.pipelines_utils.state_handlers import (  # handler_inject_bd
     handler_skip_if_running,
 )
 from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
-from tmp.pipelines_playground.cerco_digital.materialize_new.tasks import (  # TODO: remove this
-    task_remove_dbt_log_file,
-)
+# from tmp.pipelines_playground.cerco_digital.materialize_new.tasks import (  # TODO: remove this
+    # task_remove_dbt_log_file,
+# )
 
 from pipelines import constants
 from pipelines.cerco_digital.readings.schedules import readings_schedule
