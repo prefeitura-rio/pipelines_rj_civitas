@@ -7,20 +7,21 @@ Tasks for execute_dbt
 
 import asyncio
 import os
+from pathlib import Path
 
 import prefect
+
 # import requests
 from dbt.cli.main import dbtRunner, dbtRunnerResult
 from prefect.client import Client
 from prefect.engine.signals import FAIL
-from pathlib import Path
-from pipelines.utils.credential_injector import (
-    authenticated_task as task,
-)
-from pipelines.utils.dbt import Summarizer, log_to_file, process_dbt_logs
 from prefeitura_rio.pipelines_utils.infisical import get_secret
 from prefeitura_rio.pipelines_utils.logging import log
+
+from pipelines.utils.credential_injector import authenticated_task as task
+from pipelines.utils.dbt import Summarizer, log_to_file, process_dbt_logs
 from pipelines.utils.notifications import send_discord_message
+
 
 # TODO: resolver bug de zero width space que quebra o md no Discord.
 # Falha está no cabeçaalho da mensagem, ## :x: Erro ao executar DBT ...
@@ -85,8 +86,8 @@ def execute_dbt(
         # repository_path = os.path.join(os.path.dirname(__file__), "..", "..", "queries")
         # repository_path = os.path.abspath(repository_path)
         repository_path = (Path(__file__).parents[3] / "queries").as_posix()
-        
-    log(f"Repository path: {repository_path}") # TODO: remove this
+
+    log(f"Repository path: {repository_path}")  # TODO: remove this
 
     cli_args = commands + ["--profiles-dir", repository_path, "--project-dir", repository_path]
 
@@ -116,13 +117,13 @@ def execute_dbt(
 
     log("RESULTADOS:")
     log(running_result)
-    
+
     environment = prefect.context.get("parameters").get("environment")
     secret_name = "DISCORD_WEBHOOK_URL_DBT-RUNS"
     flow_name = prefect.context.get("flow_name")
     flow_run_id = prefect.context.get("flow_run_id")
     webhook_url = get_secret(secret_name=secret_name, environment=environment).get(secret_name)
-    
+
     if command not in ("deps") and not os.path.exists(log_path):
         message = (
             "## ❌ Erro ao executar DBT\n",
@@ -130,12 +131,13 @@ def execute_dbt(
             f"> Flow Run: [{flow_name}](https://pipelines.dados.rio/flow-run/{flow_run_id})\n",
             "> Não foi possível encontrar o arquivo de logs.\n",
         )
-        
+
         async def main():
             await send_discord_message(
                 webhook_url=webhook_url,
                 message=message,
             )
+
         asyncio.run(main())
         raise FAIL("DBT Run seems not successful. No logs found.")
 
@@ -194,7 +196,9 @@ def create_dbt_report(
 
     # Sort and log the general report
     general_report = sorted(general_report, reverse=True)
-    general_report = "**Resumo**:\n" + "  \n".join(general_report) # TODO :  * 5 para testar msg maior
+    general_report = "**Resumo**:\n" + "  \n".join(
+        general_report
+    )  # TODO :  * 5 para testar msg maior
     log(general_report)
 
     # Get Parameters
@@ -232,31 +236,33 @@ def create_dbt_report(
     command = prefect.context.get("parameters").get("command")
     emoji = "❌" if not fully_successful else "✅"
     complement = "com Erros" if not fully_successful else "sem Erros"
-    
+
     environment = prefect.context.get("parameters").get("environment")
     secret_name = "DISCORD_WEBHOOK_URL_DBT-RUNS"
     flow_name = prefect.context.get("flow_name")
     flow_run_id = prefect.context.get("flow_run_id")
     webhook_url = get_secret(secret_name=secret_name, environment=environment).get(secret_name)
-    
+
     title = f"{emoji} [{bigquery_project}] - Execução `dbt {command}` finalizada {complement}"
     header_content = f"""
 ## {title}
 > Prefect Environment: {environment}
 > Flow Run: [{flow_name}](https://pipelines.dados.rio/flow-run/{flow_run_id})
     """
-    message = f"{header_content}\n{param_report}\n{general_report}\u200B" if include_report else param_report # TODO tinha \u200B depois de general_report
-    
+    message = (
+        f"{header_content}\n{param_report}\n{general_report}\u200B"
+        if include_report
+        else param_report
+    )  # TODO tinha \u200B depois de general_report
+
     with open(log_path, "rb") as file:
         file_content = file.read()
 
     async def main():
         await send_discord_message(
-            webhook_url=webhook_url,
-            message=message,
-            file=file_content,
-            file_format="txt"
+            webhook_url=webhook_url, message=message, file=file_content, file_format="txt"
         )
+
     asyncio.run(main())
 
 
@@ -299,7 +305,7 @@ def get_target_from_environment(environment: str):
     #     "dev": "dev",
     # }
     # return converter.get(environment, "dev")
-    return "dev" # TODO: ajustar profiles para diferentes targets
+    return "dev"  # TODO: ajustar profiles para diferentes targets
 
 
 # if __name__ == "__main__":
@@ -307,4 +313,3 @@ def get_target_from_environment(environment: str):
 #     repository_path = Path(__file__).parents[3] / "queries"
 #     print(repository_path.as_posix())
 #     print(repository_path.absolute())
-    

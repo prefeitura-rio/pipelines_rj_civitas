@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
-from typing import Any, Callable, Union
-
 import base64
 from os import environ
+from typing import Any, Callable, Union
+
 import prefect
 from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
-from prefeitura_rio.pipelines_utils.infisical import get_infisical_client, inject_env, get_flow_run_mode
+from prefeitura_rio.pipelines_utils.infisical import (
+    get_flow_run_mode,
+    get_infisical_client,
+    inject_env,
+)
 from prefeitura_rio.pipelines_utils.logging import log
 
 
@@ -31,11 +35,9 @@ def inject_bd_credentials(path: str = "/") -> None:
     with open("/tmp/credentials.json", "wb") as credentials_file:
         credentials_file.write(service_account)
     environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/tmp/credentials.json"
-    
-    
-def authenticated_task(
-    fn: Callable = None, **task_init_kwargs: Any
-) -> Union[
+
+
+def authenticated_task(fn: Callable = None, **task_init_kwargs: Any) -> Union[
     prefect.tasks.core.function.FunctionTask,
     Callable[[Callable], prefect.tasks.core.function.FunctionTask],
 ]:

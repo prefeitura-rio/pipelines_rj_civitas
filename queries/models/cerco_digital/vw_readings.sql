@@ -14,7 +14,7 @@ WITH readings AS (
     TIMESTAMP_DIFF(datahora_captura, datahora, SECOND) > -300 AND
     -- camera_numero, camera_latitude and camera_longitude can't be mutually empty/null
     (
-      (camera_numero IS NOT NULL AND camera_numero NOT IN ('', '0')) OR 
+      (camera_numero IS NOT NULL AND camera_numero NOT IN ('', '0')) OR
       (camera_latitude != 0.0 AND camera_longitude != 0.0)
     )
     AND NOT REGEXP_CONTAINS(camera_numero, r'[a-zA-Z]') -- camera_numero can't contain letters
@@ -41,7 +41,7 @@ WITH readings AS (
 normalized_readings AS (
   SELECT
     a.datahora_captura,
-    CASE 
+    CASE
       WHEN a.placa = ''
       THEN '-------'
       ELSE a.placa
@@ -95,5 +95,5 @@ SELECT
   a.camera_latitude,
   a.camera_longitude,
   a.empresa
-FROM 
+FROM
   camera_numero_codcet a

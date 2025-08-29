@@ -12,7 +12,6 @@ from prefeitura_rio.pipelines_utils.io import untuple_clocks as untuple
 
 from pipelines.constants import constants
 
-
 parameters = {
     "RENAME_FLOW": True,
     "SEND_DISCORD_REPORT": True,
@@ -22,7 +21,7 @@ parameters = {
     "BIGQUERY_PROJECT": "civitas",
     "DBT_SECRETS": ["DISCORD_WEBHOOK_URL_DBT-RUNS"],
     "ENVIRONMENT": "dev",
-    "SECRETS_PATH": "/discord"
+    "SECRETS_PATH": "/discord",
 }
 
 readings_clocks = [
@@ -36,6 +35,4 @@ readings_clocks = [
     )
 ]
 
-readings_schedule = Schedule(
-    clocks=untuple(readings_clocks)
-)
+readings_schedule = Schedule(clocks=untuple(readings_clocks))

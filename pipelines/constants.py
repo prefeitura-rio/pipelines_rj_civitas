@@ -22,5 +22,5 @@ class constants(Enum):
     # Other constants
     ######################################
     # EXAMPLE_CONSTANT = "example_constant"
-    
+
     FLOW_NAME_DBT_TRANSFORM = "[TEMPLATE] Transformar tabelas com DBT"
