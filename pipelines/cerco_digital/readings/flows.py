@@ -42,7 +42,7 @@ from pipelines.utils.state_handlers import handler_inject_bd_credentials
 with Flow(
     name="CIVITAS: cerco digital - Materialização da view de leituras de placas",
     state_handlers=[
-        # handler_inject_bd_credentials,
+        handler_inject_bd_credentials,
         # handler_initialize_sentry,
         handler_skip_if_running,
         # handler_notify_on_failure,
