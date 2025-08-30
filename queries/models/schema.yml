@@ -27,22 +27,6 @@ sources:
     tables:
       - name: ocorrencias
 
-  - name: stg_integracao_reports
-    database: rj-civitas
-    schema: integracao_reports_staging
-    tables:
-      - name: reports_1746
-      - name: reports_disque_denuncia
-      - name: reports_fogo_cruzado
-      - name: reports_telegram
-      - name: reports_twitter
-
-  - name: disque_denuncia
-    database: rj-civitas
-    schema: disque_denuncia
-    tables:
-      - name: denuncias
-
   - name: chamados_1746
     database: rj-segovi
     schema: adm_central_atendimento_1746
@@ -68,26 +52,89 @@ sources:
     tables:
       - name: readings_2024
         identifier: readings_2024_*
-      - name: all_readings
-        identifier: vw_readings
       - name: all_readings_raw
         identifier: readings_*
+        tests:
+          - dbt_utils.expression_is_true:
+              name: test_camera_numero_and_coordinates_not_mutually_empty
+              expression: |
+                (camera_numero IS NOT NULL AND camera_numero NOT IN ('', '0')) OR 
+                (camera_latitude != 0.0 AND camera_longitude != 0.0)
+              config:
+                severity: error
+                where: "datahora >= '{{ var('start_date') }}'"
+        columns:
+          - name: datahora_captura
+            #tests:
+              #- dbt_expectations.expect_column_values_to_not_be_null:
+               #   name: test_datahora_captura_not_null
+                #  where: "datahora >= '{{ var('start_date') }}'"
+          - name: placa
+            tests:
+              - dbt_expectations.expect_column_values_to_not_be_null:
+                  name: test_placa_not_null
+                  where: "datahora >= '{{ var('start_date') }}'"
+              #- dbt_expectations.expect_column_values_to_not_be_in_set:
+               #   name: test_placa_not_empty_or_zero_or_dashes
+                #  value_set: ["", "0", "-------"]
+                 # where: "datahora >= '{{ var('start_date') }}'"
+                  #config:
+                   # severity: warn
+              - dbt_expectations.expect_column_value_lengths_to_equal:
+                  name: test_placa_length_equals_7
+                  value: 7
+                  where: "placa IS NOT NULL AND placa != '' AND datahora >= '{{ var('start_date') }}'"
+              - dbt_expectations.expect_column_values_to_match_regex_list:
+                  name: test_placa_brazilian_or_mercosul_pattern
+                  regex_list: [
+                     "^[A-Z-]{3}[0-9-]{4}$",  # Padrão antigo + parcial: AAA1111 ou AB-12--
+                     "^[A-Z-]{3}[0-9-][A-Z-][0-9-]{2}$"  # Padrão Mercosul + parcial: AAA1A23 ou A--1-2-
+                  ]
+                  match_on: any
+                  where: "placa IS NOT NULL AND placa != '' AND datahora >= '{{ var('start_date') }}'"
+                  is_raw: True
+                  flags: i
+                  config:
+                    severity: warn
+
+          - name: tipoveiculo
+          - name: velocidade
+          - name: datahora
+          - name: camera_numero
+            tests:
+              #- dbt_expectations.expect_column_values_to_not_be_null:
+               #   name: test_camera_numero_not_null
+                #  where: "datahora >= '{{ var('start_date') }}'"
+              #- dbt_expectations.expect_column_values_to_not_be_in_set:
+               #   name: test_camera_numero_not_empty_or_zero
+                #  value_set: ["", "0", 0]
+                 # where: "datahora >= '{{ var('start_date') }}'"
+              - dbt_expectations.expect_column_values_to_match_regex:
+                  name: test_camera_numero_only_numbers
+                  regex: "^[0-9]+$"
+                  where: "datahora >= '{{ var('start_date') }}'"
+                  config:
+                    severity: warn
+
+              #- relationships:
+               #   name: test_camera_numero_exists_in_equipamento
+                #  to: source('ocr_radar', 'equipamento')
+                 # field: codcet
+                  #where: "datahora >= '{{ var('start_date') }}' AND NOT REGEXP_CONTAINS(camera_numero, r'[a-zA-Z]')"
+                    
+          - name: camera_latitude
+          - name: camera_longitude
+          - name: empresa
+
       - name: equipamento
       - name: equipamento_codcet_to_camera_numero
-
-  - name: fogo_cruzado
-    database: rj-civitas
-    schema: fogo_cruzado
-    tables:
-      - name: ocorrencias
+      - name: tipoveiculo_mapping
 
   - name: g20
     database: rj-civitas
     schema: g20
     tables:
       - name: contextos
-      - name: reports_enriquecidos
-        identifier: reports_enriquecidos_v2
 
   - name: stg_scraping_redes
     database: rj-civitas
@@ -99,13 +146,6 @@ sources:
       - name: twitter_georreferenciado
       - name: twitter_messages
       - name: twitter_chats
-
-  - name: scraping_redes
-    database: rj-civitas
-    schema: scraping_redes
-    tables:
-      - name: telegram
-      - name: twitter
 
   - name: smtr_veiculo
     database: rj-smtr
