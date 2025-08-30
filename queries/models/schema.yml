@@ -58,7 +58,7 @@ sources:
           - dbt_utils.expression_is_true:
               name: test_camera_numero_and_coordinates_not_mutually_empty
               expression: |
-                (camera_numero IS NOT NULL AND camera_numero NOT IN ('', '0')) OR 
+                (camera_numero IS NOT NULL AND camera_numero NOT IN ('', '0')) OR
                 (camera_latitude != 0.0 AND camera_longitude != 0.0)
               config:
                 severity: error
@@ -121,7 +121,7 @@ sources:
                 #  to: source('ocr_radar', 'equipamento')
                  # field: codcet
                   #where: "datahora >= '{{ var('start_date') }}' AND NOT REGEXP_CONTAINS(camera_numero, r'[a-zA-Z]')"
-                    
+
           - name: camera_latitude
           - name: camera_longitude
           - name: empresa
