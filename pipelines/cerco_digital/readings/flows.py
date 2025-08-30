@@ -40,8 +40,8 @@ from pipelines.utils.state_handlers import handler_inject_bd_credentials
 with Flow(
     name="CIVITAS: cerco digital - Materialização da view de leituras de placas",
     state_handlers=[
-        handler_inject_bd_credentials,
-        handler_initialize_sentry,
+        # handler_inject_bd_credentials,
+        # handler_initialize_sentry,
         handler_skip_if_running,
         # handler_notify_on_failure,
     ],
@@ -119,6 +119,3 @@ materialize_readings.run_config = KubernetesRun(
 
 materialize_readings.schedule = readings_schedule
 
-# materialize_readings.storage = Local()
-# materialize_readings.run_config = LocalRun(labels=["dev"])
-# materialize_readings.executor = LocalDaskExecutor()

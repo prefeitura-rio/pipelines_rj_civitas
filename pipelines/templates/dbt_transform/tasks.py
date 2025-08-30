@@ -15,6 +15,7 @@ import prefect
 from dbt.cli.main import dbtRunner, dbtRunnerResult
 from prefect.client import Client
 from prefect.engine.signals import FAIL
+from prefeitura_rio.pipelines_utils.io import get_root_path
 from prefeitura_rio.pipelines_utils.infisical import get_secret
 from prefeitura_rio.pipelines_utils.logging import log
 
@@ -83,9 +84,8 @@ def execute_dbt(
     commands = command.split(" ")
 
     if not repository_path:
-        # repository_path = os.path.join(os.path.dirname(__file__), "..", "..", "queries")
-        # repository_path = os.path.abspath(repository_path)
-        repository_path = (Path(__file__).parents[3] / "queries").as_posix()
+        root_path = get_root_path()
+        repository_path = (root_path / "queries").as_posix()
 
     log(f"Repository path: {repository_path}")  # TODO: remove this
 
@@ -164,9 +164,9 @@ def create_dbt_report(
         None
     """
     if not repository_path:
-        # repository_path = os.path.join(os.getcwd(), "queries")
-        repository_path = (Path(__file__).parents[3] / "queries").as_posix()
-
+        root_path = get_root_path()
+        repository_path = (root_path / "queries").as_posix()
+        
     logs = process_dbt_logs(log_path=os.path.join(repository_path, "logs", "dbt.log"))
 
     log_path = log_to_file(logs)
@@ -309,7 +309,3 @@ def get_target_from_environment(environment: str):
 
 
 # if __name__ == "__main__":
-#     from pathlib import Path
-#     repository_path = Path(__file__).parents[3] / "queries"
-#     print(repository_path.as_posix())
-#     print(repository_path.absolute())

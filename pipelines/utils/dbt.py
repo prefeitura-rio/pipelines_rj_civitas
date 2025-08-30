@@ -226,7 +226,10 @@ def log_to_file(logs: pd.DataFrame, levels=None) -> str:
     report = "\n".join(report)
     log(f"Logs do DBT:{report}")
 
-    target_path = Path(__file__).parents[2] / "tmp" / "dbt_log.txt"
+    root_path = get_root_path()
+    target_path = root_path / "tmp" / "dbt_log.txt"
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    
     with open(target_path, "w+", encoding="utf-8") as log_file:
         log_file.write(report)
 
