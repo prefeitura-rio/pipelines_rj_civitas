@@ -17,7 +17,7 @@ WITH ocorrencias AS (
     *,
     ROW_NUMBER() OVER (PARTITION BY id_ocorrencia ORDER BY timestamp_update DESC) AS rn
   FROM
-    {{ source('fogo_cruzado', 'ocorrencias') }}
+    {{ ref('ocorrencias') }}
 
   {% if is_incremental() %}
   WHERE

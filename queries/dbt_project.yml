@@ -20,31 +20,62 @@ models:
   +persist_docs:
     relation: true
     columns: true
+  elementary:
+    ## elementary models will be created in the schema '<your_schema>_elementary'
+    +schema: "gerenciamento__dbt_elementary"
+    ## To disable elementary for dev, uncomment this:
+    +enabled: "{{ target.name in ['dev', 'prod'] }}"
   queries:
     disque_denuncia:
       +materialized: table
       +schema: disque_denuncia
+      +meta:
+        owner: "@nicolas.evilasio"
     integracao_reports:
       +materialized: table
       +schema: integracao_reports
+      +meta:
+        owner: "@nicolas.evilasio"
     integracao_reports_staging:
       +materialized: table
       +schema: integracao_reports_staging
+      +meta:
+        owner: "@nicolas.evilasio"
     radares_infra:
       +materialized: table
       +schema: radares_infra
+      +meta:
+        owner: "@nicolas.evilasio"
     fogo_cruzado:
       +materialized: table
       +schema: fogo_cruzado
+      +meta:
+        owner: "@nicolas.evilasio"
     radar_readings:
       +materialized: table
       +schema: radar_readings
+      +meta:
+        owner: "@nicolas.evilasio"
     g20:
       +materialized: table
       +schema: g20
+      +meta:
+        owner: "@nicolas.evilasio"
     scraping_redes:
       +materialized: table
       +schema: scraping_redes
+      +meta:
+        owner: "@nicolas.evilasio"
     cerco_digital:
       +materialized: table
       +schema: cerco_digital
+      +meta:
+        owner: "@nicolas.evilasio"
+
+vars:
+  start_date: "2025-08-17 23:00:00"
+
+flags:
+  require_explicit_package_overrides_for_builtin_materializations: False
+  source_freshness_run_project_hooks: True
+

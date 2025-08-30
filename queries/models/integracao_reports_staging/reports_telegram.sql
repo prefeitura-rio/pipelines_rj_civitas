@@ -17,7 +17,7 @@ WITH messages AS (
     *,
     ROW_NUMBER() OVER (PARTITION BY id ORDER BY timestamp_creation DESC) AS rn
   FROM
-    {{ source('scraping_redes', 'telegram') }}
+    {{ ref('telegram') }}
 
   {% if is_incremental() %}
   WHERE
