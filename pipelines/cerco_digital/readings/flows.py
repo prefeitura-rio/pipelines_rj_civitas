@@ -120,4 +120,3 @@ materialize_readings.run_config = KubernetesRun(
 )
 
 materialize_readings.schedule = readings_schedule
-
