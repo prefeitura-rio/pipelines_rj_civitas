@@ -15,8 +15,8 @@ import prefect
 from dbt.cli.main import dbtRunner, dbtRunnerResult
 from prefect.client import Client
 from prefect.engine.signals import FAIL
-from prefeitura_rio.pipelines_utils.io import get_root_path
 from prefeitura_rio.pipelines_utils.infisical import get_secret
+from prefeitura_rio.pipelines_utils.io import get_root_path
 from prefeitura_rio.pipelines_utils.logging import log
 
 from pipelines.utils.credential_injector import authenticated_task as task
@@ -166,7 +166,7 @@ def create_dbt_report(
     if not repository_path:
         root_path = get_root_path()
         repository_path = (root_path / "queries").as_posix()
-        
+
     logs = process_dbt_logs(log_path=os.path.join(repository_path, "logs", "dbt.log"))
 
     log_path = log_to_file(logs)
