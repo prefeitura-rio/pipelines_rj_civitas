@@ -7,17 +7,13 @@ from prefect import Parameter
 from prefect.run_configs import KubernetesRun
 from prefect.storage import GCS
 
-# from prefect.executors import LocalDaskExecutor
-# from prefect.run_configs import LocalRun
-# from prefect.storage import Local
 from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
 from prefect.utilities.edges import unmapped
 from prefeitura_rio.pipelines_utils.custom import Flow
-from prefeitura_rio.pipelines_utils.prefect import (  # get_flow_run_mode,
+from prefeitura_rio.pipelines_utils.prefect import (
     task_get_current_flow_run_labels,
 )
-from prefeitura_rio.pipelines_utils.state_handlers import (  # handler_inject_bd_credentials,
-    handler_initialize_sentry,
+from prefeitura_rio.pipelines_utils.state_handlers import (
     handler_skip_if_running,
 )
 from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
@@ -27,16 +23,6 @@ from pipelines.cerco_digital.readings.schedules import readings_schedule
 from pipelines.constants import constants
 from pipelines.utils.state_handlers import handler_inject_bd_credentials
 
-# from tmp.pipelines_playground.cerco_digital.materialize_new.tasks import (  # TODO: remove this
-# task_remove_dbt_log_file,
-# )
-
-
-# from pipelines.utils.state_handlers import handler_notify_on_failure
-# from pipelines.templates.dbt_transform.tasks import get_target_from_environment
-# from pipelines.utils.tasks import task_get_secret_folder
-
-# from tmp.pipelines_playground.cerco_digital.materialize_new.tasks import task_remove_dbt_log_file # TODO: remove this
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
@@ -70,8 +56,6 @@ with Flow(
 
     materialization_labels = task_get_current_flow_run_labels()
     materialization_flow_name = constants.FLOW_NAME_DBT_TRANSFORM.value
-
-    # remove_dbt_log_file = task_remove_dbt_log_file() # TODO: remove this
 
     materialization_parameters = [
         {
