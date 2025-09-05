@@ -60,12 +60,8 @@ def authenticated_task(fn: Callable = None, **task_init_kwargs: Any) -> Union[
         """
 
         def new_function(**kwargs):
-            assert "environment" in prefect.context.get(
-                "parameters"
-            ), "Environment not found in flow parameters"
-
             logger = prefect.context.get("logger")
-            env = prefect.context.get("parameters")["environment"]
+            env = get_flow_run_mode()  # Infer environment from Prefect project
             logger.debug(f"[Injected] Set BD credentials for environment {env}")
             inject_bd_credentials()
 
@@ -73,7 +69,6 @@ def authenticated_task(fn: Callable = None, **task_init_kwargs: Any) -> Union[
             return function(**kwargs)
 
         new_function.__name__ = function.__name__
-
         return new_function
 
     # Standard Mode: only create a FunctionTask from function
