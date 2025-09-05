@@ -11,11 +11,9 @@ from prefeitura_rio.pipelines_utils.prefect import (
     task_get_current_flow_run_labels,
     task_rename_current_flow_run_dataset_table,
 )
-from prefeitura_rio.pipelines_utils.state_handlers import (
-    # handler_initialize_sentry,
+from prefeitura_rio.pipelines_utils.state_handlers import (  # handler_initialize_sentry,
     handler_skip_if_running,
 )
-from pipelines.utils.state_handlers import handler_inject_bd_credentials
 from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
 from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE, constants
@@ -30,7 +28,10 @@ from pipelines.fogo_cruzado.extract_load.tasks import (
     task_check_max_document_number,
     task_update_max_document_number_on_redis,
 )
-from pipelines.utils.state_handlers import handler_notify_on_failure
+from pipelines.utils.state_handlers import (
+    handler_inject_bd_credentials,
+    handler_notify_on_failure,
+)
 from pipelines.utils.tasks import task_get_secret_folder
 
 # Define the Prefect Flow for data extraction and transformation
@@ -52,25 +53,27 @@ with Flow(
     PREFIX = Parameter("prefix", default="FULL_REFRESH_")
     START_DATE = Parameter("start_date", default=None)
     TAKE = Parameter("take", default=100)
-    
+
     # Flow
     RENAME_FLOW = Parameter("rename_flow", default=True)
-    SEND_DISCORD_ALERTS = Parameter("send_discord_alerts", default=True) # TODO: remove this parameter
+    SEND_DISCORD_ALERTS = Parameter(
+        "send_discord_alerts", default=True
+    )  # TODO: remove this parameter
     SEND_DISCORD_REPORT = Parameter("send_discord_report", default=True)
-    
+
     # DBT
     COMMAND = Parameter("command", default=None)
     SELECT = Parameter("select", default=None)
     GITHUB_REPO = Parameter("github_repo", default=None)
     BIGQUERY_PROJECT = Parameter("bigquery_project", default=None)
     DBT_SECRETS = Parameter("dbt_secrets", default=[])
-    
+
     # Tables
     PROJECT_ID = Parameter("project_id", default="rj-civitas")
     DATASET_ID = Parameter("dataset_id", default="fogo_cruzado")
     TABLE_ID = Parameter("table_id", default="ocorrencias")
     WRITE_DISPOSITION = Parameter("write_disposition", default="WRITE_TRUNCATE")
-    
+
     # Materialization
     MATERIALIZE_AFTER_DUMP = Parameter("materialize_after_dump", default=True)
     MATERIALIZE_REPORTS_FC_AFTER_DUMP = Parameter("materialize_reports_fc_after_dump", default=True)
@@ -79,7 +82,7 @@ with Flow(
     DISCORD_SECRETS = task_get_secret_folder(secret_path="/discord", inject_env=True)
     SECRETS = task_get_secret_folder(secret_path="/api-fogo-cruzado")
     REDIS_PASSWORD = task_get_secret_folder(secret_path="/redis")
-    
+
     # Rename current flow run to identify if is full refresh or partial
     rename_flow_run = task_rename_current_flow_run_dataset_table(
         prefix=PREFIX, dataset_id=DATASET_ID, table_id=TABLE_ID
@@ -116,7 +119,7 @@ with Flow(
 
     start_timestamp = get_current_timestamp()
     start_timestamp.set_upstream(max_document_number_check)
-    
+
     #####################################
     # LOAD RAW DATA
     #####################################
@@ -152,7 +155,7 @@ with Flow(
                 "dbt_secrets": DBT_SECRETS,
             },
         ]
-        
+
         materialization_flow_runs = create_flow_run.map(
             flow_name=unmapped(materialization_flow_name),
             project_name=unmapped(current_flow_project_name),
@@ -168,7 +171,6 @@ with Flow(
             raise_final_state=unmapped(True),
         )
 
-
         update_max_document_number_on_redis = task_update_max_document_number_on_redis(
             new_document_number=max_document_number_check,
             dataset_id=DATASET_ID,
@@ -176,7 +178,7 @@ with Flow(
             redis_password=REDIS_PASSWORD["REDIS_PASSWORD"],
         )
         update_max_document_number_on_redis.set_upstream(materialization_wait_for_flow_run)
-        
+
         #####################################
         # SEND DISCORD ALERTS FOR RECENT OCCURRENCES
         #####################################
@@ -196,7 +198,6 @@ with Flow(
                 labels=unmapped(materialization_labels),
             )
             alerta_discord_flow_runs.set_upstream(update_max_document_number_on_redis)
-
 
         #####################################
         # MATERIALIZE REPORTS FOGO CRUZADO

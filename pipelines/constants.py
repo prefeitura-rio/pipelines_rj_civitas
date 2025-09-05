@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-from enum import Enum
-from prefect.run_configs import KubernetesRun
-from prefect.storage import GCS
-from prefect.executors import LocalExecutor
-from prefect.run_configs import LocalRun
-from prefect.storage import Local
 import os
+from enum import Enum
+
+from prefect.executors import LocalExecutor
+from prefect.run_configs import KubernetesRun, LocalRun
+from prefect.storage import GCS, Local
+
 
 class constants(Enum):
     ######################################
@@ -31,8 +31,8 @@ class constants(Enum):
     FLOW_NAME_DBT_TRANSFORM = "[TEMPLATE] Transformar tabelas com DBT"
 
     ######################################
-    
-    
+
+
 if os.getenv("ENVIRONMENT") == "dev":
     FLOW_STORAGE = Local()
     FLOW_RUN_CONFIG = LocalRun(
@@ -44,4 +44,3 @@ else:
         image=constants.DOCKER_IMAGE.value,
         labels=[constants.RJ_CIVITAS_AGENT_LABEL.value],
     )
-    
