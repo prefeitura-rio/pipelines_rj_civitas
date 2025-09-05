@@ -3,13 +3,8 @@
 Send a discord alert whenever a new occurrence is detected in the Fogo Cruzado.
 """
 from prefect import Parameter
-from prefect.run_configs import KubernetesRun
-from prefect.storage import GCS
 from prefeitura_rio.pipelines_utils.custom import Flow
-from prefeitura_rio.pipelines_utils.state_handlers import (
-    handler_initialize_sentry,
-    handler_inject_bd_credentials,
-)
+from pipelines.utils.state_handlers import handler_inject_bd_credentials
 
 from pipelines.alertas_discord.fogo_cruzado.tasks import (
     task_check_occurrences_qty,
@@ -19,7 +14,7 @@ from pipelines.alertas_discord.fogo_cruzado.tasks import (
     task_send_discord_messages,
     task_set_config,
 )
-from pipelines.constants import constants
+from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE
 from pipelines.utils.state_handlers import handler_notify_on_failure
 from pipelines.utils.tasks import task_get_secret_folder
 
@@ -27,7 +22,7 @@ with Flow(
     name="CIVITAS: ALERTA DISCORD - Fogo Cruzado",
     state_handlers=[
         handler_inject_bd_credentials,
-        handler_initialize_sentry,
+        # handler_initialize_sentry,
         handler_notify_on_failure,
     ],
 ) as alerta_fogo_cruzado:
@@ -52,10 +47,5 @@ with Flow(
 
     send_to_discord = task_send_discord_messages(config, upstream_tasks=[messages, maps])
 
-alerta_fogo_cruzado.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
-alerta_fogo_cruzado.run_config = KubernetesRun(
-    image=constants.DOCKER_IMAGE.value,
-    labels=[
-        constants.RJ_CIVITAS_AGENT_LABEL.value,
-    ],
-)
+alerta_fogo_cruzado.storage = FLOW_STORAGE
+alerta_fogo_cruzado.run_config = FLOW_RUN_CONFIG

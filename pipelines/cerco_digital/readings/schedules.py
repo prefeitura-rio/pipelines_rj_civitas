@@ -13,15 +13,15 @@ from prefeitura_rio.pipelines_utils.io import untuple_clocks as untuple
 from pipelines.constants import constants
 
 parameters = {
-    "rename_flow": True,
-    "send_discord_report": True,
-    "command": "build",
+    # "rename_flow": True,
+    # "send_discord_report": True,
+    # "command": "build",
     "select": "vw_readings",
-    "github_repo": "https://github.com/prefeitura-rio/pipelines_rj_civitas",
-    "bigquery_project": "civitas",
-    "dbt_secrets": ["DISCORD_WEBHOOK_URL_DBT-RUNS"],
-    "environment": "dev",
-    "secrets_path": "/discord",
+    # "github_repo": "https://github.com/prefeitura-rio/pipelines_rj_civitas",
+    # "bigquery_project": "civitas",
+    # "dbt_secrets": ["DISCORD_WEBHOOK_URL_DBT-RUNS"],
+    # "environment": "dev",
+    # "secrets_path": "/discord",
 }
 
 readings_clocks = [
@@ -29,7 +29,7 @@ readings_clocks = [
         interval=timedelta(hours=1),
         start_date=datetime(2024, 8, 23, 5, 0, tzinfo=pytz.timezone("America/Sao_Paulo")),
         labels=[
-            constants.RJ_CIVITAS_AGENT_LABEL.value,
+            # constants.RJ_CIVITAS_AGENT_LABEL.value,
         ],
         parameter_defaults=parameters,
     )

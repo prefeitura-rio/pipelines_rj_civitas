@@ -5,23 +5,20 @@ This module defines a Prefect workflow for materializing tables using DBT.....
 
 
 from prefect import Parameter
-from prefect.run_configs import KubernetesRun
-from prefect.storage import GCS
 from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
 from prefect.utilities.edges import unmapped
-from prefeitura_rio.core import settings
 from prefeitura_rio.pipelines_utils.custom import Flow
 from prefeitura_rio.pipelines_utils.prefect import (  # get_flow_run_mode,
     task_get_current_flow_run_labels,
 )
 from prefeitura_rio.pipelines_utils.state_handlers import (
-    handler_initialize_sentry,
-    handler_inject_bd_credentials,
+    # handler_initialize_sentry,
     handler_skip_if_running,
 )
+from pipelines.utils.state_handlers import handler_inject_bd_credentials
 from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
-from pipelines.constants import constants
+from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE, constants
 from pipelines.radares_infra.materialize.schedules import (
     radares_infra_twice_daily_update_schedule,
 )
@@ -33,7 +30,7 @@ with Flow(
     name="CIVITAS: radares_infra - Materialização das tabelas",
     state_handlers=[
         handler_inject_bd_credentials,
-        handler_initialize_sentry,
+        # handler_initialize_sentry,
         handler_skip_if_running,
         handler_notify_on_failure,
     ],
@@ -41,14 +38,15 @@ with Flow(
 
     secrets = task_get_secret_folder(secret_path="/discord", inject_env=True)
 
-    dataset_id = Parameter("dataset_id", default="radares_infra")
+    DATASET_ID = Parameter("dataset_id", default="radares_infra")
+    
     materialization_labels = task_get_current_flow_run_labels()
-    materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
+    materialization_flow_name = constants.FLOW_NAME_DBT_TRANSFORM.value
+    
     dump_prod_tables_to_materialize_parameters = [
-        {"dataset_id": dataset_id, "table_id": "inatividade", "dbt_alias": False},
-        {"dataset_id": dataset_id, "table_id": "latencia_base+", "dbt_alias": False},
-        {"dataset_id": dataset_id, "table_id": "medicoes", "dbt_alias": False},
-        {"dataset_id": dataset_id, "table_id": "fluxo", "dbt_alias": False},
+        {
+            "select": DATASET_ID,
+        }
     ]
     current_flow_project_name = get_current_flow_project_name()
 
@@ -66,12 +64,7 @@ with Flow(
         raise_final_state=unmapped(True),
     )
 
-materialize_radares_infra.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
-materialize_radares_infra.run_config = KubernetesRun(
-    image=constants.DOCKER_IMAGE.value,
-    labels=[
-        constants.RJ_CIVITAS_AGENT_LABEL.value,
-    ],
-)
+materialize_radares_infra.storage = FLOW_STORAGE
+materialize_radares_infra.run_config = FLOW_RUN_CONFIG
 
 materialize_radares_infra.schedule = radares_infra_twice_daily_update_schedule

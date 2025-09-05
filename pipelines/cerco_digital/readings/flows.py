@@ -4,8 +4,6 @@ This module defines a Prefect workflow for materializing tables using DBT.....
 """
 
 from prefect import Parameter
-from prefect.run_configs import KubernetesRun
-from prefect.storage import GCS
 
 from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
 from prefect.utilities.edges import unmapped
@@ -20,8 +18,8 @@ from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
 from pipelines import constants
 from pipelines.cerco_digital.readings.schedules import readings_schedule
-from pipelines.constants import constants
-from pipelines.utils.state_handlers import handler_inject_bd_credentials
+from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE, constants
+from pipelines.utils.state_handlers import handler_inject_bd_credentials, handler_notify_on_failure
 
 
 # Define the Prefect Flow for data extraction and transformation
@@ -31,7 +29,7 @@ with Flow(
         handler_inject_bd_credentials,
         # handler_initialize_sentry,
         handler_skip_if_running,
-        # handler_notify_on_failure,
+        handler_notify_on_failure,
     ],
 ) as materialize_readings:
 
@@ -39,35 +37,15 @@ with Flow(
     # Parameters
     #####################################
 
-    # Flow
-    RENAME_FLOW = Parameter("rename_flow", default=True)
-    SEND_DISCORD_REPORT = Parameter("send_discord_report", default=True)
-
     # DBT
-    COMMAND = Parameter("command", default=None)
     SELECT = Parameter("select", default=None)
-    GITHUB_REPO = Parameter("github_repo", default=None)
-    BIGQUERY_PROJECT = Parameter("bigquery_project", default=None)
-    DBT_SECRETS = Parameter("dbt_secrets", default=[])
-
-    # Environment
-    ENVIRONMENT = Parameter("environment", default=None)
-    SECRETS_PATH = Parameter("secrets_path", default=None)
 
     materialization_labels = task_get_current_flow_run_labels()
     materialization_flow_name = constants.FLOW_NAME_DBT_TRANSFORM.value
 
     materialization_parameters = [
         {
-            "rename_flow": RENAME_FLOW,
-            "send_discord_report": SEND_DISCORD_REPORT,
-            "command": COMMAND,
             "select": SELECT,
-            "github_repo": GITHUB_REPO,
-            "bigquery_project": BIGQUERY_PROJECT,
-            "dbt_secrets": DBT_SECRETS,
-            "secrets_path": SECRETS_PATH,
-            "environment": ENVIRONMENT,
         },
     ]
 
@@ -95,12 +73,7 @@ with Flow(
 # Set Storage and Run Config
 #####################################
 
-materialize_readings.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
-materialize_readings.run_config = KubernetesRun(
-    image=constants.DOCKER_IMAGE.value,
-    labels=[
-        constants.RJ_CIVITAS_AGENT_LABEL.value,
-    ],
-)
+materialize_readings.storage = FLOW_STORAGE
+materialize_readings.run_config = FLOW_RUN_CONFIG
 
 materialize_readings.schedule = readings_schedule

@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 from prefect import Parameter, case
-from prefect.run_configs import KubernetesRun
-from prefect.storage import GCS
 from prefeitura_rio.pipelines_utils.custom import Flow
 from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
-from pipelines.constants import constants
+from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE, constants
 from pipelines.templates.dbt_transform.tasks import (
     add_dbt_secrets_to_env,
     create_dbt_report,
@@ -23,25 +21,25 @@ with Flow(
     #####################################
 
     # Flow
-    RENAME_FLOW = Parameter("rename_flow", default=False)
+    RENAME_FLOW = Parameter("rename_flow", default=True)
     SEND_DISCORD_REPORT = Parameter("send_discord_report", default=True)
 
     # DBT
-    COMMAND = Parameter("command", default="test", required=False)
+    COMMAND = Parameter("command", default="build", required=False)
     SELECT = Parameter("select", default=None, required=False)
     EXCLUDE = Parameter("exclude", default=None, required=False)
     FLAG = Parameter("flag", default=None, required=False)
-    GITHUB_REPO = Parameter("github_repo", default=None, required=True)
-    BIGQUERY_PROJECT = Parameter("bigquery_project", default=None, required=True)
-    DBT_SECRETS = Parameter("dbt_secrets", default=[], required=True)
-    SECRETS_PATH = Parameter("secrets_path", default=None, required=True)
-    ENVIRONMENT = Parameter("environment", default=None)
+    GITHUB_REPO = Parameter("github_repo", default="https://github.com/prefeitura-rio/pipelines_rj_civitas")
+    BIGQUERY_PROJECT = Parameter("bigquery_project", default="civitas")
+    DBT_SECRETS = Parameter("dbt_secrets", default=["DISCORD_WEBHOOK_URL_DBT-RUNS"])
+    SECRETS_PATH = Parameter("secrets_path", default="/discord")
+    # ENVIRONMENT = Parameter("environment", default=None)
 
     #####################################
     # Set environment
     ####################################
 
-    target = get_target_from_environment(environment=ENVIRONMENT)
+    target = get_target_from_environment()
 
     current_flow_project_name = get_current_flow_project_name()
     current_flow_project_name.set_upstream(target)
@@ -79,24 +77,10 @@ with Flow(
             running_results=running_results,
             bigquery_project=BIGQUERY_PROJECT,
         )
-        create_dbt_report_task.set_upstream([secrets, running_results])
+        create_dbt_report_task.set_upstream([secrets, running_results, GITHUB_REPO])
 
 
-# # Storage and run configs
-templates__dbt_transform__flow.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
-templates__dbt_transform__flow.run_config = KubernetesRun(
-    image=constants.DOCKER_IMAGE.value,
-    labels=[
-        constants.RJ_CIVITAS_AGENT_LABEL.value,
-    ],
-)
+templates__dbt_transform__flow.storage = FLOW_STORAGE
+templates__dbt_transform__flow.run_config = FLOW_RUN_CONFIG
 
 # templates__dbt_transform__flow.schedule = dbt_transform_update_schedule
-
-# from prefect.run_configs import LocalRun
-# from prefect.storage import Local
-# from prefect.executors import LocalDaskExecutor
-
-# templates__dbt_transform__flow.storage = Local()
-# templates__dbt_transform__flow.run_config = LocalRun(labels=["dev"])
-# templates__dbt_transform__flow.executor = LocalDaskExecutor()
