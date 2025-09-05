@@ -16,13 +16,42 @@ models:
       **Publicado por**: Nicolas Evilasio
 
       **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+    tests:
+      - dbt_expectations.expect_column_pair_values_A_to_be_greater_than_B:
+          name: test_not_future_datahora
+          column_A: timestamp_insercao
+          column_B: data_ocorrencia
+          or_equal: true
+          config:
+            severity: warn
+          meta:
+            #owner: ["@nicolas.evilasio"]
+            description: "Verifica se data_ocorrencia não é futura em relação a timestamp_insercao."
 
     columns:
       - name: id_ocorrencia
         description: Identificador único para cada ocorrência no banco de dados.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_unique:
+              name: test_id_ocorrencia_unique
+              meta:
+                description: "Verifica se o identificador único da ocorrência é único."
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_id_ocorrencia_not_null
+              meta:
+                description: "Verifica se o identificador único da ocorrência não é nulo."
 
       - name: numero_ocorrencia
         description: Este campo representa o número único atribuído a cada ocorrência.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_unique:
+              name: test_numero_ocorrencia_unique
+              meta:
+                description: "Verifica se o número único da ocorrência é único."
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_numero_ocorrencia_not_null
+              meta:
+                description: "Verifica se o número único da ocorrência não é nulo."
 
       - name: endereco
         description: Este campo contém o endereço onde a ocorrência ocorreu.
@@ -53,10 +82,24 @@ models:
 
       - name: latitude
         description: Este campo representa a latitude do local onde a ocorrência ocorreu.
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_latitude_not_null
+              config:
+                severity: warn
+              meta:
+                description: "Verifica se a latitude não é nula."
 
       - name: longitude
         description: Este campo representa a longitude do local onde a ocorrência
           ocorreu.
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_longitude_not_null
+              config:
+                severity: warn
+              meta:
+                description: "Verifica se a longitude não é nula."
 
       - name: data_ocorrencia
         description: |
