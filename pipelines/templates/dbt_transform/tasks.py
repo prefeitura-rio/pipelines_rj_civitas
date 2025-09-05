@@ -15,7 +15,7 @@ import prefect
 from dbt.cli.main import dbtRunner, dbtRunnerResult
 from prefect.client import Client
 from prefect.engine.signals import FAIL
-from prefeitura_rio.pipelines_utils.infisical import get_secret
+from prefeitura_rio.pipelines_utils.infisical import get_flow_run_mode, get_secret
 from prefeitura_rio.pipelines_utils.io import get_root_path
 from prefeitura_rio.pipelines_utils.logging import log
 
@@ -87,8 +87,6 @@ def execute_dbt(
         root_path = get_root_path()
         repository_path = (root_path / "queries").as_posix()
 
-    log(f"Repository path: {repository_path}")  # TODO: remove this
-
     cli_args = commands + ["--profiles-dir", repository_path, "--project-dir", repository_path]
 
     if command in ("build", "data_test", "run", "test"):
@@ -118,7 +116,7 @@ def execute_dbt(
     log("RESULTADOS:")
     log(running_result)
 
-    environment = prefect.context.get("parameters").get("environment")
+    environment = get_flow_run_mode()
     secret_name = "DISCORD_WEBHOOK_URL_DBT-RUNS"
     flow_name = prefect.context.get("flow_name")
     flow_run_id = prefect.context.get("flow_run_id")
@@ -205,14 +203,15 @@ def create_dbt_report(
     param_report = ["**Parametros**:"]
 
     parameters = prefect.context.get("parameters")
+    environment = get_flow_run_mode()
 
-    if parameters.get("environment") == "dev":
+    if environment == "dev":
         bigquery_project = "rj-" + bigquery_project + "-dev"
-    elif parameters.get("environment") == "prod":
+    elif environment in ["prod", "staging"]:
         bigquery_project = "rj-" + bigquery_project
 
     param_report.append(f"- Projeto BigQuery: `{bigquery_project}`")
-    param_report.append(f"- Target dbt: `{parameters.get('environment')}`")
+    param_report.append(f"- Target dbt: `{environment}`")
     param_report.append(f"- Comando: `{parameters.get('command')}`")
 
     if parameters.get("select"):
@@ -232,38 +231,38 @@ def create_dbt_report(
     fully_successful = is_successful and running_results.success
     include_report = has_warnings or (not fully_successful)
 
-    # DBT - Sending Logs to Discord
-    command = prefect.context.get("parameters").get("command")
-    emoji = "❌" if not fully_successful else "✅"
-    complement = "com Erros" if not fully_successful else "sem Erros"
+    if include_report:
+        # DBT - Sending Logs to Discord
+        command = prefect.context.get("parameters").get("command")
+        emoji = "❌" if not fully_successful else "✅"
+        complement = "com Erros" if not fully_successful else "sem Erros"
 
-    environment = prefect.context.get("parameters").get("environment")
-    secret_name = "DISCORD_WEBHOOK_URL_DBT-RUNS"
-    flow_name = prefect.context.get("flow_name")
-    flow_run_id = prefect.context.get("flow_run_id")
-    webhook_url = get_secret(secret_name=secret_name, environment=environment).get(secret_name)
+        secret_name = "DISCORD_WEBHOOK_URL_DBT-RUNS"
+        flow_name = prefect.context.get("flow_name")
+        flow_run_id = prefect.context.get("flow_run_id")
+        webhook_url = get_secret(secret_name=secret_name, environment=environment).get(secret_name)
 
-    title = f"{emoji} [{bigquery_project}] - Execução `dbt {command}` finalizada {complement}"
-    header_content = f"""
-## {title}
-> Prefect Environment: {environment}
-> Flow Run: [{flow_name}](https://pipelines.dados.rio/flow-run/{flow_run_id})
-    """
-    message = (
-        f"{header_content}\n{param_report}\n{general_report}\u200B"
-        if include_report
-        else param_report
-    )  # TODO tinha \u200B depois de general_report
+        title = f"{emoji} [{bigquery_project}] - Execução `dbt {command}` finalizada {complement}"
+        header_content = f"""
+    ## {title}
+    > Prefect Environment: {environment}
+    > Flow Run: [{flow_name}](https://pipelines.dados.rio/flow-run/{flow_run_id})
+        """
+        message = (
+            f"{header_content}\n{param_report}\n{general_report}\u200B"
+            if include_report
+            else param_report
+        )  # TODO tinha \u200B depois de general_report
 
-    with open(log_path, "rb") as file:
-        file_content = file.read()
+        with open(log_path, "rb") as file:
+            file_content = file.read()
 
-    async def main():
-        await send_discord_message(
-            webhook_url=webhook_url, message=message, file=file_content, file_format="txt"
-        )
+        async def main():
+            await send_discord_message(
+                webhook_url=webhook_url, message=message, file=file_content, file_format="txt"
+            )
 
-    asyncio.run(main())
+        asyncio.run(main())
 
 
 @task
@@ -293,19 +292,15 @@ def rename_current_flow_run_dbt(
 
 
 @task
-def get_target_from_environment(environment: str):
+def get_target_from_environment():
     """
     Retrieves the target environment based on the given environment parameter.
     """
-    # converter = {
-    #     "prod": "prod",
-    #     "local-prod": "prod",
-    #     "staging": "dev",
-    #     "local-staging": "dev",
-    #     "dev": "dev",
-    # }
-    # return converter.get(environment, "dev")
-    return "dev"  # TODO: ajustar profiles para diferentes targets
-
-
-# if __name__ == "__main__":
+    converter = {
+        "prod": "prod",
+        "local-prod": "prod",
+        "staging": "dev",
+        "local-staging": "dev",
+        "dev": "dev",
+    }
+    return converter.get("dev") # TODO: refactor profiles.yml to support different targets
