@@ -16,7 +16,7 @@ WITH denuncias AS (
     *,
     ROW_NUMBER() OVER (PARTITION BY id_denuncia ORDER BY timestamp_insercao DESC) AS rn
   FROM
-    {{ source('disque_denuncia', 'denuncias') }}
+    {{ ref('denuncias') }}
 
   {% if is_incremental() %}
     WHERE

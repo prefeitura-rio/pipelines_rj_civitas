@@ -19,6 +19,7 @@ from google.cloud import bigquery
 from prefect import task
 from prefect.engine.runner import ENDRUN
 from prefect.engine.state import Skipped
+from prefeitura_rio.pipelines_utils.infisical import get_flow_run_mode
 from prefeitura_rio.pipelines_utils.logging import log, log_mod
 from pytz import timezone
 
@@ -243,7 +244,6 @@ def load_to_table(
         table_id (str): The ID of the table.
         occurrences (List[Dict]): The list of dictionaries to be saved to BigQuery.
     """
-    log(f"Writing occurrences to {project_id}.{dataset_id}.{table_id}")
     SCHEMA = [
         bigquery.SchemaField(name="id", field_type="STRING", mode="NULLABLE"),
         bigquery.SchemaField(name="documentNumber", field_type="STRING", mode="NULLABLE"),
@@ -543,6 +543,11 @@ def load_to_table(
         ),
     ]
 
+    environment = get_flow_run_mode()
+    if environment in ["dev", "staging"]:
+        project_id += "-dev"
+
+    log(f"Writing occurrences to {project_id}.{dataset_id}.{table_id}")
     save_data_in_bq(
         project_id=project_id,
         dataset_id=dataset_id,

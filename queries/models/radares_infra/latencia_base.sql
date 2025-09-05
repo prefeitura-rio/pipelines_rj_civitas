@@ -25,7 +25,7 @@ WITH datas_fuso AS (
         -- store the max_datahora_captura for incremental control
         MAX(datahora_captura) OVER() AS max_datahora_captura
     FROM
-        {{ source('ocr_radar', 'all_readings') }}
+        {{ ref('vw_readings') }}
     WHERE
         {% if is_incremental() %}
         -- keep only new data
