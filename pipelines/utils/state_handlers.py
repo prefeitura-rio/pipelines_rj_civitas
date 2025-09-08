@@ -11,9 +11,22 @@ import pendulum
 from prefect import Flow, Task, context
 from prefect.backend import FlowRunView
 from prefect.engine import state
+from prefect.engine.state import State
 from prefeitura_rio.pipelines_utils.logging import log
 
+from pipelines.utils.credential_injector import inject_bd_credentials
 from pipelines.utils.notifications import send_discord_message
+
+
+def handler_inject_bd_credentials(
+    obj, old_state: State, new_state: State, path: str = "/"
+) -> State:
+    """
+    State handler that will inject BD credentials into the environment.
+    """
+    if new_state.is_running():
+        inject_bd_credentials(path=path)
+    return new_state
 
 
 def handler_save_traceback_on_failure(obj, old_state, new_state):

@@ -17,7 +17,7 @@ SELECT
     CONCAT(id_source, id_report_original) AS id_report,
     *
 FROM
-    {{ source('stg_integracao_reports', 'reports_disque_denuncia') }}
+    {{ ref('reports_disque_denuncia') }}
 
 UNION ALL
 
@@ -25,7 +25,7 @@ SELECT
     CONCAT(id_source, id_report_original) AS id_report,
     *
 FROM
-    {{ source('stg_integracao_reports', 'reports_1746') }}
+    {{ ref('reports_1746') }}
 
 UNION ALL
 
@@ -33,14 +33,14 @@ SELECT
   CONCAT(id_source, id_report_original) AS id_report,
   *
 FROM
-    {{ source('stg_integracao_reports', 'reports_fogo_cruzado') }}
+    {{ ref('reports_fogo_cruzado') }}
 UNION ALL
 
 SELECT
   CONCAT(id_source, id_report_original) AS id_report,
   *
 FROM
-    {{ source('stg_integracao_reports', 'reports_telegram') }}
+    {{ ref('reports_telegram') }}
 
 UNION ALL
 
@@ -48,4 +48,4 @@ SELECT
   CONCAT(id_source, id_report_original) AS id_report,
   *
 FROM
-    {{ source('stg_integracao_reports', 'reports_twitter') }}
+    {{ ref('reports_twitter') }}

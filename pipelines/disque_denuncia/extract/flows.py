@@ -8,16 +8,11 @@ related to 'Disque Denúncia' reports, including updating missing coordinates.
 from pathlib import Path
 
 from prefect import Parameter, case
-from prefect.run_configs import KubernetesRun
-from prefect.storage import GCS
 from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
 from prefect.utilities.edges import unmapped
-from prefeitura_rio.core import settings
 from prefeitura_rio.pipelines_utils.custom import Flow
 from prefeitura_rio.pipelines_utils.prefect import task_get_current_flow_run_labels
-from prefeitura_rio.pipelines_utils.state_handlers import (
-    handler_initialize_sentry,
-    handler_inject_bd_credentials,
+from prefeitura_rio.pipelines_utils.state_handlers import (  # handler_initialize_sentry,
     handler_skip_if_running,
 )
 from prefeitura_rio.pipelines_utils.tasks import (  # task_run_dbt_model_task,
@@ -25,7 +20,7 @@ from prefeitura_rio.pipelines_utils.tasks import (  # task_run_dbt_model_task,
     get_current_flow_project_name,
 )
 
-from pipelines.constants import constants
+from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE, constants
 from pipelines.disque_denuncia.extract.schedules import (
     disque_denuncia_etl_minutely_update_schedule,
 )
@@ -36,7 +31,10 @@ from pipelines.disque_denuncia.extract.tasks import (
     task_get_date_execution,
     update_missing_coordinates_in_bigquery,
 )
-from pipelines.utils.state_handlers import handler_notify_on_failure
+from pipelines.utils.state_handlers import (
+    handler_inject_bd_credentials,
+    handler_notify_on_failure,
+)
 from pipelines.utils.tasks import task_get_secret_folder
 
 # Define the Prefect Flow for data extraction and transformation
@@ -44,37 +42,37 @@ with Flow(
     name="CIVITAS: DataLake - Extração e carga de dados no datalake do Disque Denúncia",
     state_handlers=[
         handler_inject_bd_credentials,
-        handler_initialize_sentry,
+        # handler_initialize_sentry,
         handler_skip_if_running,
         handler_notify_on_failure,
     ],
 ) as extracao_disque_denuncia:
 
     # Parâmetros
-    project_id = Parameter("project_id", default="")
-    dataset_id = Parameter("dataset_id", default="")
-    table_id = Parameter("table_id", default="")
-    start_date = Parameter("start_date", default="")
-    tipo_difusao = Parameter("tipo_difusao", default="")
-    loop_limiter = Parameter("loop_limiter", default=False)
-    dump_mode = Parameter("dump_mode", default="")
-    biglake_table = Parameter("biglake_table", default=True)
-    mod = Parameter("mod", default=100)
+    PROJECT_ID = Parameter("project_id", default="")
+    DATASET_ID = Parameter("dataset_id", default="")
+    TABLE_ID = Parameter("table_id", default="")
+    START_DATE = Parameter("start_date", default="")
+    TIPO_DIFUSAO = Parameter("tipo_difusao", default="")
+    LOOP_LIMITER = Parameter("loop_limiter", default=False)
+    DUMP_MODE = Parameter("dump_mode", default="")
+    BIGLAKE_TABLE = Parameter("biglake_table", default=True)
+    MOD = Parameter("mod", default=100)
 
-    materialize_after_dump = Parameter("materialize_after_dump", default=True)
-    dbt_alias = Parameter("dbt_alias", default=False)
+    MATERIALIZE_AFTER_DUMP = Parameter("materialize_after_dump", default=True)
+    DBT_ALIAS = Parameter("dbt_alias", default=False)
 
-    materialize_reports_dd_after_dump = Parameter("materialize_reports_dd_after_dump", default=True)
+    MATERIALIZE_REPORTS_DD_AFTER_DUMP = Parameter("materialize_reports_dd_after_dump", default=True)
 
     # Georeference reports
-    georeference_reports = Parameter("georeference_reports", default=True)
-    mode = Parameter("mode", default="")
-    address_columns = Parameter("address_columns", default=[])
-    lat_lon_columns = Parameter("lat_lon_columns", default={})
-    id_column_name = Parameter("id_column_name", default="")
-    timestamp_creation_column_name = Parameter("timestamp_creation_column_name", default=None)
-    start_date_geocoding = Parameter("start_date_geocoding", default=None)
-    date_column_name_geocoding = Parameter("date_column_name_geocoding", default=None)
+    GEOREFERENCE_REPORTS = Parameter("georeference_reports", default=True)
+    MODE = Parameter("mode", default="")
+    ADDRESS_COLUMNS = Parameter("address_columns", default=[])
+    LAT_LON_COLUMNS = Parameter("lat_lon_columns", default={})
+    ID_COLUMN_NAME = Parameter("id_column_name", default="")
+    TIMESTAMP_CREATION_COLUMN_NAME = Parameter("timestamp_creation_column_name", default=None)
+    START_DATE_GEOCODING = Parameter("start_date_geocoding", default=None)
+    DATE_COLUMN_NAME_GEOCODING = Parameter("date_column_name_geocoding", default=None)
 
     api_key = task_get_secret_folder(secret_path="/api-keys")
     secrets = task_get_secret_folder(secret_path="/discord", inject_env=True)
@@ -83,15 +81,15 @@ with Flow(
 
     # Task to get reports from the specified start date
     reports_response = get_reports_from_start_date(
-        start_date=start_date,
+        start_date=START_DATE,
         file_dir=Path("/tmp/pipelines/disque_denuncia/data/raw"),
-        tipo_difusao=tipo_difusao,
-        dataset_id=dataset_id,
-        table_id=table_id,
-        loop_limiter=loop_limiter,
-        mod=mod,
+        tipo_difusao=TIPO_DIFUSAO,
+        dataset_id=DATASET_ID,
+        table_id=TABLE_ID,
+        loop_limiter=LOOP_LIMITER,
+        mod=MOD,
     )
-    reports_response.set_upstream(table_id)
+    reports_response.set_upstream(TABLE_ID)
     # Task to check report quantity
     report_qty_check = check_report_qty(reports_response)
     report_qty_check.set_upstream(reports_response)
@@ -101,28 +99,30 @@ with Flow(
     csv_path_list = loop_transform_report_data(
         source_file_path_list=reports_response["xml_file_path_list"],
         final_file_dir=Path("/tmp/pipelines/disque_denuncia/data/partition_directory"),
-        mod=mod,
+        mod=MOD,
     )
     csv_path_list.set_upstream(report_qty_check)
 
     # Cria a tabela e faz o upload dos dados para o BigQuery
     create_table = create_table_and_upload_to_gcs(
         data_path=Path("/tmp/pipelines/disque_denuncia/data/partition_directory"),
-        dataset_id=dataset_id,
-        table_id=table_id,
-        dump_mode=dump_mode,
-        biglake_table=biglake_table,
+        dataset_id=DATASET_ID,
+        table_id=TABLE_ID,
+        dump_mode=DUMP_MODE,
+        biglake_table=BIGLAKE_TABLE,
     )
     create_table.set_upstream(csv_path_list)
 
-    with case(task=materialize_after_dump, value=True):
+    with case(task=MATERIALIZE_AFTER_DUMP, value=True):
         # Get TEMPLATE flow name
-        materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
+        materialization_flow_name = constants.FLOW_NAME_DBT_TRANSFORM.value
         materialization_labels = task_get_current_flow_run_labels()
         current_flow_project_name = get_current_flow_project_name()
 
         dump_prod_tables_to_materialize_parameters = [
-            {"dataset_id": "disque_denuncia", "table_id": "denuncias", "dbt_alias": False}
+            {
+                "select": TABLE_ID,
+            }
         ]
 
         dump_prod_materialization_flow_runs = create_flow_run.map(
@@ -143,7 +143,7 @@ with Flow(
 
         # Run DBT to create/update "reports_disque_denuncia" table in "integracao_reports" dataset
         # Execute only if "materialize_after_dump" is True
-        with case(task=materialize_reports_dd_after_dump, value=True):
+        with case(task=MATERIALIZE_REPORTS_DD_AFTER_DUMP, value=True):
             reports_dd_tables_to_materialize_parameters = [
                 {
                     "dataset_id": "integracao_reports_staging",
@@ -164,29 +164,24 @@ with Flow(
             reports_dd_materialization_flow_runs.set_upstream(dump_prod_materialization_flow_runs)
 
     # Atualiza coordenadas ausentes usando a API do Google Maps
-    with case(task=georeference_reports, value=True):
+    with case(task=GEOREFERENCE_REPORTS, value=True):
         update_coordinates_task = update_missing_coordinates_in_bigquery(
-            project_id=project_id,
-            dataset_id=dataset_id,
-            table_id=table_id,
-            id_column_name=id_column_name,
-            address_columns_names=address_columns,
-            lat_lon_columns_names=lat_lon_columns,
+            project_id=PROJECT_ID,
+            dataset_id=DATASET_ID,
+            table_id=TABLE_ID,
+            id_column_name=ID_COLUMN_NAME,
+            address_columns_names=ADDRESS_COLUMNS,
+            lat_lon_columns_names=LAT_LON_COLUMNS,
             api_key=api_key["GOOGLE_MAPS_API_KEY"],
-            mode=mode,
+            mode=MODE,
             date_execution=date_execution,
-            start_date=start_date_geocoding,
-            date_column_name=date_column_name_geocoding,
-            timestamp_creation_column_name=timestamp_creation_column_name,
+            start_date=START_DATE_GEOCODING,
+            date_column_name=DATE_COLUMN_NAME_GEOCODING,
+            timestamp_creation_column_name=TIMESTAMP_CREATION_COLUMN_NAME,
         )
         update_coordinates_task.set_upstream(dump_prod_materialization_flow_runs)
 
-extracao_disque_denuncia.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
-extracao_disque_denuncia.run_config = KubernetesRun(
-    image=constants.DOCKER_IMAGE.value,
-    labels=[
-        constants.RJ_CIVITAS_AGENT_LABEL.value,
-    ],
-)
+extracao_disque_denuncia.storage = FLOW_STORAGE
+extracao_disque_denuncia.run_config = FLOW_RUN_CONFIG
 
 extracao_disque_denuncia.schedule = disque_denuncia_etl_minutely_update_schedule

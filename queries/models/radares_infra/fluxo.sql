@@ -20,7 +20,7 @@ WITH new_data AS (
         COUNTIF(velocidade = 0) AS total_velocidade_zero,
         MAX(datahora_captura) AS max_datahora_captura
     FROM
-        {{ source('ocr_radar', 'all_readings') }}
+        {{ ref('vw_readings') }}
     WHERE
         datahora >= '2024-01-01 03:00:00'
         AND datahora_captura >= datahora

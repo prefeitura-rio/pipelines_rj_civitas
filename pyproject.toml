@@ -30,6 +30,8 @@ dspy = "^2.6.27"
 litellm = "^1.73.6"
 pyfarmhash = "^0.4.0"
 aiohappyeyeballs = ">=2.4.0,<2.4.2 || >2.4.2,<2.5.0"
+elementary-data = {extras = ["bigquery"], version = "^0.19.4"}
+gitpython = "^3.1.45"
 
 [tool.poetry.group.dev]
 optional = true
@@ -46,9 +48,9 @@ isort = "^5.12.0"
 optional = true
 
 [tool.poetry.group.ci.dependencies]
-networkx = "^3.1"
 loguru = "^0.7.0"
 typer = "^0.9.0"
+networkx = ">=2.3,<4.0"
 
 [tool.black]
 line-length = 100

@@ -37,3 +37,146 @@ models:
 
       - name: datetime_ultima_atualizacao
         description: "Última atualização no dataset de origem [GMT-3]"
+
+  - name: vw_readings
+    description: |
+      Consolida e normaliza as leituras de placas capturadas pelos radares da CETRIO.
+
+      Filtros aplicados:
+      - Remove leituras onde camera_numero, camera_latitude e camera_longitude são todos nulos/vazios
+      - Remove leituras onde camera_numero contém letras (e.g. 'MGR24100202', são radares que não deveríamos receber dados.)
+      - Aceita apenas placas vazias ('') ou com exatamente 7 caracteres
+      - Exclui erros conhecidos de detecção (e.g. 'P0L1C14')
+
+      Transformações:
+      - Substitui placas vazias por '-------'
+      - Aplica mapeamento de tipos de veículos (tipoveiculo_mapping)
+      - Converte coordenadas para valores negativos (hemisfério sul)
+      - Associa camera_numero ao codcet via tabela de equipamentos
+
+      - Importante: As tabelas que originam essa view são particionadas por 'datahora' (HORA) e clusterizadas por 'placa', portanto, utilize essas colunas para otimizar as consultas.
+
+      Origem: rj-cetrio.ocr_radar.readings_*
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+
+    tests:
+      - dbt_expectations.expect_column_pair_values_A_to_be_greater_than_B:
+          name: test_not_future_datahora
+          column_A: datahora_captura
+          column_B: datahora
+          or_equal: true
+          config:
+            where: "datahora >= '{{ var('start_date') }}'"
+            severity: warn
+          meta:
+            #owner: ["@nicolas.evilasio"]
+            description: "Verifica se datahora não é futura em relação a datahora_captura."
+
+      - dbt_expectations.expect_column_pair_values_A_to_be_greater_than_B:
+          name: test_not_more_than_5_minutes_future_datahora
+          column_A: TIMESTAMP_ADD(datahora_captura, INTERVAL 5 MINUTE)
+          column_B: datahora
+          or_equal: true
+          config:
+            where: "datahora >= '{{ var('start_date') }}'"
+          meta:
+            description: "Verifica se datahora não é mais de 5 minutos no futuro em relação a datahora_captura."
+
+    columns:
+      - name: datahora_captura
+        description: "Timestamp UTC em que a leitura da placa foi recebida, podendo diferir do horário real da leitura da placa (datahora)."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_datahora_captura_not_null
+              where: "datahora >= '{{ var('start_date') }}'"
+              meta:
+                description: "Verifica se datahora_captura não é nula."
+
+
+      - name: placa
+        description: "Placa do veículo. Leituras parciais são exibidas com '-' nas posições onde o radar não conseguiu identificar o caractere."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_placa_not_null
+              where: "datahora >= '{{ var('start_date') }}'"
+              meta:
+                description: "Verifica se placa não é nula."
+          - dbt_expectations.expect_column_values_to_not_be_in_set:
+              name: test_placa_not_empty
+              value_set: ["", "0"]
+              where: "datahora >= '{{ var('start_date') }}'"
+              meta:
+                description: "Verifica se placa não é uma string vazia ou '0'."
+              config:
+                severity: warn
+          #- dbt_expectations.expect_column_values_to_not_be_in_set:
+           #   name: test_placa_not_recognized
+            #  value_set: ["-------"]
+             # where: "datahora >= '{{ var('start_date') }}'"
+              #config:
+               # severity: warn
+          - dbt_expectations.expect_column_values_to_match_regex_list:
+              name: test_placa_brazilian_or_mercosul_pattern
+              regex_list: [
+                  "^[A-Z-]{3}[0-9-]{4}$",     # Padrão antigo + parcial: AAA1111 ou AB-12--
+                  "^[A-Z-]{3}[0-9-][A-Z-][0-9-]{2}$"  # Padrão Mercosul + parcial: AAA1A23 ou A--1-2-
+              ]
+              match_on: any
+              where: "placa IS NOT NULL AND placa NOT IN ('', '-------') AND datahora >= '{{ var('start_date') }}'"
+              is_raw: True
+              flags: i
+              meta:
+                description: "Verifica se placa está no padrão brasileiro ou Mercosul."
+              config:
+                severity: warn
+
+      - name: tipoveiculo
+        description: "Tipo de veículo detectado pelo equipamento [tabela auxiliar em rj-civitas.cerco_digital.tipoveiculo_mapping]."
+
+      - name: velocidade
+        description: "Velocidade do veículo em km/h."
+
+      - name: datahora
+        description: "Timestamp UTC em que a leitura da placa foi realizada pelo equipamento."
+
+      - name: camera_numero
+        description: "Código identificador do equipamento utilizado pela empresa. [Código que a empresa atribui ao equipamento]."
+
+      - name: codcet
+        description: "Código identificador do equipamento utilizado pela CETRIO. Composto por 10 números, sendo os três primeiros números o identificador do contrato, o 9º dígito indica o sentido da via e o 10º dígito indica a faixa de captura."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_codcet_not_null
+              where: "datahora >= '{{ var('start_date') }}'"
+              meta:
+                description: "Verifica se codcet não é nula."
+          - dbt_expectations.expect_column_values_to_not_be_in_set:
+              name: test_codcet_not_empty
+              value_set: ["", "0"]
+              where: "datahora >= '{{ var('start_date') }}'"
+              meta:
+                description: "Verifica se codcet não é uma string vazia ou '0'."
+          - dbt_expectations.expect_column_values_to_match_regex:
+              name: test_codcet_only_numbers
+              regex: "^[0-9]+$"
+              where: "datahora >= '{{ var('start_date') }}'"
+              meta:
+                description: "Verifica se codcet é apenas números."
+
+          - relationships:
+              name: test_codcet_exists_in_equipamento
+              to: source('ocr_radar', 'equipamento')
+              field: codcet
+              where: "datahora >= '{{ var('start_date') }}' AND NOT REGEXP_CONTAINS(camera_numero, r'[a-zA-Z]')"
+              meta:
+                description: "Verifica se codcet existe na tabela de equipamentos."
+
+      - name: camera_latitude
+        description: "Latitude da câmera, em graus decimais."
+
+      - name: camera_longitude
+        description: "Longitude da câmera, em graus decimais."
+
+      - name: empresa
+        description: "Empresa responsável pelo equipamento."

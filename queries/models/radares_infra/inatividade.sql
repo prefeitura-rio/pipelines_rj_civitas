@@ -34,7 +34,7 @@ DATE(MIN(datahora), 'America/Sao_Paulo') AS min_date,
 DATE(MAX(datahora), 'America/Sao_Paulo') AS max_date,
 MAX(datahora_captura) AS max_datahora_captura
 FROM
-{{ source('ocr_radar', 'all_readings') }}
+{{ ref('vw_readings') }}
 WHERE
  datahora > '2024-05-30 03:00:00'
 AND datahora_captura >= datahora
@@ -77,7 +77,7 @@ SELECT
 FROM
  dates d
 JOIN
-{{ source('ocr_radar', 'all_readings') }} r
+{{ ref('vw_readings') }} r
 ON
  d.codcet = r.codcet
 AND d.empresa = r.empresa
@@ -152,7 +152,7 @@ SELECT
  AVG(TIMESTAMP_DIFF(datahora_captura, datahora, SECOND)) AS avg_latency,
  APPROX_QUANTILES(TIMESTAMP_DIFF(datahora_captura, datahora, SECOND), 100)[OFFSET(50)] AS median_latency
 FROM
-{{ source('ocr_radar', 'all_readings') }}
+{{ ref('vw_readings') }}
 WHERE
  datahora_captura >= datahora
 {% if is_incremental() %}
