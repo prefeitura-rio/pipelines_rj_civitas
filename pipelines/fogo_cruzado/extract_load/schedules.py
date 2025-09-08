@@ -26,6 +26,11 @@ fogo_cruzado_daily_clocks = [
 ]
 
 fogo_cruzado_minutely_parameters = {
+    "bigquery_project": "civitas",
+    "dbt_secrets": ["DISCORD_WEBHOOK_URL_DBT-RUNS"],
+    "github_repo": "https://github.com/prefeitura-rio/pipelines_rj_civitas",
+    "send_discord_report": True,
+    "send_discord_alerts": True,
     "start_date": datetime.now(tz=tz).strftime("%Y-%m-%d"),
     "prefix": "PARTIAL_REFRESH_",
     "write_disposition": "WRITE_APPEND",

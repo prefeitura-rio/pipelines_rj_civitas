@@ -31,6 +31,7 @@ newest_data AS (
    {% if is_incremental() %}
      AND timestamp_insercao > (SELECT MAX(timestamp_update) FROM {{ this }})
    {% endif %}
+    AND date <= TIMESTAMP(timestamp_insercao, 'America/Sao_Paulo') -- filter out future data
  ),
  -- Aggregate complementary reasons into an array for each 'id'
 complementary_reasons_agg AS (
