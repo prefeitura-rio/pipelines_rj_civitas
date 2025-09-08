@@ -12,18 +12,19 @@ from prefeitura_rio.pipelines_utils.custom import Flow
 from prefeitura_rio.pipelines_utils.prefect import (  # get_flow_run_mode,
     task_get_current_flow_run_labels,
 )
-from prefeitura_rio.pipelines_utils.state_handlers import (
-    # handler_initialize_sentry,
+from prefeitura_rio.pipelines_utils.state_handlers import (  # handler_initialize_sentry,
     handler_skip_if_running,
 )
-from pipelines.utils.state_handlers import handler_inject_bd_credentials
 from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
 from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE, constants
 from pipelines.integracao_reports_staging.materialize_1746.schedules import (
     integracao_reports_1746_daily_update_schedule,
 )
-from pipelines.utils.state_handlers import handler_notify_on_failure
+from pipelines.utils.state_handlers import (
+    handler_inject_bd_credentials,
+    handler_notify_on_failure,
+)
 from pipelines.utils.tasks import task_get_secret_folder
 
 # Define the Prefect Flow for data extraction and transformation

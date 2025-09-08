@@ -13,13 +13,13 @@ Tasks include:
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Literal, Optional
 
-from prefeitura_rio.pipelines_utils.infisical import get_flow_run_mode
 import requests
 import urllib3
 from google.cloud import bigquery
 from prefect import task
 from prefect.engine.runner import ENDRUN
 from prefect.engine.state import Skipped
+from prefeitura_rio.pipelines_utils.infisical import get_flow_run_mode
 from prefeitura_rio.pipelines_utils.logging import log, log_mod
 from pytz import timezone
 
@@ -546,7 +546,7 @@ def load_to_table(
     environment = get_flow_run_mode()
     if environment in ["dev", "staging"]:
         project_id += "-dev"
-    
+
     log(f"Writing occurrences to {project_id}.{dataset_id}.{table_id}")
     save_data_in_bq(
         project_id=project_id,

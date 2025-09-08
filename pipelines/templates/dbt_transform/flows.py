@@ -30,7 +30,9 @@ with Flow(
     SELECT = Parameter("select", default=None, required=False)
     EXCLUDE = Parameter("exclude", default=None, required=False)
     FLAG = Parameter("flag", default=None, required=False)
-    GITHUB_REPO = Parameter("github_repo", default="https://github.com/prefeitura-rio/pipelines_rj_civitas")
+    GITHUB_REPO = Parameter(
+        "github_repo", default="https://github.com/prefeitura-rio/pipelines_rj_civitas"
+    )
     BIGQUERY_PROJECT = Parameter("bigquery_project", default="civitas")
     DBT_SECRETS = Parameter("dbt_secrets", default=["DISCORD_WEBHOOK_URL_DBT-RUNS"])
     SECRETS_PATH = Parameter("secrets_path", default="/discord")

@@ -303,4 +303,4 @@ def get_target_from_environment():
         "local-staging": "dev",
         "dev": "dev",
     }
-    return converter.get("dev") # TODO: refactor profiles.yml to support different targets
+    return converter.get("dev")  # TODO: refactor profiles.yml to support different targets

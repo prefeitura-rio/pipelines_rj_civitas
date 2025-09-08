@@ -11,14 +11,13 @@ from prefeitura_rio.pipelines_utils.custom import Flow
 from prefeitura_rio.pipelines_utils.prefect import (  # get_flow_run_mode,
     task_get_current_flow_run_labels,
 )
-from prefeitura_rio.pipelines_utils.state_handlers import (
-    # handler_initialize_sentry,
+from prefeitura_rio.pipelines_utils.state_handlers import (  # handler_initialize_sentry,
     handler_skip_if_running,
 )
-from pipelines.utils.state_handlers import handler_inject_bd_credentials
 from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
 from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE, constants
+from pipelines.utils.state_handlers import handler_inject_bd_credentials
 
 # from pipelines.integracao_reports.materialize_reports.schedules import (
 # integracao_reports_minutely_update_schedule,
@@ -65,5 +64,3 @@ materialize_integracao_reports.storage = FLOW_STORAGE
 materialize_integracao_reports.run_config = FLOW_RUN_CONFIG
 
 # materialize_integracao_reports.schedule = integracao_reports_minutely_update_schedule
-
-

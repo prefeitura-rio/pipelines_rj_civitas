@@ -11,18 +11,19 @@ from prefeitura_rio.pipelines_utils.custom import Flow
 from prefeitura_rio.pipelines_utils.prefect import (  # get_flow_run_mode,
     task_get_current_flow_run_labels,
 )
-from prefeitura_rio.pipelines_utils.state_handlers import (
-    # handler_initialize_sentry,
+from prefeitura_rio.pipelines_utils.state_handlers import (  # handler_initialize_sentry,
     handler_skip_if_running,
 )
-from pipelines.utils.state_handlers import handler_inject_bd_credentials
 from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
 from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE, constants
 from pipelines.radares_infra.materialize.schedules import (
     radares_infra_twice_daily_update_schedule,
 )
-from pipelines.utils.state_handlers import handler_notify_on_failure
+from pipelines.utils.state_handlers import (
+    handler_inject_bd_credentials,
+    handler_notify_on_failure,
+)
 from pipelines.utils.tasks import task_get_secret_folder
 
 # Define the Prefect Flow for data extraction and transformation
@@ -39,10 +40,10 @@ with Flow(
     secrets = task_get_secret_folder(secret_path="/discord", inject_env=True)
 
     DATASET_ID = Parameter("dataset_id", default="radares_infra")
-    
+
     materialization_labels = task_get_current_flow_run_labels()
     materialization_flow_name = constants.FLOW_NAME_DBT_TRANSFORM.value
-    
+
     dump_prod_tables_to_materialize_parameters = [
         {
             "select": DATASET_ID,

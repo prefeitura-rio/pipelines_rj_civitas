@@ -4,7 +4,6 @@ Send a discord alert whenever a new occurrence is detected in the Fogo Cruzado.
 """
 from prefect import Parameter
 from prefeitura_rio.pipelines_utils.custom import Flow
-from pipelines.utils.state_handlers import handler_inject_bd_credentials
 
 from pipelines.alertas_discord.fogo_cruzado.tasks import (
     task_check_occurrences_qty,
@@ -15,7 +14,10 @@ from pipelines.alertas_discord.fogo_cruzado.tasks import (
     task_set_config,
 )
 from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE
-from pipelines.utils.state_handlers import handler_notify_on_failure
+from pipelines.utils.state_handlers import (
+    handler_inject_bd_credentials,
+    handler_notify_on_failure,
+)
 from pipelines.utils.tasks import task_get_secret_folder
 
 with Flow(

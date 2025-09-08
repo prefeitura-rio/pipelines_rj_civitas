@@ -12,11 +12,9 @@ from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
 from prefect.utilities.edges import unmapped
 from prefeitura_rio.pipelines_utils.custom import Flow
 from prefeitura_rio.pipelines_utils.prefect import task_get_current_flow_run_labels
-from prefeitura_rio.pipelines_utils.state_handlers import (
-    # handler_initialize_sentry,
+from prefeitura_rio.pipelines_utils.state_handlers import (  # handler_initialize_sentry,
     handler_skip_if_running,
 )
-from pipelines.utils.state_handlers import handler_inject_bd_credentials
 from prefeitura_rio.pipelines_utils.tasks import (  # task_run_dbt_model_task,
     create_table_and_upload_to_gcs,
     get_current_flow_project_name,
@@ -33,7 +31,10 @@ from pipelines.disque_denuncia.extract.tasks import (
     task_get_date_execution,
     update_missing_coordinates_in_bigquery,
 )
-from pipelines.utils.state_handlers import handler_notify_on_failure
+from pipelines.utils.state_handlers import (
+    handler_inject_bd_credentials,
+    handler_notify_on_failure,
+)
 from pipelines.utils.tasks import task_get_secret_folder
 
 # Define the Prefect Flow for data extraction and transformation
