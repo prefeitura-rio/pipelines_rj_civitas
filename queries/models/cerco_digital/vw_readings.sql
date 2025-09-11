@@ -6,7 +6,16 @@
 
 WITH readings AS (
   SELECT
-    *
+    datahora_captura,
+    placa,
+    tipoveiculo,
+    velocidade,
+    datahora,
+    camera_numero,
+    camera_latitude,
+    camera_longitude,
+    empresa,
+    image_url
   FROM
     {{ source('ocr_radar', 'all_readings_raw') }}
     WHERE
@@ -26,16 +35,9 @@ WITH readings AS (
         OR LENGTH(placa) = 7
       )
     )
-  GROUP BY
-    datahora_captura,
-    placa,
-    tipoveiculo,
-    velocidade,
-    datahora,
-    camera_numero,
-    camera_latitude,
-    camera_longitude,
-    empresa
+  QUALIFY (
+    ROW_NUMBER() OVER(PARTITION BY datahora, placa, camera_numero ORDER BY datahora_captura DESC)
+  ) = 1
 ),
 
 normalized_readings AS (

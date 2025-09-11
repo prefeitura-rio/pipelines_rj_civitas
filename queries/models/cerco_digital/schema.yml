@@ -180,3 +180,74 @@ models:
 
       - name: empresa
         description: "Empresa responsável pelo equipamento."
+
+  - name: cameras
+    description: |
+      **Descrição**: Tabela de câmeras do VMS TIXXI.
+      **Frequência de atualização**: Diária
+      **Origem**: API TIXXI
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_camera
+        description: "Código identificador da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: teste_id_camera_not_null
+              meta:
+                description: "Verifica se id_camera não é nulo"
+
+      - name: nome_camera
+        description: "Nome da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: teste_nome_camera_not_null
+              meta:
+                description: "Verifica se nome_camera não é nulo"
+
+      - name: zona_camera
+        description: "Zona da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: teste_zona_camera_not_null
+              meta:
+                description: "Verifica se zona_camera não é nulo"
+
+      - name: latitude
+        description: "Latitude da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: teste_latitude_not_null
+              meta:
+                description: "Verifica se latitude não é nulo"
+
+          - dbt_expectations.expect_column_values_to_be_between:
+              name: teste_latitude_between_minus_90_and_0
+              min_value: -90.0
+              max_value: 0.0
+              meta:
+                description: "Verifica se latitude está entre -90 e 0 [Hemisfério Sul]"
+          
+      - name: longitude
+        description: "Longitude da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: teste_longitude_not_null
+              meta:
+                description: "Verifica se longitude não é nulo"
+
+          - dbt_expectations.expect_column_values_to_be_between:
+              name: teste_longitude_less_than_minus_180
+              min_value: -180.0
+              max_value: 0.0
+              meta:
+                description: "Verifica se longitude está entre -180 e 0 [Hemisfério Sul]"
+
+      - name: streaming_url
+        description: "URL de streaming ao vivo da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: teste_streaming_url_not_null
+              meta:
+                description: "Verifica"
+    

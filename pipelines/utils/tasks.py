@@ -51,3 +51,5 @@ def task_get_secret_folder(
         inject_env_vars(secrets)
 
     return secrets
+
+
