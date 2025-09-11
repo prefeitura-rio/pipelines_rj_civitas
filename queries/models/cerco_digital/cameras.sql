@@ -14,16 +14,16 @@ WITH base_cte AS (
     REPLACE(REPLACE(TRIM(Streamming), 'app', 'dev'), 'outvideo', 'outvideo3') AS streaming_url
   FROM {{ source('stg_cerco_digital', 'cameras') }}
 )
-SELECT 
+SELECT
   id_camera,
   nome_camera,
   zona_camera,
-  CASE 
+  CASE
     WHEN id_camera = '005859' THEN latitude / 10000 ELSE latitude
   END AS latitude,
-  CASE 
+  CASE
     WHEN id_camera = '005859' THEN longitude / 10000 ELSE longitude
   END AS longitude,
   streaming_url
-FROM 
+FROM
   base_cte

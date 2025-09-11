@@ -14,10 +14,7 @@ from pipelines.constants import constants
 tz = pytz.timezone("America/Sao_Paulo")
 
 
-parameters = {
-    "dataset_id": "cerco_digital",
-    "table_id": "cameras"
-}
+parameters = {"dataset_id": "cerco_digital", "table_id": "cameras"}
 daily_schedule = [
     IntervalClock(
         interval=timedelta(hours=24),
@@ -25,10 +22,8 @@ daily_schedule = [
         labels=[
             constants.RJ_CIVITAS_AGENT_LABEL.value,
         ],
-        parameter_defaults=parameters
+        parameter_defaults=parameters,
     )
 ]
 
-cerco_digital_cameras_schedule = Schedule(
-    clocks=daily_schedule
-)
+cerco_digital_cameras_schedule = Schedule(clocks=daily_schedule)
