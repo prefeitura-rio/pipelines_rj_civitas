@@ -212,7 +212,8 @@ def fetch_occurrences(
         If unable to fetch data or authenticate
     """
 
-    token = get_valid_token(email=email, password=password, redis_password=redis_password)
+    # token = get_valid_token(email=email, password=password, redis_password=redis_password)
+    token = "teste"
 
     log(msg="Fetching data...", level="info")
     occurrences = get_occurrences(token=token, initial_date=initial_date, take=take)

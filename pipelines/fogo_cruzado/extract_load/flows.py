@@ -225,6 +225,7 @@ with Flow(
             )
             reports_fc_materialization_flow_runs.set_upstream(update_max_document_number_on_redis)
 
+extracao_fogo_cruzado.set_reference_tasks([occurrences_reponse])
 extracao_fogo_cruzado.storage = FLOW_STORAGE
 extracao_fogo_cruzado.run_config = FLOW_RUN_CONFIG
 
