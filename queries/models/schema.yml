@@ -1,6 +1,12 @@
 version: 2
 
 sources:
+  - name: stg_cerco_digital
+    database: rj-civitas
+    schema: cerco_digital_staging
+    tables:
+      - name: cameras
+
   - name: stg_disque_denuncia
     database: rj-civitas
     schema: disque_denuncia_staging
