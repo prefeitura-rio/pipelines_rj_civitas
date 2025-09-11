@@ -227,7 +227,7 @@ models:
               max_value: 0.0
               meta:
                 description: "Verifica se latitude está entre -90 e 0 [Hemisfério Sul]"
-          
+
       - name: longitude
         description: "Longitude da câmera."
         tests:
@@ -250,4 +250,3 @@ models:
               name: teste_streaming_url_not_null
               meta:
                 description: "Verifica"
-    

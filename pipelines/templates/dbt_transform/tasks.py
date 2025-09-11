@@ -266,7 +266,9 @@ def create_dbt_report(
 
     # Fail the flow if DBT execution was not successful
     if not fully_successful:
-        raise FAIL(f"DBT execution failed. Check the logs for details. Failed models: {', '.join(failed_models)}")
+        raise FAIL(
+            f"DBT execution failed. Check the logs for details. Failed models: {', '.join(failed_models)}"
+        )
 
 
 @task

@@ -18,10 +18,10 @@ SELECT
   id_camera,
   nome_camera,
   zona_camera,
-  CASE 
+  CASE
     WHEN id_camera = '005859' AND latitude < -90 THEN latitude / 10000 ELSE latitude
   END AS latitude,
-  CASE 
+  CASE
     WHEN id_camera = '005859' AND longitude < -180 THEN longitude / 10000 ELSE longitude
   END AS longitude,
   streaming_url
