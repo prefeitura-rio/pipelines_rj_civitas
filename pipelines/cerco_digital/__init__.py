@@ -4,6 +4,6 @@ This module imports functions and classes from the 'pipelines.cerco_digital.extr
 module.
 """
 
+from pipelines.cerco_digital.cameras.flows import *  # noqa
 from pipelines.cerco_digital.extract_load.flows import *  # noqa
 from pipelines.cerco_digital.readings.flows import *  # noqa
-from pipelines.cerco_digital.cameras.flows import *  # noqa
