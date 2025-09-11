@@ -11,19 +11,15 @@ from prefeitura_rio.pipelines_utils.prefect import (
     task_get_current_flow_run_labels,
     task_rename_current_flow_run_dataset_table,
 )
-from prefeitura_rio.pipelines_utils.state_handlers import (
-    handler_skip_if_running,
-)
+from prefeitura_rio.pipelines_utils.state_handlers import handler_skip_if_running
 from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
-from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE, constants
-from pipelines.cerco_digital.cameras.schedules import (
-    cerco_digital_cameras_schedule,
-)
+from pipelines.cerco_digital.cameras.schedules import cerco_digital_cameras_schedule
 from pipelines.cerco_digital.cameras.tasks import (
+    create_table_and_upload_to_gcs,
     get_cameras,
-    create_table_and_upload_to_gcs
 )
+from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE, constants
 from pipelines.utils.state_handlers import (
     handler_inject_bd_credentials,
     handler_notify_on_failure,
@@ -68,10 +64,9 @@ with Flow(
         table_id=TABLE_ID,
         dump_mode=DUMP_MODE,
         biglake_table=BIGLAKE_TABLE,
-        
     )
     upload_raw_data.set_upstream(cameras)
-    
+
     #####################################
     # TRANSFORM
     #####################################
@@ -104,7 +99,7 @@ with Flow(
         stream_logs=unmapped(True),
         raise_final_state=unmapped(True),
     )
-    
+
 
 elt_cerco_digital_cameras.storage = FLOW_STORAGE
 elt_cerco_digital_cameras.run_config = FLOW_RUN_CONFIG
