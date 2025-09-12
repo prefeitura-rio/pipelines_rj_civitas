@@ -10,9 +10,11 @@ Tasks include:
 """
 
 
+import asyncio
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Literal, Optional
 
+import aiohttp
 import requests
 import urllib3
 from google.cloud import bigquery
@@ -102,38 +104,18 @@ def get_valid_token(email: str, password: str, redis_password: str) -> str:
         raise
 
 
-def get_occurrences(
+async def get_occurrences(
     token: str,
     initial_date: Optional[str] = None,
-    take: int = 100,
+    take: int = 200,
     id_state: str = "b112ffbe-17b3-4ad0-8f2a-2038745d1d14",
     id_city: str = "d1bf56cc-6d85-4e6a-a5f5-0ab3f4074be3",
+    max_concurrent: int = 5,
+    delay_between_requests: float = 5,
 ) -> List[Dict]:
     """
-    Fetches occurrences from the Fogo Cruzado API.
-
-    Parameters
-    ----------
-    token : str
-        The access token to use for authentication.
-    initial_date : str
-        The initial date to fetch occurrences from.
-    take : int, optional
-        The number of occurrences to fetch per page. Defaults to 1000.
-    id_state : str, optional
-        The ID of the state to fetch occurrences from.
-        Defaults to "b112ffbe-17b3-4ad0-8f2a-2038745d1d14" [Rio de Janeiro - Brazil]
-    id_city : str, optional
-        The ID of the citie to fetch occurrences from.
-        Defaults to "d1bf56cc-6d85-4e6a-a5f5-0ab3f4074be3" [Rio de Janeiro, RJ - Brazil]
-
-    Returns
-    -------
-    List
-        A list of dictionaries containing the occurrence data.
+    Fetches occurrences from the Fogo Cruzado API asynchronously with rate limiting.
     """
-    occurrences = []
-
     # Associate parameters names with values
     params_dict = {
         "initialdate": initial_date,
@@ -148,27 +130,103 @@ def get_occurrences(
     headers = {"Authorization": f"Bearer {token}"}
     base_url = "https://api-service.fogocruzado.org.br/api/v2/occurrences?page={page}"
 
-    # First request to get the total page number
-    initial_url = base_url.format(page=1)
-    log(msg="Loop 0: Getting data from API.", level="info")
-    response = requests.get(initial_url, headers=headers, params=params, verify=False)
-    response.raise_for_status()
-    initial_data = response.json()
-    total_pages = initial_data["pageMeta"]["pageCount"]
-    occurrences.extend(initial_data["data"])
+    async with aiohttp.ClientSession() as session:
+        # First request to get the total page number
+        initial_url = base_url.format(page=1)
+        log("Getting total pages from API...", level="info")
 
-    # Request next pages
-    for page in range(2, total_pages + 1):
-        url = base_url.format(page=page)
-        log_mod(msg=f"Loop {page}: Getting data from API.", level="info", index=page, mod=10)
-        response = requests.get(url, headers=headers, params=params, verify=False)
-        response.raise_for_status()
-        data = response.json()
-        occurrences.extend(data["data"])
+        async with session.get(initial_url, headers=headers, params=params, ssl=False) as response:
+            if response.status == 429:
+                log("Rate limited on first request. Waiting 5 seconds...", level="info")
+                await asyncio.sleep(5)
+                async with session.get(
+                    initial_url, headers=headers, params=params, ssl=False
+                ) as response:
+                    response.raise_for_status()
+                    initial_data = await response.json()
+            else:
+                response.raise_for_status()
+                initial_data = await response.json()
 
-    log(msg="Data collected from API successfully.", level="info")
+            total_pages = initial_data["pageMeta"]["pageCount"]
+            occurrences = initial_data["data"]
 
-    return occurrences
+        log(f"Total pages to fetch: {total_pages}", level="info")
+
+        # Create semaphore to limit concurrent requests
+        semaphore = asyncio.Semaphore(max_concurrent)
+
+        async def fetch_page_with_retry(session, page, retries=3):
+            async with semaphore:  # Limit concurrent requests
+                for attempt in range(retries):
+                    try:
+                        url = base_url.format(page=page)
+                        async with session.get(
+                            url, headers=headers, params=params, ssl=False
+                        ) as response:
+                            if response.status == 429:
+                                wait_time = 2**attempt  # Exponential backoff
+                                log(
+                                    f"Rate limited on page {page}, attempt {attempt + 1}. Waiting {wait_time}s...",
+                                    level="info",
+                                )
+                                await asyncio.sleep(wait_time)
+                                continue
+
+                            response.raise_for_status()
+                            data = await response.json()
+
+                            # Add delay between requests
+                            if delay_between_requests > 0:
+                                await asyncio.sleep(delay_between_requests)
+
+                            log_mod(
+                                f"Page {page} fetched successfully.",
+                                level="info",
+                                index=page,
+                                mod=10,
+                            )
+                            return data["data"]
+
+                    except Exception as e:
+                        if attempt == retries - 1:
+                            log(
+                                f"Failed to fetch page {page} after {retries} attempts: {e}",
+                                level="error",
+                            )
+                            return []
+                        log(f"Error on page {page}, attempt {attempt + 1}: {e}", level="warn")
+                        await asyncio.sleep(2**attempt)
+
+        # Execute requests with controlled concurrency
+        tasks = [fetch_page_with_retry(session, page) for page in range(2, total_pages + 1)]
+        log(
+            f"Fetching {len(tasks)} pages with max {max_concurrent} concurrent requests...",
+            level="info",
+        )
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Check if there were failures
+        failed_pages = []
+        successful_pages = 0
+
+        for i, page_data in enumerate(results):
+            page_num = i + 2  # +2 because we started from page 2
+            if isinstance(page_data, list):
+                occurrences.extend(page_data)
+                successful_pages += 1
+            else:
+                failed_pages.append((page_num, str(page_data)))
+
+        # If there were failures, raise an exception
+        if failed_pages:
+            error_msg = f"Failed to fetch {len(failed_pages)} pages after retries: {failed_pages}"
+            log(f"ERROR: {error_msg}", level="error")
+            raise Exception(error_msg)
+
+        log(f"Data collected from API successfully. {successful_pages} pages loaded.", level="info")
+        return occurrences
 
 
 @task(max_retries=5, retry_delay=timedelta(seconds=30))
@@ -211,12 +269,16 @@ def fetch_occurrences(
     Exception
         If unable to fetch data or authenticate
     """
-
-    # token = get_valid_token(email=email, password=password, redis_password=redis_password)
-    token = "teste"
+    token = get_valid_token(email=email, password=password, redis_password=redis_password)
 
     log(msg="Fetching data...", level="info")
-    occurrences = get_occurrences(token=token, initial_date=initial_date, take=take)
+    occurrences = asyncio.run(
+        get_occurrences(
+            token=token,
+            initial_date=initial_date,
+            take=take,
+        )
+    )
 
     # Convert latitude and longitude to float
     for row in occurrences:

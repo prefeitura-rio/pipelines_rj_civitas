@@ -194,9 +194,7 @@ def create_dbt_report(
 
     # Sort and log the general report
     general_report = sorted(general_report, reverse=True)
-    general_report = "**Resumo**:\n" + "  \n".join(
-        general_report
-    )  # TODO :  * 5 para testar msg maior
+    general_report = "**Resumo**:\n" + "  \n".join(general_report)
     log(general_report)
 
     # Get Parameters
