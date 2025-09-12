@@ -3,7 +3,7 @@
 This module defines a Prefect workflow for extracting and transforming data.....
 """
 
-from prefect import Parameter, case
+from prefect import Parameter
 from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
 from prefect.utilities.edges import unmapped
 from prefeitura_rio.pipelines_utils.custom import Flow
@@ -19,7 +19,7 @@ from pipelines.cerco_digital.cameras.tasks import (
     create_table_and_upload_to_gcs,
     get_cameras,
 )
-from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE, constants
+from pipelines.constants import constants  # FLOW_RUN_CONFIG,; FLOW_STORAGE,
 from pipelines.utils.state_handlers import (
     handler_inject_bd_credentials,
     handler_notify_on_failure,
@@ -101,7 +101,15 @@ with Flow(
     )
 
 
-elt_cerco_digital_cameras.storage = FLOW_STORAGE
-elt_cerco_digital_cameras.run_config = FLOW_RUN_CONFIG
+# elt_cerco_digital_cameras.storage = FLOW_STORAGE
+# elt_cerco_digital_cameras.run_config = FLOW_RUN_CONFIG
+from prefect.run_configs import KubernetesRun
+from prefect.storage import GCS
+
+elt_cerco_digital_cameras.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
+elt_cerco_digital_cameras.run_config = KubernetesRun(
+    image=constants.DOCKER_IMAGE.value,
+    labels=[constants.RJ_CIVITAS_AGENT_LABEL.value],
+)
 
 elt_cerco_digital_cameras.schedule = cerco_digital_cameras_schedule

@@ -4,7 +4,7 @@ from prefect import Parameter, case
 from prefeitura_rio.pipelines_utils.custom import Flow
 from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
-from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE, constants
+from pipelines.constants import constants  # FLOW_RUN_CONFIG,; FLOW_STORAGE,
 from pipelines.templates.dbt_transform.tasks import (
     add_dbt_secrets_to_env,
     create_dbt_report,
@@ -83,7 +83,16 @@ with Flow(
         create_dbt_report_task.set_upstream([secrets, running_results, GITHUB_REPO])
 
 
-templates__dbt_transform__flow.storage = FLOW_STORAGE
-templates__dbt_transform__flow.run_config = FLOW_RUN_CONFIG
+# templates__dbt_transform__flow.storage = FLOW_STORAGE
+# templates__dbt_transform__flow.run_config = FLOW_RUN_CONFIG
 
 # templates__dbt_transform__flow.schedule = dbt_transform_update_schedule
+
+from prefect.run_configs import KubernetesRun
+from prefect.storage import GCS
+
+templates__dbt_transform__flow.storage = GCS(constants.GCS_FLOWS_BUCKET.value)
+templates__dbt_transform__flow.run_config = KubernetesRun(
+    image=constants.DOCKER_IMAGE.value,
+    labels=[constants.RJ_CIVITAS_AGENT_LABEL.value],
+)
