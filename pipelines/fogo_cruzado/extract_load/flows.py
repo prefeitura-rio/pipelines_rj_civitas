@@ -11,23 +11,14 @@ from prefeitura_rio.pipelines_utils.prefect import (
     task_get_current_flow_run_labels,
     task_rename_current_flow_run_dataset_table,
 )
-from prefeitura_rio.pipelines_utils.state_handlers import (  # handler_initialize_sentry,
-    handler_skip_if_running,
-)
+from prefeitura_rio.pipelines_utils.state_handlers import handler_skip_if_running
 from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
 from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE, constants
 from pipelines.fogo_cruzado.extract_load.schedules import (
     fogo_cruzado_etl_update_schedule,
 )
-from pipelines.fogo_cruzado.extract_load.tasks import (
-    check_report_qty,
-    fetch_occurrences,
-    get_current_timestamp,
-    load_to_table,
-    task_check_max_document_number,
-    task_update_max_document_number_on_redis,
-)
+from pipelines.fogo_cruzado.extract_load.tasks import fetch_occurrences, load_to_table
 from pipelines.utils.state_handlers import (
     handler_inject_bd_credentials,
     handler_notify_on_failure,
@@ -39,7 +30,6 @@ with Flow(
     name="CIVITAS: Fogo Cruzado - Extração e Carga",
     state_handlers=[
         handler_inject_bd_credentials,
-        # handler_initialize_sentry,
         handler_skip_if_running,
         handler_notify_on_failure,
     ],
@@ -56,17 +46,11 @@ with Flow(
 
     # Flow
     RENAME_FLOW = Parameter("rename_flow", default=True)
-    SEND_DISCORD_ALERTS = Parameter(
-        "send_discord_alerts", default=True
-    )  # TODO: remove this parameter
     SEND_DISCORD_REPORT = Parameter("send_discord_report", default=True)
 
     # DBT
-    COMMAND = Parameter("command", default=None)
-    SELECT = Parameter("select", default=None)
     GITHUB_REPO = Parameter("github_repo", default=None)
     BIGQUERY_PROJECT = Parameter("bigquery_project", default=None)
-    DBT_SECRETS = Parameter("dbt_secrets", default=[])
 
     # Tables
     PROJECT_ID = Parameter("project_id", default="rj-civitas")
@@ -102,23 +86,7 @@ with Flow(
         table_id=TABLE_ID,
         redis_password=REDIS_PASSWORD["REDIS_PASSWORD"],
     )
-
-    # Task to check report quantity
-    report_qty_check = check_report_qty(task_response=occurrences_reponse)
-    report_qty_check.set_upstream(occurrences_reponse)
-
-    # Task to check if there are any new occurrences
-    max_document_number_check = task_check_max_document_number(
-        occurrences=occurrences_reponse,
-        dataset_id=DATASET_ID,
-        table_id=TABLE_ID,
-        prefix=PREFIX,
-        redis_password=REDIS_PASSWORD["REDIS_PASSWORD"],
-    )
-    max_document_number_check.set_upstream(report_qty_check)
-
-    start_timestamp = get_current_timestamp()
-    start_timestamp.set_upstream(max_document_number_check)
+    occurrences_reponse.set_upstream([SECRETS, REDIS_PASSWORD, DISCORD_SECRETS])
 
     #####################################
     # LOAD RAW DATA
@@ -132,7 +100,7 @@ with Flow(
         write_disposition=WRITE_DISPOSITION,
     )
 
-    load_to_table_response.set_upstream(start_timestamp)
+    load_to_table_response.set_upstream(occurrences_reponse)
 
     #####################################
     # MATERIALIZE DATA
@@ -152,7 +120,6 @@ with Flow(
                 "select": DATASET_ID,
                 "github_repo": GITHUB_REPO,
                 "bigquery_project": BIGQUERY_PROJECT,
-                "dbt_secrets": DBT_SECRETS,
             },
         ]
 
@@ -171,34 +138,6 @@ with Flow(
             raise_final_state=unmapped(True),
         )
 
-        update_max_document_number_on_redis = task_update_max_document_number_on_redis(
-            new_document_number=max_document_number_check,
-            dataset_id=DATASET_ID,
-            table_id=TABLE_ID,
-            redis_password=REDIS_PASSWORD["REDIS_PASSWORD"],
-        )
-        update_max_document_number_on_redis.set_upstream(materialization_wait_for_flow_run)
-
-        #####################################
-        # SEND DISCORD ALERTS FOR RECENT OCCURRENCES
-        #####################################
-
-        with case(task=SEND_DISCORD_ALERTS, value=True):
-            alerta_discord_parameters = [
-                {
-                    "start_datetime": start_timestamp,
-                    "reasons": ["disputa"],
-                }
-            ]
-
-            alerta_discord_flow_runs = create_flow_run.map(
-                flow_name=unmapped("CIVITAS: ALERTA DISCORD - Fogo Cruzado"),
-                project_name=unmapped(current_flow_project_name),
-                parameters=alerta_discord_parameters,
-                labels=unmapped(materialization_labels),
-            )
-            alerta_discord_flow_runs.set_upstream(update_max_document_number_on_redis)
-
         #####################################
         # MATERIALIZE REPORTS FOGO CRUZADO
         #####################################
@@ -213,7 +152,6 @@ with Flow(
                     "select": "integracao_reports_staging.reports_fogo_cruzado",
                     "github_repo": GITHUB_REPO,
                     "bigquery_project": BIGQUERY_PROJECT,
-                    "dbt_secrets": DBT_SECRETS,
                 },
             ]
 
@@ -223,7 +161,7 @@ with Flow(
                 parameters=materialization_parameters,
                 labels=unmapped(materialization_labels),
             )
-            reports_fc_materialization_flow_runs.set_upstream(update_max_document_number_on_redis)
+            reports_fc_materialization_flow_runs.set_upstream(materialization_wait_for_flow_run)
 
 extracao_fogo_cruzado.set_reference_tasks([occurrences_reponse])
 extracao_fogo_cruzado.storage = FLOW_STORAGE
