@@ -13,8 +13,8 @@ from prefeitura_rio.pipelines_utils.state_handlers import (  # handler_initializ
 )
 from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
-from pipelines.cerco_digital.extract_load.schedules import (
-    licenciamento_veiculos_daily_update_schedule,
+from pipelines.cerco_digital.auxiliary_tables.schedules import (
+    auxiliary_tables_daily_update_schedule,
 )
 from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE, constants
 from pipelines.utils.state_handlers import (
@@ -25,27 +25,27 @@ from pipelines.utils.tasks import task_get_secret_folder
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
-    name="CIVITAS: cerco digital - Materialização dos dados de licenciamento de veículos",
+    name="CIVITAS: cerco digital - Materialização das tabelas auxiliares",
     state_handlers=[
         handler_inject_bd_credentials,
         # handler_initialize_sentry,
         handler_skip_if_running,
         handler_notify_on_failure,
     ],
-) as materialize_licenciamento_veiculos:
+) as materialize_auxiliary_tables:
 
     SECRETS = task_get_secret_folder(secret_path="/discord", inject_env=True)
 
     DATASET_ID = Parameter("dataset_id", default="cerco_digital")
-    TABLE_ID = Parameter("table_id", default="licenciamento_veiculos")
-    DBT_ALIAS = Parameter("dbt_alias", default=False)
+    EXCLUDE = Parameter("exclude", default="vw_readings")
 
     materialization_flow_name = constants.FLOW_NAME_DBT_TRANSFORM.value
     materialization_labels = task_get_current_flow_run_labels()
 
     dump_prod_tables_to_materialize_parameters = [
         {
-            "select": TABLE_ID,
+            "select": DATASET_ID,
+            "exclude": EXCLUDE,
         }
     ]
     current_flow_project_name = get_current_flow_project_name()
@@ -64,7 +64,7 @@ with Flow(
         raise_final_state=unmapped(True),
     )
 
-materialize_licenciamento_veiculos.storage = FLOW_STORAGE
-materialize_licenciamento_veiculos.run_config = FLOW_RUN_CONFIG
+materialize_auxiliary_tables.storage = FLOW_STORAGE
+materialize_auxiliary_tables.run_config = FLOW_RUN_CONFIG
 
-materialize_licenciamento_veiculos.schedule = licenciamento_veiculos_daily_update_schedule
+materialize_auxiliary_tables.schedule = auxiliary_tables_daily_update_schedule

@@ -5,7 +5,7 @@ models:
     description: |
       **Descrição**: Tabela histórica de dados cadastrais dos veículos que operam o sistema de transporte rodoviário, considerando tanto os licenciados no Sistema de Transporte Urbano (STU) quanto as solicitações válidas em andamento para ingresso no sistema
       **Frequência de atualização**: Diária
-      **Origem**: rj-smtr.veiculo.licenciamento
+      **Origem**: rj-smtr.veiculo.licenciamento e rj-smtr.cadastro.veiculo_licenciamento_dia
       **Publicado por**: Nicolas Evilasio
       **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
     columns:
@@ -250,3 +250,122 @@ models:
               name: teste_streaming_url_not_null
               meta:
                 description: "Verifica"
+
+  - name: radares_cameras_proximas
+    description: |
+      **Descrição**: Tabela que relaciona os radares com as câmeras mais próximas.
+      **Frequência de atualização**: Diária
+      **Origem**: rj-cetrio.ocr_radar.radar_cameras_proximas
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - codcet
+            - id_camera
+
+    columns:
+      - name: codcet
+        description: "Código identificador do radar."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_codcet_not_null
+              meta:
+                description: "Verifica se codcet não é nulo"
+
+      - name: local
+        description: "Local do radar."
+
+      - name: bairro
+        description: "Bairro do radar."
+
+      - name: latitude_radar
+        description: "Latitude do radar."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_latitude_radar_not_null
+              meta:
+                description: "Verifica se latitude_radar não é nulo"
+
+      - name: longitude_radar
+        description: "Longitude do radar."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_longitude_radar_not_null
+              meta:
+                description: "Verifica se longitude_radar não é nulo"
+
+      - name: id_camera
+        description: "Código identificador da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_id_camera_not_null
+              meta:
+                description: "Verifica se id_camera não é nulo"
+
+      - name: nome_camera
+        description: "Nome da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_nome_camera_not_null
+              meta:
+                description: "Verifica se nome_camera não é nulo"
+
+      - name: streaming_url
+        description: "URL de streaming da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_streaming_url_not_null
+              meta:
+                description: "Verifica se streaming_url não é nulo"
+
+      - name: latitude
+        description: "Latitude da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_latitude_not_null
+              meta:
+                description: "Verifica se latitude não é nulo"
+
+      - name: longitude
+        description: "Longitude da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_longitude_not_null
+              meta:
+                description: "Verifica se longitude não é nulo"
+
+      - name: distance
+        description: "Distância entre o radar e a câmera."
+
+      - name: rank
+        description: "Rank da câmera."
+
+  - name: equipamento_codcet_camera_numero
+    description: |
+      **Descrição**: Tabela que relaciona os códigos de equipamento com os números de câmera.
+      **Frequência de atualização**: Diária
+      **Origem**: rj-cetrio.ocr_radar_staging.equipamento_codcet_to_camera_numero
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - codcet
+            - camera_numero
+    columns:
+      - name: codcet
+        description: "Código identificador do equipamento."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_codcet_not_null
+              meta:
+                description: "Verifica se codcet não é nulo"
+
+      - name: camera_numero
+        description: "Número da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: test_camera_numero_not_null
+              meta:
+                description: "Verifica se camera_numero não é nulo"
