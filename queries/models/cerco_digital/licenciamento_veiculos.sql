@@ -1,15 +1,15 @@
 {{
     config(
-        materialized='incremental',
+        materialized='table',
         partition_by={
             "field": "datetime_ultima_atualizacao",
             "data_type": "datetime",
             "granularity": "day",
-        }
+        },
+        unique_key = ['placa']
     )
 }}
--- CTE base
-WITH base_query AS (
+WITH all_data AS (
   SELECT
     modo,
     ano_fabricacao,
@@ -18,19 +18,33 @@ WITH base_query AS (
     placa,
     tipo_combustivel,
     tipo_veiculo,
-    datetime_ultima_atualizacao,
-    ROW_NUMBER() OVER(PARTITION BY placa ORDER BY datetime_ultima_atualizacao DESC) rn
-  FROM
-    {{ source('smtr_veiculo', 'licenciamento') }}
+    datetime_ultima_atualizacao
+  FROM {{ source('smtr_veiculo_old', 'licenciamento') }}
 
-  {% if is_incremental() %}
-  WHERE
-    datetime_ultima_atualizacao > (SELECT MAX(datetime_ultima_atualizacao) FROM {{ this }})
-    OR placa NOT IN (SELECT DISTINCT placa FROM {{ this }})
-  {% endif %}
-  QUALIFY rn = 1
+  UNION ALL
+
+  SELECT
+    modo,
+    ano_fabricacao,
+    carroceria,
+    nome_chassi,
+    placa,
+    tipo_combustivel,
+    tipo_veiculo,
+    datetime_ultima_atualizacao
+  FROM {{ source('smtr_veiculo', 'veiculo_licenciamento_dia') }}
 )
 SELECT
-  * EXCEPT(rn)
-FROM
-  base_query
+  modo,
+  ano_fabricacao,
+  carroceria,
+  nome_chassi,
+  placa,
+  tipo_combustivel,
+  tipo_veiculo,
+  datetime_ultima_atualizacao
+FROM all_data
+QUALIFY ROW_NUMBER() OVER (
+  PARTITION BY placa
+  ORDER BY datetime_ultima_atualizacao DESC
+) = 1

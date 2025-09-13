@@ -153,8 +153,14 @@ sources:
       - name: twitter_messages
       - name: twitter_chats
 
-  - name: smtr_veiculo
+  - name: smtr_veiculo_old
     database: rj-smtr
     schema: veiculo
     tables:
       - name: licenciamento
+
+  - name: smtr_veiculo
+    database: rj-smtr
+    schema: cadastro
+    tables:
+      - name: veiculo_licenciamento_dia

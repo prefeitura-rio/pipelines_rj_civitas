@@ -5,7 +5,7 @@ models:
     description: |
       **Descrição**: Tabela histórica de dados cadastrais dos veículos que operam o sistema de transporte rodoviário, considerando tanto os licenciados no Sistema de Transporte Urbano (STU) quanto as solicitações válidas em andamento para ingresso no sistema
       **Frequência de atualização**: Diária
-      **Origem**: rj-smtr.veiculo.licenciamento
+      **Origem**: rj-smtr.veiculo.licenciamento e rj-smtr.cadastro.veiculo_licenciamento_dia
       **Publicado por**: Nicolas Evilasio
       **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
     columns:
