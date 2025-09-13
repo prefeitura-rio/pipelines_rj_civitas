@@ -8,17 +8,19 @@ from datetime import datetime, timedelta
 import pytz
 from prefect.schedules import Schedule
 from prefect.schedules.clocks import IntervalClock
+from prefeitura_rio.pipelines_utils.io import untuple_clocks as untuple
 
 from pipelines.constants import constants
 
-tz = pytz.timezone("America/Sao_Paulo")
+parameters = {
+    "dataset_id": "cerco_digital",
+    "exclude": "vw_readings",
+}
 
-
-parameters = {"dataset_id": "cerco_digital", "table_id": "cameras"}
-daily_schedule = [
+auxiliary_tables_daily_clocks = [
     IntervalClock(
         interval=timedelta(hours=24),
-        start_date=datetime(2024, 9, 7, 0, 0, tzinfo=tz),
+        start_date=datetime(2024, 8, 30, 0, 0, tzinfo=pytz.timezone("America/Sao_Paulo")),
         labels=[
             constants.RJ_CIVITAS_AGENT_LABEL.value,
         ],
@@ -26,4 +28,4 @@ daily_schedule = [
     )
 ]
 
-cerco_digital_cameras_schedule = Schedule(clocks=daily_schedule)
+auxiliary_tables_daily_update_schedule = Schedule(clocks=untuple(auxiliary_tables_daily_clocks))

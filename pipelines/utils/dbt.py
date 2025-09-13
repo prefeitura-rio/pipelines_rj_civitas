@@ -339,7 +339,7 @@ class RunResultSummarizer:
             if column_name:
                 info_parts.append(f"   **Coluna:** `{column_name}`  \n")
         else:
-            info_parts.append(f"\n   **Tabela:** `Tabela não disponível`  \n")
+            info_parts.append("\n   **Tabela:** `Tabela não disponível`  \n")
 
         description = getattr(result.node, "meta", {}).get("description")
         if description:

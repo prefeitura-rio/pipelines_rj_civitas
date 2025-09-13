@@ -17,6 +17,7 @@ from pipelines.utils.state_handlers import (
     handler_inject_bd_credentials,
     handler_notify_on_failure,
 )
+from pipelines.utils.tasks import task_get_secret_folder
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
@@ -27,6 +28,8 @@ with Flow(
         handler_notify_on_failure,
     ],
 ) as materialize_readings:
+
+    DISCORD_SECRETS = task_get_secret_folder(secret_path="/discord", inject_env=True)
 
     #####################################
     # Parameters

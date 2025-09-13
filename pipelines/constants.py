@@ -2,7 +2,6 @@
 import os
 from enum import Enum
 
-from prefect.executors import LocalExecutor
 from prefect.run_configs import KubernetesRun, LocalRun
 from prefect.storage import GCS, Local
 
