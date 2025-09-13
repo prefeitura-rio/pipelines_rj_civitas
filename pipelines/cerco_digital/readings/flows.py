@@ -11,7 +11,6 @@ from prefeitura_rio.pipelines_utils.prefect import task_get_current_flow_run_lab
 from prefeitura_rio.pipelines_utils.state_handlers import handler_skip_if_running
 from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
 
-from pipelines import constants
 from pipelines.cerco_digital.readings.schedules import readings_schedule
 from pipelines.constants import FLOW_RUN_CONFIG, FLOW_STORAGE, constants
 from pipelines.utils.state_handlers import (
@@ -24,7 +23,6 @@ with Flow(
     name="CIVITAS: cerco digital - Materialização da view de leituras de placas",
     state_handlers=[
         handler_inject_bd_credentials,
-        # handler_initialize_sentry,
         handler_skip_if_running,
         handler_notify_on_failure,
     ],
@@ -36,6 +34,7 @@ with Flow(
 
     # DBT
     SELECT = Parameter("select", default=None)
+    VARS = Parameter("vars", default=None)
 
     materialization_labels = task_get_current_flow_run_labels()
     materialization_flow_name = constants.FLOW_NAME_DBT_TRANSFORM.value
@@ -43,6 +42,7 @@ with Flow(
     materialization_parameters = [
         {
             "select": SELECT,
+            "vars": VARS,
         },
     ]
 
