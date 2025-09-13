@@ -3,7 +3,7 @@
 This module defines a Prefect workflow for extracting and transforming data.....
 """
 
-from prefect import Parameter, case
+from prefect import Parameter
 from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
 from prefect.utilities.edges import unmapped
 from prefeitura_rio.pipelines_utils.custom import Flow
@@ -47,6 +47,7 @@ with Flow(
     BIGLAKE_TABLE = Parameter("biglake_table", default=False)
 
     SECRETS = task_get_secret_folder(secret_path="/api-tixxi", inject_env=True)
+    DISCORD_SECRETS = task_get_secret_folder(secret_path="/discord", inject_env=True)
 
     rename_flow_run = task_rename_current_flow_run_dataset_table(
         prefix="ELT_", dataset_id=DATASET_ID, table_id=TABLE_ID
