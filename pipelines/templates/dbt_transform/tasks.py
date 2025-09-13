@@ -6,8 +6,10 @@ Tasks for execute_dbt
 """
 
 import asyncio
+import json
 import os
 from pathlib import Path
+from typing import Literal
 
 import prefect
 
@@ -60,13 +62,14 @@ def add_dbt_secrets_to_env(dbt_secrets: list[str], path: str = "/") -> dict[str,
 @task
 def execute_dbt(
     repository_path: str = "",
-    command: str = "run",
+    command: Literal["run", "build", "test", "data_test", "deps"] = "run",
     target: str = "dev",
     select="",
     exclude="",
     state="",
     flag="",
     prefect_environment="",
+    vars: list[dict] | None = None,
 ):
     """
     Executes a dbt command with the specified parameters.
@@ -89,6 +92,12 @@ def execute_dbt(
 
     cli_args = commands + ["--profiles-dir", repository_path, "--project-dir", repository_path]
 
+    if vars:
+        vars_dict = {}
+        for var_dict in vars:
+            vars_dict.update(var_dict)
+        vars_json = json.dumps(vars_dict)
+
     if command in ("build", "data_test", "run", "test"):
         cli_args.extend(
             [
@@ -105,6 +114,8 @@ def execute_dbt(
             cli_args.extend(["--state", state])
         if flag:
             cli_args.extend([flag])
+        if vars:
+            cli_args.extend(["--vars", vars_json])
 
         log(f"Executing dbt command: {' '.join(cli_args)}", level="info")
 

@@ -30,6 +30,7 @@ with Flow(
     SELECT = Parameter("select", default=None, required=False)
     EXCLUDE = Parameter("exclude", default=None, required=False)
     FLAG = Parameter("flag", default=None, required=False)
+    VARS = Parameter("vars", default=None, required=False)
     GITHUB_REPO = Parameter(
         "github_repo", default="https://github.com/prefeitura-rio/pipelines_rj_civitas"
     )
@@ -72,6 +73,7 @@ with Flow(
         exclude=EXCLUDE,
         flag=FLAG,
         prefect_environment=current_flow_project_name,
+        vars=VARS,
     )
     running_results.set_upstream(install_dbt_packages)
 
