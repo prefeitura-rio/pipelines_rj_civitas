@@ -164,3 +164,9 @@ sources:
     schema: cadastro
     tables:
       - name: veiculo_licenciamento_dia
+
+  - name: ocr_radar_staging
+    database: rj-cetrio
+    schema: ocr_radar_staging
+    tables:
+      - name: equipamento_codcet_to_camera_numero
