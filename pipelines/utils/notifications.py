@@ -34,11 +34,11 @@ def split_by_newline(text: str, limit: int = 2000) -> list[str]:
 
         # If adding this line to the current chunk does not exceed the limit, we add it
         if len(temp_chunk) + len(line) + 1 <= limit - 4:
-            temp_chunk += line + "\n\u200B"
+            temp_chunk += line + "\n\u200b"
         else:
             # If the chunk ends inside a code block, we close it temporarily
             if is_inside_code_block:
-                temp_chunk += "```\u200B"
+                temp_chunk += "```\u200b"
 
             chunks.append(temp_chunk.strip())
 
