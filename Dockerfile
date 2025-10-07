@@ -5,6 +5,7 @@ ARG PYTHON_VERSION=3.10-slim
 FROM python:${PYTHON_VERSION}
 
 # Install git, firefox and build tools
+# HADOLINT ignore=DL3008,DL3015
 RUN apt-get update && \
     apt-get install -y git firefox-esr build-essential && \
     apt-get clean && \
