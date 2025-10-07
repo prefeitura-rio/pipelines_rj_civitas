@@ -38,7 +38,7 @@ def check_healthcheck() -> list[dict]:
 def send_discord_alert(dlq_data: list[dict], dlq_names: list[str]):
     """Send Discord alert if DLQs have messages."""
     environment = get_flow_run_mode()
-    dlq_names = [dlq_name.lower() + f"-{environment}_dead" for dlq_name in dlq_names]
+    dlq_names = [dlq_name.lower() + f"-dead-{environment}" for dlq_name in dlq_names]
     log(f"DLQ names: {dlq_names}")
 
     dlqs_with_messages = [
