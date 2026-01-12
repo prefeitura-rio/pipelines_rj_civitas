@@ -6,6 +6,7 @@ sources:
     schema: cerco_digital_staging
     tables:
       - name: cameras
+      - name: equipamento_codcet_to_camera_numero
 
   - name: stg_disque_denuncia
     database: rj-civitas
@@ -170,3 +171,10 @@ sources:
     schema: ocr_radar_staging
     tables:
       - name: equipamento_codcet_to_camera_numero
+
+  - name: cerco_digital_dev
+    database: rj-civitas-dev
+    schema: cerco_digital
+    tables:
+      - name: controle_demandas_operacional_2025
+      - name: controle_demandas_operacional_2024
