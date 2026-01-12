@@ -91,12 +91,12 @@ with Flow(
     # 1. Definir parâmetros
     PROJECT_ID = Parameter("project_id", default="rj-civitas")
     DATASET_ID = Parameter("dataset_id", default="meu_dataset")
-    
+
     # 2. Executar tarefas
     dados_extraidos = extrair_dados(parametros)
     dados_transformados = transformar_dados(dados_extraidos)
     load_result = carregar_dados(dados_transformados, PROJECT_ID, DATASET_ID)
-    
+
     # 3. Materialização com DBT (opcional)
     with case(task=MATERIALIZE_AFTER_DUMP, value=True):
         materialization_flow = create_flow_run(
@@ -120,10 +120,10 @@ from prefeitura_rio.pipelines_utils.logging import log
 def extrair_dados(parametros):
     """
     Extrai dados de uma fonte externa.
-    
+
     Args:
         parametros: Configuração da extração
-        
+
     Returns:
         dict: Dados extraídos
     """
