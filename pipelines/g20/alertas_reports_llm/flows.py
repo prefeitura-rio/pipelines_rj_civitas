@@ -2,6 +2,7 @@
 """
 G20 - Alerts flow.
 """
+
 from prefect import Flow, Parameter, case
 from prefect.run_configs import KubernetesRun
 from prefect.storage import GCS

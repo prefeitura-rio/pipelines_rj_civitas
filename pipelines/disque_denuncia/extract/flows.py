@@ -4,7 +4,6 @@ This module defines a Prefect workflow for extracting and transforming data
 related to 'Disque Denúncia' reports, including updating missing coordinates.
 """
 
-
 from pathlib import Path
 
 from prefect import Parameter, case

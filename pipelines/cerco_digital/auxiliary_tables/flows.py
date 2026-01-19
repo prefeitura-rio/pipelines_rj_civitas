@@ -3,6 +3,7 @@
 This module defines a Prefect workflow for materializing tables using DBT.
 related to 'cerco_digital.licenciamento_veiculos'.
 """
+
 from prefect import Parameter
 from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
 from prefect.utilities.edges import unmapped

@@ -2,6 +2,7 @@
 """
 This module contains tasks for BRICS alerts and reports processing using LLM.
 """
+
 import asyncio
 import os
 from datetime import datetime

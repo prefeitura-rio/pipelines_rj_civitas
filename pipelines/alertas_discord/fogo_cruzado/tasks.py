@@ -2,6 +2,7 @@
 """
 This module contains tasks for sending Fogo Cruzado ocurrences alerts.
 """
+
 import asyncio
 from datetime import datetime, timedelta
 from typing import List, Literal

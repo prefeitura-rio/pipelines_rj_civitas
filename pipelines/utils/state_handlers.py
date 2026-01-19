@@ -42,8 +42,7 @@ def handler_save_traceback_on_failure(obj, old_state, new_state):
         task_cached_inputs = str(new_state.cached_inputs)
 
         trigger = obj.trigger
-        error_description = dedent(
-            f"""\
+        error_description = dedent(f"""\
 
             :x: **Task name:** {task_name}
             **Trigger:** {trigger.__name__}
@@ -53,8 +52,7 @@ def handler_save_traceback_on_failure(obj, old_state, new_state):
 
             **Task cached inputs:**
             {task_cached_inputs}
-            """
-        )
+            """)
         error_description += f"\n```bash\n{full_traceback}\n```"
 
         file_dir = Path("/tmp/pipelines/error_logs")

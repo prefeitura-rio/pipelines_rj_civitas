@@ -258,7 +258,7 @@ def create_dbt_report(
     > Flow Run: [{flow_name}](https://pipelines.dados.rio/flow-run/{flow_run_id})
         """
         message = (
-            f"{header_content}\n{param_report}\n{general_report}\u200B"
+            f"{header_content}\n{param_report}\n{general_report}\u200b"
             if include_report
             else param_report
         )  # TODO tinha \u200B depois de general_report
