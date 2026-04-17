@@ -12,9 +12,10 @@ from prefeitura_rio.pipelines_utils.io import untuple_clocks as untuple
 
 from pipelines.constants import constants
 
+exclude_models = ["vw_readings", "radar", "equipamento_codcet_camera_numero"]
 parameters = {
     "dataset_id": "cerco_digital",
-    "exclude": "vw_readings radar equipamento_codcet_camera_numero",
+    "exclude": " ".join(exclude_models),
     "vars": [
         {
             "start_date": (datetime.now(tz=timezone.utc) - timedelta(hours=1)).strftime(
