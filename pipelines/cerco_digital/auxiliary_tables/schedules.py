@@ -3,7 +3,7 @@
 Schedules for the database dump pipeline.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytz
 from prefect.schedules import Schedule
@@ -17,7 +17,7 @@ parameters = {
     "exclude": "vw_readings radar equipamento_codcet_camera_numero",
     "vars": [
         {
-            "start_date": (datetime.now(tz=pytz.timezone.utc) - timedelta(hours=1)).strftime(
+            "start_date": (datetime.now(tz=timezone.utc) - timedelta(hours=1)).strftime(
                 "%Y-%m-%d %H:00:00"
             )
         }
