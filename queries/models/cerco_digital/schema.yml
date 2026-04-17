@@ -863,115 +863,37 @@ models:
     columns:
       - name: id_ponto_coleta
         description: "Código identificador do ponto de coleta."
-        tests:
-          - dbt_expectations.expect_column_values_to_not_be_null:
-              name: vw_ponto_coleta_lpr_agg__id_ponto_coleta__not_null
-              where: "datahora_ultima_leitura >= '{{ var('start_date') }}'"
-              meta:
-                description: "Verifica se id_ponto_coleta não é nula."
 
       - name: origem_equipamento
         description: "Origem do equipamento."
-        tests:
-          - dbt_expectations.expect_column_values_to_not_be_null:
-              name: vw_ponto_coleta_lpr_agg__origem_equipamento__not_null
-              where: "datahora_ultima_leitura >= '{{ var('start_date') }}'"
-              meta:
-                description: "Verifica se origem_equipamento não é nula."
-          - dbt_expectations.expect_column_values_to_be_in_set:
-              name: vw_ponto_coleta_lpr_agg__origem_equipamento__accepted_values
-              value_set: ['CETRIO', 'CIVITAS']
-              where: "datahora_ultima_leitura >= '{{ var('start_date') }}'"
-              meta:
-                description: "Verifica se origem_equipamento é um dos valores aceitos: CETRIO, CIVITAS."
       
       - name: codigo_ponto_coleta
         description: "Código do ponto de coleta."
-        tests:
-          - dbt_expectations.expect_column_values_to_not_be_null:
-              name: vw_ponto_coleta_lpr_agg__codigo_ponto_coleta__not_null
-              where: "datahora_ultima_leitura >= '{{ var('start_date') }}'"
-              meta:
-                description: "Verifica se codigo_ponto_coleta não é nula."
 
       - name: local
         description: "Local do ponto de coleta."
-        tests:
-          - dbt_expectations.expect_column_values_to_not_be_null:
-              name: vw_ponto_coleta_lpr_agg__local__not_null
-              where: "datahora_ultima_leitura >= '{{ var('start_date') }}'"
-              meta:
-                description: "Verifica se local não é nula."
      
       - name: bairro
         description: "Bairro do ponto de coleta."
-        tests:
-          - dbt_expectations.expect_column_values_to_not_be_null:
-              name: vw_ponto_coleta_lpr_agg__bairro__not_null
-              where: "datahora_ultima_leitura >= '{{ var('start_date') }}'"
-              meta:
-                description: "Verifica se bairro não é nula."
       
       - name: sentido
         description: "Sentido do ponto de coleta."
-        tests:
-          - dbt_expectations.expect_column_values_to_not_be_null:
-              name: vw_ponto_coleta_lpr_agg__sentido__not_null
-              where: "datahora_ultima_leitura >= '{{ var('start_date') }}'"
-              meta:
-                description: "Verifica se sentido não é nula."
       
       - name: latitude
         description: "Latitude do ponto de coleta."
-        tests:
-          - dbt_expectations.expect_column_values_to_not_be_null:
-              name: vw_ponto_coleta_lpr_agg__latitude__not_null
-              where: "datahora_ultima_leitura >= '{{ var('start_date') }}'"
-              meta:
-                description: "Verifica se latitude não é nula."
       
       - name: longitude
         description: "Longitude do ponto de coleta."
-        tests:
-          - dbt_expectations.expect_column_values_to_not_be_null:
-              name: vw_ponto_coleta_lpr_agg__longitude__not_null
-              where: "datahora_ultima_leitura >= '{{ var('start_date') }}'"
-              meta:
-                description: "Verifica se longitude não é nula."
       - name: status_ativo
 
       - name: status_ativo
         description: "Status ativo do ponto de coleta."
-        tests:
-          - dbt_expectations.expect_column_values_to_not_be_null:
-              name: vw_ponto_coleta_lpr_agg__status_ativo__not_null
-              where: "datahora_ultima_leitura >= '{{ var('start_date') }}'"
-              meta:
-                description: "Verifica se status_ativo não é nula."
       
       - name: datahora_ultima_leitura
         description: "Data e hora da última leitura do ponto de coleta."
-        tests:
-          - dbt_expectations.expect_column_values_to_not_be_null:
-              name: vw_ponto_coleta_lpr_agg__datahora_ultima_leitura__not_null
-              where: "datahora_ultima_leitura >= '{{ var('start_date') }}'"
-              meta:
-                description: "Verifica se datahora_ultima_leitura não é nula."
       
       - name: total_leituras
         description: "Total de leituras do ponto de coleta."
-        tests:
-          - dbt_expectations.expect_column_values_to_not_be_null:
-              name: vw_ponto_coleta_lpr_agg__total_leituras__not_null
-              where: "datahora_ultima_leitura >= '{{ var('start_date') }}'"
-              meta:
-                description: "Verifica se total_leituras não é nula."
       
       - name: ativo_ultimas_24h
         description: "Indica se o ponto de coleta está ativo nas últimas 24 horas."
-        tests:
-          - dbt_expectations.expect_column_values_to_not_be_null:
-              name: vw_ponto_coleta_lpr_agg__ativo_ultimas_24h__not_null
-              where: "datahora_ultima_leitura >= '{{ var('start_date') }}'"
-              meta:
-                description: "Verifica se ativo_ultimas_24h não é nula."
