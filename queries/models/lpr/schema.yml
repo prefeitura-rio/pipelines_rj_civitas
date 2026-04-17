@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: lpr_cameras
+    description: |
+      **Descrição**: Tabela de câmeras LPR da CIVITAS cadastradas no sistema SENTRY.
+      **Frequência de atualização**: Diária
+      **Origem**: rj-civitas.lpr_staging.lanes
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_camera
+        description: "Código identificador da câmera no sistema SENTRY. Também pode ser chamado de 'lane_code'."
+        tests:
+          - not_null
+
+      - name: codigo_ponto_coleta
+        description: "Código do ponto de coleta da câmera LPR."
+        tests:
+          - not_null
+
+      - name: nome_ponto_coleta
+        description: "Nome do ponto de coleta da câmera LPR."
+        tests:
+          - not_null
+
+      - name: local_ponto_coleta
+        description: "Local do ponto de coleta da câmera LPR."
+        tests:
+          - not_null
+
+      - name: sentido
+        description: "Sentido da via da câmera LPR."
+        tests:
+          - not_null
+
+      - name: latitude
+        description: "Latitude da câmera LPR, em graus decimais."
+        tests:
+          - not_null
+
+      - name: longitude
+        description: "Longitude da câmera LPR, em graus decimais."
+        tests:
+          - not_null
+
+      - name: direcao
+        description: "Direção da câmera LPR."
+        tests:
+          - not_null
+          
+      - name: status
+        description: "Status da câmera LPR."
+        tests:
+          - not_null
