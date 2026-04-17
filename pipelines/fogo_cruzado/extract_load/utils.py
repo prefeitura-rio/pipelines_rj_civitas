@@ -163,7 +163,6 @@ def save_on_redis(
 
 
 def safe_float_conversion(str_value):
-
     if isinstance(str_value, float):
         return str_value
 

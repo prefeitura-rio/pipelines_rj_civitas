@@ -30,7 +30,6 @@ tz = pytz.timezone("America/Sao_Paulo")
 
 @task
 def task_get_disque_denuncia_newest_data(spreadsheet_id: str, range_name: str) -> List[List]:
-
     values = get_data_from_google_sheets(spreadsheet_id=spreadsheet_id, range_name=range_name)
 
     df_sheets = pd.DataFrame(values, columns=["id_denuncia", "data_denuncia"])

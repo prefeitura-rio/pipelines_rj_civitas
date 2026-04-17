@@ -36,7 +36,6 @@ with Flow(
         handler_notify_on_failure,
     ],
 ) as materialize_radares_infra:
-
     secrets = task_get_secret_folder(secret_path="/discord", inject_env=True)
 
     DATASET_ID = Parameter("dataset_id", default="radares_infra")

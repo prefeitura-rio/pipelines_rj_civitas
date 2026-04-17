@@ -83,7 +83,7 @@ camera_numero_codcet AS (
   FROM
     normalized_readings a
   LEFT JOIN
-    {{ source('ocr_radar', 'equipamento_codcet_to_camera_numero') }} b ON a.camera_numero = b.camera_numero
+    {{ ref('equipamento_codcet_camera_numero') }} b ON a.camera_numero = b.camera_numero
 )
 
 SELECT

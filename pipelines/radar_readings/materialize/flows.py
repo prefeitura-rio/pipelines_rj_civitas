@@ -36,7 +36,6 @@ with Flow(
         handler_skip_if_running,
     ],
 ) as materialize_radar_readings:
-
     # environment = get_flow_run_mode()
     dataset_id = Parameter("dataset_id", default="radar_readings")
     # table_id = Parameter("table_id", default="reports")

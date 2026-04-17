@@ -32,7 +32,6 @@ with Flow(
         handler_notify_on_failure,
     ],
 ) as g20_alerts:
-
     project_id = Parameter("project_id", default="rj-civitas")
     dataset_id = Parameter("dataset_id", default="integracao_reports")
 
@@ -68,7 +67,6 @@ with Flow(
     date_execution.set_upstream(batch_size)
 
     with case(get_llm_ocorrencias, True):
-
         occurrences = task_get_data(
             source="enriquecimento",
             project_id=project_id,
@@ -101,7 +99,6 @@ with Flow(
         reports_enriquecidos.set_upstream(occurrences)
 
     with case(get_llm_relacao, True):
-
         relations = task_get_data(
             source="relacao",
             project_id=project_id,

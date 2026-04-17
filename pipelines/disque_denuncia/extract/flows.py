@@ -47,7 +47,6 @@ with Flow(
         handler_notify_on_failure,
     ],
 ) as extracao_disque_denuncia:
-
     # Parâmetros
     PROJECT_ID = Parameter("project_id", default="")
     DATASET_ID = Parameter("dataset_id", default="")

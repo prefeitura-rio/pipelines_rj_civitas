@@ -76,7 +76,6 @@ def handler_notify_on_failure(obj: Flow | Task, old_state: state.State, new_stat
         state.State: The new state unchanged
     """
     if isinstance(new_state, state.Failed) and isinstance(obj, Flow):
-
         server_url = os.getenv("PREFECT_UI_URL")
         project_name = context.get("project_name", "default")
         flow_run_id = context.get("flow_run_id", "Unknown flow run ID")

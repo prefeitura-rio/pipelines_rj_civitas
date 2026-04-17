@@ -34,7 +34,6 @@ with Flow(
         handler_skip_if_running,
     ],
 ) as materialize_integracao_reports_twitter:
-
     dataset_id = Parameter("dataset_id", default="integracao_reports_staging")
     table_id = Parameter("table_id", default="reports_twitter")
     dbt_alias = Parameter("dbt_alias", default=False)

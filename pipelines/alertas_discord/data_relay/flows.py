@@ -27,7 +27,6 @@ with Flow(
         handler_notify_on_failure,
     ],
 ) as alerta_data_relay_dlq_monitor:
-
     # Parameters
     DLQ_NAMES = Parameter("dlq_names", default=[])
 

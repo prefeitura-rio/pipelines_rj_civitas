@@ -32,7 +32,6 @@ with Flow(
         handler_skip_if_running,
     ],
 ) as materialize_integracao_reports:
-
     # environment = get_flow_run_mode()
     TABLE_ID = Parameter("table_id", default="reports")
 

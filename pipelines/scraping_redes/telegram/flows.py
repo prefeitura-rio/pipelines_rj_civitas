@@ -46,7 +46,6 @@ with Flow(
         handler_skip_if_running,
     ],
 ) as extracao_palver_telegram:
-
     project_id = Parameter("project_id", default="")
     dataset_id = Parameter("dataset_id", default="")
     table_id = Parameter("table_id", default="")
@@ -180,7 +179,6 @@ with Flow(
     save_geocoded.set_upstream(geocoded_data)
 
     with case(task=materialize_after_dump, value=True):
-
         materialization_flow_name = settings.FLOW_NAME_EXECUTE_DBT_MODEL
         materialization_labels = task_get_current_flow_run_labels()
         current_flow_project_name = get_current_flow_project_name()

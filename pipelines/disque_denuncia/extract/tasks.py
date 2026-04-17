@@ -226,7 +226,6 @@ def get_reports_from_start_date(
 
     log(msg="Starting report retrieval loop", level="info")
     while not last_page:
-
         log_mod(msg="Capturing reports from API", level="info", index=iter_counter, mod=mod)
         report_response = get_reports(
             start_date=start_date, tipo_difusao=tipo_difusao, mod=mod, iter_counter=iter_counter

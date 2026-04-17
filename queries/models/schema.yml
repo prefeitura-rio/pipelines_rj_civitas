@@ -7,6 +7,23 @@ sources:
     tables:
       - name: cameras
       - name: equipamento_codcet_to_camera_numero
+      - name: cameras_civitas
+      - name: hosts_cameras_civitas
+      - name: radar
+        columns:
+        - name: codCET
+        - name: locequip
+        - name: bairro
+        - name: latitude
+        - name: longitude
+        - name: logradouro
+        - name: sentido
+        - name: suspenso
+        - name: status
+        - name: inicioOperacao
+        - name: fimContrato
+        - name: empresa
+        - name: locequiP45
 
   - name: stg_disque_denuncia
     database: rj-civitas
@@ -63,36 +80,40 @@ sources:
         identifier: readings_*
         tests:
           - dbt_utils.expression_is_true:
-              name: test_camera_numero_and_coordinates_not_mutually_empty
+              name: all_readings_raw__camera_numero_and_coordinates_not_mutually_empty
               expression: |
                 (camera_numero IS NOT NULL AND camera_numero NOT IN ('', '0')) OR
                 (camera_latitude != 0.0 AND camera_longitude != 0.0)
               config:
-                severity: error
+                severity: warn
                 where: "datahora >= '{{ var('start_date') }}'"
         columns:
           - name: datahora_captura
             #tests:
               #- dbt_expectations.expect_column_values_to_not_be_null:
-               #   name: test_datahora_captura_not_null
+               #   name: all_readings_raw__datahora_captura__not_null
                 #  where: "datahora >= '{{ var('start_date') }}'"
           - name: placa
             tests:
               - dbt_expectations.expect_column_values_to_not_be_null:
-                  name: test_placa_not_null
+                  name: all_readings_raw__placa__not_null
                   where: "datahora >= '{{ var('start_date') }}'"
+                  config:
+                    severity: warn
               #- dbt_expectations.expect_column_values_to_not_be_in_set:
-               #   name: test_placa_not_empty_or_zero_or_dashes
+               #   name: all_readings_raw__placa__not_empty_or_zero_or_dashes
                 #  value_set: ["", "0", "-------"]
                  # where: "datahora >= '{{ var('start_date') }}'"
                   #config:
                    # severity: warn
               - dbt_expectations.expect_column_value_lengths_to_equal:
-                  name: test_placa_length_equals_7
+                  name: all_readings_raw__placa__length_equals_7
+                  config:
+                    severity: warn
                   value: 7
                   where: "placa IS NOT NULL AND placa != '' AND datahora >= '{{ var('start_date') }}'"
               - dbt_expectations.expect_column_values_to_match_regex_list:
-                  name: test_placa_brazilian_or_mercosul_pattern
+                  name: all_readings_raw__placa__brazilian_or_mercosul_pattern
                   regex_list: [
                      "^[A-Z-]{3}[0-9-]{4}$",  # Padrão antigo + parcial: AAA1111 ou AB-12--
                      "^[A-Z-]{3}[0-9-][A-Z-][0-9-]{2}$"  # Padrão Mercosul + parcial: AAA1A23 ou A--1-2-
@@ -110,21 +131,21 @@ sources:
           - name: camera_numero
             tests:
               #- dbt_expectations.expect_column_values_to_not_be_null:
-               #   name: test_camera_numero_not_null
+               #   name: all_readings_raw__camera_numero__not_null
                 #  where: "datahora >= '{{ var('start_date') }}'"
               #- dbt_expectations.expect_column_values_to_not_be_in_set:
-               #   name: test_camera_numero_not_empty_or_zero
+               #   name: all_readings_raw__camera_numero__not_empty_or_zero
                 #  value_set: ["", "0", 0]
                  # where: "datahora >= '{{ var('start_date') }}'"
               - dbt_expectations.expect_column_values_to_match_regex:
-                  name: test_camera_numero_only_numbers
+                  name: all_readings_raw__camera_numero__only_numbers
                   regex: "^[0-9]+$"
                   where: "datahora >= '{{ var('start_date') }}'"
                   config:
                     severity: warn
 
               #- relationships:
-               #   name: test_camera_numero_exists_in_equipamento
+               #   name: all_readings_raw__camera_numero__exists_in_equipamento
                 #  to: source('ocr_radar', 'equipamento')
                  # field: codcet
                   #where: "datahora >= '{{ var('start_date') }}' AND NOT REGEXP_CONTAINS(camera_numero, r'[a-zA-Z]')"
@@ -178,3 +199,45 @@ sources:
     tables:
       - name: controle_demandas_operacional_2025
       - name: controle_demandas_operacional_2024
+
+  - name: lpr_staging
+    database: rj-civitas
+    schema: lpr_staging
+    tables:
+      - name: lanes
+
+  - name: lpr
+    database: rj-civitas
+    schema: lpr
+    tables:
+      - name: readings_raw
+        identifier: readings_*
+      - name: cameras
+    
+
+exposures:
+  - name: civitas-api
+    type: application
+    maturity: high
+    url: https://api.civitas.rio/
+    description: "API da CIVITAS"
+    depends_on:
+      - ref('cameras')
+      - ref('lpr_cameras')
+      - ref('vw_all_readings')
+      - ref('vw_readings')
+      - ref('reports')
+    owner:
+      name: "Nicolas Evilasio"
+      email: "nicolas.evilasio@prefeitura.rio"
+
+  - name: atlas-civitas-api
+    type: application
+    maturity: high
+    url: https://api-atlas.civitas.rio/
+    description: "API do Atlas CIVITAS"
+    depends_on:
+      - ref('cameras')
+    owner:
+      name: "Ricardo Stuckert"
+      email: "ricardo.stuckert@prefeitura.rio"

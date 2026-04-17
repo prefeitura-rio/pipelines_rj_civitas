@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# ....................
+# ........................
 from prefect import Parameter, case
 from prefeitura_rio.pipelines_utils.custom import Flow
 from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name
@@ -16,7 +16,6 @@ from pipelines.templates.dbt_transform.tasks import (
 with Flow(
     name=constants.FLOW_NAME_DBT_TRANSFORM.value,
 ) as templates__dbt_transform__flow:
-
     #####################################
     # Parameters
     #####################################

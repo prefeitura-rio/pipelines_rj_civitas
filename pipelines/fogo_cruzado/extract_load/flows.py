@@ -34,7 +34,6 @@ with Flow(
         handler_notify_on_failure,
     ],
 ) as extracao_fogo_cruzado:
-
     #####################################
     # Parameters
     #####################################

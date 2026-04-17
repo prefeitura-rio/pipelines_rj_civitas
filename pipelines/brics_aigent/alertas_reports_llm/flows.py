@@ -39,7 +39,6 @@ with Flow(
         handler_notify_on_failure,
     ],
 ) as brics_alerts:
-
     # Data source parameters
     source_project_id = Parameter("source_project_id", default=None)
     source_dataset_id = Parameter("source_dataset_id", default=None)
