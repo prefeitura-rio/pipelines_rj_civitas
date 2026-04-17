@@ -14,7 +14,14 @@ from pipelines.constants import constants
 
 parameters = {
     "dataset_id": "cerco_digital",
-    "exclude": "vw_readings",
+    "exclude": "vw_readings radar equipamento_codcet_camera_numero",
+    "vars": [
+        {
+            "start_date": (datetime.now(tz=pytz.timezone.utc) - timedelta(hours=1)).strftime(
+                "%Y-%m-%d %H:00:00"
+            )
+        }
+    ]
 }
 
 auxiliary_tables_daily_clocks = [

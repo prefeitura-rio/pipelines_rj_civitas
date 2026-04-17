@@ -14,8 +14,7 @@ from pipelines.constants import constants
 
 tz = pytz.timezone("America/Sao_Paulo")
 parameters = {
-    "select": "cerco_digital_staging.radar",
-    "vars": None,
+    "select": "cerco_digital_staging.radar"
 }
 
 
