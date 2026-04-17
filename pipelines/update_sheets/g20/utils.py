@@ -120,7 +120,6 @@ def api_civitas_get_token(api_url: str, user: str, password: str) -> str:
 
 
 def get_waze_police_alerts(api_url: str, token: str) -> pd.DataFrame:
-
     if token is None:
         log("Token not found")
         return None

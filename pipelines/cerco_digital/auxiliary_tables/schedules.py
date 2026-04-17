@@ -22,7 +22,7 @@ parameters = {
                 "%Y-%m-%d %H:00:00"
             )
         }
-    ]
+    ],
 }
 
 auxiliary_tables_daily_clocks = [

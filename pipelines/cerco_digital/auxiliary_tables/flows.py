@@ -33,13 +33,12 @@ with Flow(
         handler_notify_on_failure,
     ],
 ) as materialize_auxiliary_tables:
-
     SECRETS = task_get_secret_folder(secret_path="/discord", inject_env=True)
 
     DATASET_ID = Parameter("dataset_id", default="cerco_digital")
     EXCLUDE = Parameter("exclude", default="vw_readings")
     VARS = Parameter("vars", default=[])
-    
+
     materialization_flow_name = constants.FLOW_NAME_DBT_TRANSFORM.value
     materialization_labels = task_get_current_flow_run_labels()
 
@@ -50,8 +49,7 @@ with Flow(
             "vars": VARS,
         }
     ]
-    
-    
+
     current_flow_project_name = get_current_flow_project_name()
 
     dump_prod_materialization_flow_runs = create_flow_run.map(

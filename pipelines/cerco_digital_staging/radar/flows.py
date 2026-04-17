@@ -7,9 +7,15 @@ from prefect import Parameter
 from prefect.tasks.prefect import create_flow_run, wait_for_flow_run
 from prefect.utilities.edges import unmapped
 from prefeitura_rio.pipelines_utils.custom import Flow
-from prefeitura_rio.pipelines_utils.prefect import task_get_current_flow_run_labels, task_rename_current_flow_run_dataset_table
+from prefeitura_rio.pipelines_utils.prefect import (
+    task_get_current_flow_run_labels,
+    task_rename_current_flow_run_dataset_table,
+)
 from prefeitura_rio.pipelines_utils.state_handlers import handler_skip_if_running
-from prefeitura_rio.pipelines_utils.tasks import get_current_flow_project_name, create_table_and_upload_to_gcs
+from prefeitura_rio.pipelines_utils.tasks import (
+    create_table_and_upload_to_gcs,
+    get_current_flow_project_name,
+)
 
 from pipelines.cerco_digital_staging.radar.schedules import radar_schedule
 from pipelines.cerco_digital_staging.radar.tasks import extract_radar_data
@@ -20,7 +26,6 @@ from pipelines.utils.state_handlers import (
 )
 from pipelines.utils.tasks import task_get_secret_folder
 
-    
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
     name="CIVITAS: cerco digital - Materialização da tabela de radares CETRIO",
@@ -30,7 +35,6 @@ with Flow(
         handler_notify_on_failure,
     ],
 ) as materialize_radar:
-
     PIPELINE_SECRETS = task_get_secret_folder(secret_path="/radar")
 
     #####################################
@@ -46,13 +50,12 @@ with Flow(
     SELECT = Parameter("select", default="cerco_digital.radar")
     VARS = Parameter("vars", default=None)
 
-    
     rename_flow_run = task_rename_current_flow_run_dataset_table(
         prefix="ELT_",
         dataset_id=DATASET_ID,
         table_id=TABLE_ID,
     )
-    
+
     #####################################
     # Extract data from CETRIO API and load to BigQuery
     #####################################
@@ -69,7 +72,6 @@ with Flow(
         dump_mode=DUMP_MODE,
         biglake_table=True,
     )
-
 
     #####################################
     # Create Flow Runs

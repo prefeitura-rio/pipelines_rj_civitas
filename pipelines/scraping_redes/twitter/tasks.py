@@ -166,7 +166,6 @@ def task_get_chats(
 def get_chats_last_dates(
     project_id: str, dataset_id: str, table_id: str, chats_ids: List[str]
 ) -> Dict[str, str]:
-
     # chats_ids = [chat["id"] for chat in chats]
 
     data = bd.read_sql(
@@ -197,7 +196,6 @@ def task_get_messages(
     end_date: str = None,
     mode: Literal["prod", "staging"] = "staging",
 ) -> List[Dict[str, Any]]:
-
     dataset_id += "_staging" if mode == "staging" else ""
 
     if end_date is None or end_date == "":
@@ -404,7 +402,6 @@ def task_get_llm_reponse_and_update_table(
     dataframe = (bd.read_sql(query)).reset_index()
 
     if len(dataframe) > 0:
-
         log(f"Start generate llm response for {prompt_column} with {len(dataframe)} rows")
         if prompt_column == "prompt_column":
             response_schema = EnrichResponseModel.schema()

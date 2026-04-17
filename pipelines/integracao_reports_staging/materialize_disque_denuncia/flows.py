@@ -36,7 +36,6 @@ with Flow(
         handler_notify_on_failure,
     ],
 ) as materialize_integracao_reports_disque_denuncia:
-
     secrets = task_get_secret_folder(secret_path="/discord", inject_env=True)
 
     TABLE_ID = Parameter("table_id", default="reports_disque_denuncia")

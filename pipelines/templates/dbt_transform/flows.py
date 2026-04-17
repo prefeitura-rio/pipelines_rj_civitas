@@ -16,7 +16,6 @@ from pipelines.templates.dbt_transform.tasks import (
 with Flow(
     name=constants.FLOW_NAME_DBT_TRANSFORM.value,
 ) as templates__dbt_transform__flow:
-
     #####################################
     # Parameters
     #####################################

@@ -37,7 +37,6 @@ with Flow(
         handler_notify_on_failure,
     ],
 ) as alertas_disque_denuncia:
-
     project_id = Parameter("project_id", default="")
     dataset_id = Parameter("dataset_id", default="")
     table_id = Parameter("table_id", default="")

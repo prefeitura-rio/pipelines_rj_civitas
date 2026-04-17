@@ -7,12 +7,11 @@ This module provides tasks for downloading data from CETRIO API and uploading it
 import csv
 from pathlib import Path
 from uuid import uuid4
+
 import pandas as pd
 import requests
 from prefect import task
-
 from prefeitura_rio.pipelines_utils.logging import log
-from slugify.slugify import QUOTE_PATTERN
 
 
 @task
@@ -38,21 +37,19 @@ def extract_radar_data(
 
     filepath = path / filename
 
-    url = secrets.get('URL')
-    token = secrets.get('TOKEN')
-    
+    url = secrets.get("URL")
+    token = secrets.get("TOKEN")
+
     log(f"Starting download from URL: {url}")
 
-    headers = {
-        'Authorization': f'Bearer {token}'
-    }
-    
+    headers = {"Authorization": f"Bearer {token}"}
+
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
         data = response.json()
         df = pd.DataFrame(data)
-        df.to_csv(filepath, index=False, sep=',', quoting=csv.QUOTE_NONNUMERIC, quotechar='"')
+        df.to_csv(filepath, index=False, sep=",", quoting=csv.QUOTE_NONNUMERIC, quotechar='"')
         return filepath
     except Exception as e:
         log(f"Error extracting radar data from CETRIO API: {str(e)}", "error")

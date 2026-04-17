@@ -89,7 +89,6 @@ class Palver:
         start_date: str = None,
         end_date: str = None,
     ) -> List[Dict]:
-
         url = f"{cls.__base_url}/{source_name}/messages"
         params = {
             "query": query,

@@ -279,9 +279,7 @@ def task_get_llm_reponse_and_update_table(
     batch_size: int = 10,
     date_execution: str = None,
 ) -> None:
-
     if len(dataframe) > 0:
-
         log(f"Start generate llm response for {prompt_column} with {len(dataframe)} rows")
         if prompt_column == "prompt_enriquecimento":
             response_schema = EnrichResponseModel.schema()
@@ -376,7 +374,6 @@ def task_get_new_alerts(
     table_id: str,
     minutes_interval: int = 360,
 ) -> pd.DataFrame:
-
     if not isinstance(minutes_interval, int) or minutes_interval < 0:
         raise ValueError("minutes_interval must be an integer greater than 0")
 

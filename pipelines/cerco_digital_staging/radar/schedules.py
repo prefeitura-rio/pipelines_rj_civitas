@@ -13,9 +13,7 @@ from prefeitura_rio.pipelines_utils.io import untuple_clocks as untuple
 from pipelines.constants import constants
 
 tz = pytz.timezone("America/Sao_Paulo")
-parameters = {
-    "select": "cerco_digital_staging.radar"
-}
+parameters = {"select": "cerco_digital_staging.radar"}
 
 
 radar_clocks = [

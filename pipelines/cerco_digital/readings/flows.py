@@ -28,7 +28,6 @@ with Flow(
         handler_notify_on_failure,
     ],
 ) as materialize_readings:
-
     DISCORD_SECRETS = task_get_secret_folder(secret_path="/discord", inject_env=True)
 
     #####################################

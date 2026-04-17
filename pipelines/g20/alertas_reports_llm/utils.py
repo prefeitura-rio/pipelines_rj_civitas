@@ -145,7 +145,6 @@ def safe_generate_content(
     # model: GenerativeModel,
     prompt: str,
 ) -> str:
-
     vertexai.init(location="us-central1")
     model = GenerativeModel(model_name)
 
