@@ -55,7 +55,7 @@ selected_radar AS (
 
 cameras AS (
   SELECT
-    id_camera,
+    codigo_camera,
     nome_camera,
     latitude,
     longitude,
@@ -71,7 +71,7 @@ ranked_cameras AS (
     t2.bairro,
     t2.latitude_radar,
     t2.longitude_radar,
-    t1.id_camera,
+    t1.codigo_camera,
     t1.nome_camera,
     t1.streaming_url,
     t1.latitude,
@@ -90,7 +90,7 @@ ranked_cameras AS (
     COALESCE(UPPER(bairro), 'Desconhecido') bairro,
     latitude_radar,
     longitude_radar,
-    id_camera,
+    codigo_camera AS id_camera,
     nome_camera,
     streaming_url,
     latitude,
