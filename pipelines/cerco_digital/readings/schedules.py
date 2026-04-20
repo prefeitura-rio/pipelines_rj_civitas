@@ -3,7 +3,7 @@
 Schedules for the "CIVITAS: radares_infra - Materialização das tabelas" pipeline..
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
 import pytz
 from prefect.schedules import Schedule
@@ -13,16 +13,7 @@ from prefeitura_rio.pipelines_utils.io import untuple_clocks as untuple
 from pipelines.constants import constants
 
 tz = pytz.timezone("America/Sao_Paulo")
-parameters = {
-    "select": "vw_readings",
-    "vars": [
-        {
-            "start_date": (datetime.now(tz=timezone.utc) - timedelta(hours=1)).strftime(
-                "%Y-%m-%d %H:00:00"
-            )
-        }
-    ],
-}
+parameters = {"select": "vw_readings"}
 
 
 readings_clocks = [

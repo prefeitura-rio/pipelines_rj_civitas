@@ -3,7 +3,7 @@
 Schedules for the database dump pipeline.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import pytz
 from prefect.schedules import Schedule
@@ -12,17 +12,10 @@ from prefeitura_rio.pipelines_utils.io import untuple_clocks as untuple
 
 from pipelines.constants import constants
 
-exclude_models = ["vw_readings", "radar", "equipamento_codcet_camera_numero"]
+exclude_models = ["vw_readings", "equipamento_codcet_camera_numero"]
 parameters = {
     "dataset_id": "cerco_digital",
     "exclude": " ".join(exclude_models),
-    "vars": [
-        {
-            "start_date": (datetime.now(tz=timezone.utc) - timedelta(hours=1)).strftime(
-                "%Y-%m-%d %H:00:00"
-            )
-        }
-    ],
 }
 
 auxiliary_tables_daily_clocks = [

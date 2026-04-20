@@ -17,7 +17,10 @@ from pipelines.utils.state_handlers import (
     handler_inject_bd_credentials,
     handler_notify_on_failure,
 )
-from pipelines.utils.tasks import task_get_secret_folder
+from pipelines.utils.tasks import (
+    add_default_start_date_to_dbt_vars,
+    task_get_secret_folder,
+)
 
 # Define the Prefect Flow for data extraction and transformation
 with Flow(
@@ -36,7 +39,8 @@ with Flow(
 
     # DBT
     SELECT = Parameter("select", default=None)
-    VARS = Parameter("vars", default=None)
+    VARS = Parameter("vars", default=[])
+    COMPUTED_VARS = add_default_start_date_to_dbt_vars(VARS)
 
     materialization_labels = task_get_current_flow_run_labels()
     materialization_flow_name = constants.FLOW_NAME_DBT_TRANSFORM.value
@@ -44,7 +48,7 @@ with Flow(
     materialization_parameters = [
         {
             "select": SELECT,
-            "vars": VARS,
+            "vars": COMPUTED_VARS,
         },
     ]
 
