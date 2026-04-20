@@ -602,6 +602,77 @@ models:
               meta:
                 description: "Verifica se status_ativo não é nulo"
 
+  - name: equipamento_ponto_coleta_lpr
+    description: |
+      **Descrição**: Ponte entre cada equipamento (`equipamento`) e o identificador canónico do ponto de coleta (`id_ponto_coleta` em `mapeamento_id_ponto_coleta`). Uma linha por equipamento com chave de negócio completa (origem, codigo_ponto_coleta, sentido).
+      **Frequência de atualização**: Diária (segue `equipamento` e `mapeamento_id_ponto_coleta`).
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - origem_equipamento
+            - codigo_equipamento
+
+    columns:
+      - name: id_ponto_coleta
+        description: "Identificador estável do ponto de coleta (dimensão)."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento_ponto_coleta_lpr__id_ponto_coleta__not_null
+              meta:
+                description: "Verifica se id_ponto_coleta não é nulo"
+
+      - name: origem_equipamento
+        description: "Origem do equipamento (CETRIO / CIVITAS)."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento_ponto_coleta_lpr__origem_equipamento__not_null
+              meta:
+                description: "Verifica se origem_equipamento não é nulo"
+
+      - name: codigo_equipamento
+        description: "Código do equipamento na origem."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento_ponto_coleta_lpr__codigo_equipamento__not_null
+              meta:
+                description: "Verifica se codigo_equipamento não é nulo"
+
+      - name: codigo_ponto_coleta
+        description: "Código de negócio do ponto de coleta."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento_ponto_coleta_lpr__codigo_ponto_coleta__not_null
+              meta:
+                description: "Verifica se codigo_ponto_coleta não é nulo"
+
+      - name: sentido
+        description: "Sentido da via."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento_ponto_coleta_lpr__sentido__not_null
+              meta:
+                description: "Verifica se sentido não é nulo"
+
+      - name: local
+        description: "Local do equipamento."
+
+      - name: bairro
+        description: "Bairro do equipamento."
+
+      - name: latitude
+        description: "Latitude do equipamento."
+
+      - name: longitude
+        description: "Longitude do equipamento."
+
+      - name: geography
+        description: "Geografia do equipamento (ST_GEOGPOINT)."
+
+      - name: status_ativo
+        description: "Equipamento ativo ou não."
+
   - name: radar
     description: |
       **Descrição**: Tabela que contém os dados dos radares da CETRIO.
