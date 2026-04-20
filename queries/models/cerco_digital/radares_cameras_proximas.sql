@@ -8,7 +8,7 @@
         cluster_by = ["codcet"]
     )
 }}
-
+-- Tabela de radares com as câmeras mais próximas
 WITH radars AS (
   SELECT
     codcet,

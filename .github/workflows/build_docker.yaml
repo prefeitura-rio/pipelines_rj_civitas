@@ -9,6 +9,7 @@ on:
       - "pipelines/**/*"
       - "pyproject.toml"
       - "Dockerfile"
+      - "queries/**"
   pull_request:
     branches:
       - main
@@ -17,6 +18,7 @@ on:
       - "pipelines/**/*"
       - "pyproject.toml"
       - "Dockerfile"
+      - "queries/**"
 
 jobs:
   build-container:
