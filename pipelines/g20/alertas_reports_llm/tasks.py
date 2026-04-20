@@ -2,6 +2,7 @@
 """
 This module contains tasks for appending new data to Google Sheets.
 """
+
 import asyncio
 import time
 from datetime import datetime, timedelta

@@ -2,6 +2,7 @@
 """
 Imports all flows for every project so we can register all of them................
 """
+
 from pipelines.alertas_discord import *  # noqa
 from pipelines.brics_aigent import *  # noqa
 from pipelines.cerco_digital import *  # noqa

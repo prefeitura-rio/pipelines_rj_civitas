@@ -2,6 +2,7 @@
 """
 This module contains tasks for appending new data to Google Sheets.
 """
+
 from datetime import datetime
 from typing import List, Literal
 

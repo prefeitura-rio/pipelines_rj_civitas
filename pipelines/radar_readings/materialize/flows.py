@@ -3,7 +3,6 @@
 This module defines a Prefect workflow for materializing tables using DBT.
 """
 
-
 from prefect import Parameter
 from prefect.run_configs import KubernetesRun
 from prefect.storage import GCS

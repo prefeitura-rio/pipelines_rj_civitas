@@ -893,14 +893,12 @@ def update_missing_coordinates_in_bigquery(
         # Criar a lista de STRUCTs
         struct_list = []
         for update in updates:
-            struct_list.append(
-                f"""STRUCT(
+            struct_list.append(f"""STRUCT(
                     '{update['id_denuncia']}' as id_denuncia,
                     {update['latitude']} as latitude,
                     {update['longitude']} as longitude,
                     DATETIME('{update['timestamp_insercao']}') as timestamp_insercao
-                )"""
-            )
+                )""")
 
         structs = ",\n".join(struct_list)
 

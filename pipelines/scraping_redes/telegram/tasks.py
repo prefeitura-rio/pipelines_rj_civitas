@@ -9,7 +9,6 @@ Tasks include:
 - Transforming XML data into structured CSV files
 """
 
-
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -168,8 +167,7 @@ def get_chats_last_dates(
 ) -> Dict[str, str]:
     # chats_ids = [chat["id"] for chat in chats]
 
-    data = bd.read_sql(
-        f"""
+    data = bd.read_sql(f"""
         SELECT
             chat_id,
             MAX(datetime) as last_date
@@ -179,8 +177,7 @@ def get_chats_last_dates(
             chat_id IN ('{"', '".join(chats_ids)}')
         GROUP BY
             chat_id
-    """
-    )
+    """)
 
     dict_data = dict(zip(data["chat_id"], data["last_date"]))
 

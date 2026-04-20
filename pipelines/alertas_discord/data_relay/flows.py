@@ -2,6 +2,7 @@
 """
 Send a discord alert whenever a new message is detected in the Data Relay DLQ..
 """
+
 from prefect import Parameter
 from prefeitura_rio.pipelines_utils.custom import Flow
 
