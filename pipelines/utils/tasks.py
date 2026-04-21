@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime, timezone
 from typing import Literal
 
 from infisical import InfisicalClient
@@ -51,3 +52,23 @@ def task_get_secret_folder(
         inject_env_vars(secrets)
 
     return secrets
+
+
+@task
+def add_default_start_date_to_dbt_vars(vars: list[dict]) -> list[dict]:
+    """
+    Adds a default start_date to the vars list.
+
+    The default start_date is the current hour with minute, second and microsecond set to 0.
+
+    Args:
+        vars (list[dict]): The list of variables to add the default start_date to.
+
+    Returns:
+        list[dict]: The list of variables with the default start_date added.
+    """
+    now = datetime.now(tz=timezone.utc)
+    start_date = now.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%d %H:00:00")
+    result = list(vars) if vars else []
+    result.append({"start_date": start_date})
+    return result

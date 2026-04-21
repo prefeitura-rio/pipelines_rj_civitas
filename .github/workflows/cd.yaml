@@ -9,6 +9,7 @@ on:
       - "pipelines/**/*"
       - "pyproject.toml"
       - "Dockerfile"
+      - "queries/**"
 
 env:
   PREFECT__BACKEND: cloud

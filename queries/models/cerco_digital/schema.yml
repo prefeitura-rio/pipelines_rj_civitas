@@ -360,6 +360,108 @@ models:
       - name: rank
         description: "Rank da câmera."
 
+  - name: ponto_coleta_lpr_camera_proxima
+    description: |
+      **Descrição**: Tabela que relaciona pontos de coleta (equipamentos LPR) às câmeras mais próximas.
+      **Frequência de atualização**: Diária
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          name: ponto_coleta_lpr_camera_proxima__unique_combination_of_columns
+          combination_of_columns:
+            - id_ponto_coleta
+            - id_camera
+
+    columns:
+      - name: id_ponto_coleta
+        description: "Identificador canónico do ponto de coleta (dimensão `ponto_coleta_lpr`)."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: ponto_coleta_lpr_camera_proxima__id_ponto_coleta__not_null
+              meta:
+                description: "Verifica se id_ponto_coleta não é nulo"
+
+      - name: origem_equipamento_lpr
+        description: "Origem do equipamento (CETRIO / CIVITAS)."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: ponto_coleta_lpr_camera_proxima__origem_equipamento_lpr__not_null
+              meta:
+                description: "Verifica se origem_equipamento_lpr não é nulo"
+
+      - name: codigo_ponto_coleta
+        description: "Código de negócio do ponto de coleta (texto, não confundir com código de equipamento)."
+
+      - name: sentido
+        description: "Sentido da via no ponto de coleta."
+
+      - name: local
+        description: "Local do ponto de coleta."
+
+      - name: bairro
+        description: "Bairro do ponto de coleta."
+
+      - name: latitude_equip_lpr
+        description: "Latitude do ponto de coleta (equipamento LPR)."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: ponto_coleta_lpr_camera_proxima__latitude_equip_lpr__not_null
+              meta:
+                description: "Verifica se latitude_equip_lpr não é nulo"
+
+      - name: longitude_equip_lpr
+        description: "Longitude do ponto de coleta (equipamento LPR)."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: ponto_coleta_lpr_camera_proxima__longitude_equip_lpr__not_null
+              meta:
+                description: "Verifica se longitude_equip_lpr não é nulo"
+
+      - name: id_camera
+        description: "Código identificador da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: ponto_coleta_lpr_camera_proxima__id_camera__not_null
+              meta:
+                description: "Verifica se id_camera não é nulo"
+
+      - name: nome_camera
+        description: "Nome da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: ponto_coleta_lpr_camera_proxima__nome_camera__not_null
+              meta:
+                description: "Verifica se nome_camera não é nulo"
+
+      - name: sistema_origem_camera
+        description: "Sistema de origem da câmera (ex. TIXXI, DC3)."
+
+      - name: streaming_url
+        description: "URL de streaming da câmera."
+
+      - name: latitude
+        description: "Latitude da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: ponto_coleta_lpr_camera_proxima__latitude__not_null
+              meta:
+                description: "Verifica se latitude não é nulo"
+
+      - name: longitude
+        description: "Longitude da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: ponto_coleta_lpr_camera_proxima__longitude__not_null
+              meta:
+                description: "Verifica se longitude não é nulo"
+
+      - name: distance
+        description: "Distância entre o ponto de coleta (equipamento LPR) e a câmera."
+
+      - name: rank
+        description: "Rank da câmera (1 a 5 mais próximas)."
+
   - name: equipamento_codcet_camera_numero
     description: |
       **Descrição**: Tabela que relaciona os códigos de equipamento com os números de câmera.
@@ -499,6 +601,77 @@ models:
               name: equipamento__status_ativo__not_null
               meta:
                 description: "Verifica se status_ativo não é nulo"
+
+  - name: equipamento_ponto_coleta_lpr
+    description: |
+      **Descrição**: Ponte entre cada equipamento (`equipamento`) e o identificador canónico do ponto de coleta (`id_ponto_coleta` em `mapeamento_id_ponto_coleta`). Uma linha por equipamento com chave de negócio completa (origem, codigo_ponto_coleta, sentido).
+      **Frequência de atualização**: Diária (segue `equipamento` e `mapeamento_id_ponto_coleta`).
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - origem_equipamento
+            - codigo_equipamento
+
+    columns:
+      - name: id_ponto_coleta
+        description: "Identificador estável do ponto de coleta (dimensão)."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento_ponto_coleta_lpr__id_ponto_coleta__not_null
+              meta:
+                description: "Verifica se id_ponto_coleta não é nulo"
+
+      - name: origem_equipamento
+        description: "Origem do equipamento (CETRIO / CIVITAS)."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento_ponto_coleta_lpr__origem_equipamento__not_null
+              meta:
+                description: "Verifica se origem_equipamento não é nulo"
+
+      - name: codigo_equipamento
+        description: "Código do equipamento na origem."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento_ponto_coleta_lpr__codigo_equipamento__not_null
+              meta:
+                description: "Verifica se codigo_equipamento não é nulo"
+
+      - name: codigo_ponto_coleta
+        description: "Código de negócio do ponto de coleta."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento_ponto_coleta_lpr__codigo_ponto_coleta__not_null
+              meta:
+                description: "Verifica se codigo_ponto_coleta não é nulo"
+
+      - name: sentido
+        description: "Sentido da via."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento_ponto_coleta_lpr__sentido__not_null
+              meta:
+                description: "Verifica se sentido não é nulo"
+
+      - name: local
+        description: "Local do equipamento."
+
+      - name: bairro
+        description: "Bairro do equipamento."
+
+      - name: latitude
+        description: "Latitude do equipamento."
+
+      - name: longitude
+        description: "Longitude do equipamento."
+
+      - name: geography
+        description: "Geografia do equipamento (ST_GEOGPOINT)."
+
+      - name: status_ativo
+        description: "Equipamento ativo ou não."
 
   - name: radar
     description: |
@@ -856,7 +1029,7 @@ models:
       View que consolida e normaliza os dados dos pontos de coleta da CETRIO e CIVITAS e traz métricas de leituras por ponto de coleta.
       Atenção: Utilizar esta view para consultas que necessitam de métricas de leituras por ponto de coleta.
       Caso contrario, utilizar a tabela ponto_coleta_lpr.
-      
+
       Publicado por: Nicolas Evilasio
       Publicado por (email): nicolas.evilasio@prefeitura.rio
 
@@ -866,34 +1039,34 @@ models:
 
       - name: origem_equipamento
         description: "Origem do equipamento."
-      
+
       - name: codigo_ponto_coleta
         description: "Código do ponto de coleta."
 
       - name: local
         description: "Local do ponto de coleta."
-     
+
       - name: bairro
         description: "Bairro do ponto de coleta."
-      
+
       - name: sentido
         description: "Sentido do ponto de coleta."
-      
+
       - name: latitude
         description: "Latitude do ponto de coleta."
-      
+
       - name: longitude
         description: "Longitude do ponto de coleta."
       - name: status_ativo
 
       - name: status_ativo
         description: "Status ativo do ponto de coleta."
-      
+
       - name: datahora_ultima_leitura
         description: "Data e hora da última leitura do ponto de coleta."
-      
+
       - name: total_leituras
         description: "Total de leituras do ponto de coleta."
-      
+
       - name: ativo_ultimas_24h
         description: "Indica se o ponto de coleta está ativo nas últimas 24 horas."
