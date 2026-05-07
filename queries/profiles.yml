@@ -9,7 +9,7 @@ queries:
       method: service-account
       priority: interactive
       project: rj-civitas
-      threads: 8
+      threads: 16
       type: bigquery
   target: dev
 

@@ -8,7 +8,8 @@
         "data_type": "timestamp",
         "granularity": "month",
     },
-    cluster_by = ["updated_at"]
+    cluster_by = ["updated_at"],
+    tags = ['daily']
     )
 }}
 
