@@ -1,15 +1,16 @@
 name: Register flows (production)
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/cd.yaml"
-      - "pipelines/**/*"
-      - "pyproject.toml"
-      - "Dockerfile"
-      - "queries/**"
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - ".github/workflows/cd.yaml"
+  #     - "pipelines/**/*"
+  #     - "pyproject.toml"
+  #     - "Dockerfile"
+  #     - "queries/**"
 
 env:
   PREFECT__BACKEND: cloud
