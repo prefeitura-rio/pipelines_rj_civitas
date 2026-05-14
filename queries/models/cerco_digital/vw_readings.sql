@@ -29,7 +29,7 @@ WITH readings AS (
     AND NOT REGEXP_CONTAINS(camera_numero, r'[a-zA-Z]') -- camera_numero can't contain letters
     -- plate must have 7 digits or be an empty string
     AND (
-      placa NOT IN ('P0L1C14') -- TODO: create table to blacklist plates (error in plate detection)
+      placa NOT IN ('P0L1C14', 'POL1C14') -- TODO: create table to blacklist plates (error in plate detection)
       AND (
         placa = ''
         OR LENGTH(placa) = 7
@@ -99,3 +99,6 @@ SELECT
   a.empresa
 FROM
   camera_numero_codcet a
+  LEFT JOIN {{ ref('quarentena_lpr') }} c
+    ON COALESCE(a.codcet, a.camera_numero) = c.codigo_equipamento
+  WHERE c.codigo_equipamento IS NULL

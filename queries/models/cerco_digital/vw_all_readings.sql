@@ -30,7 +30,7 @@ WITH radar_readings AS (
     -- plate must have 7 digits or be an empty string
     AND (
       placa NOT IN (
-        'P0L1C14')  -- TODO: create table to blacklist plates (error in plate detection)
+        'P0L1C14', 'POL1C14')  -- TODO: create table to blacklist plates (error in plate detection)
       AND (placa = '' OR LENGTH(placa) = 7))
   QUALIFY
     (
@@ -70,6 +70,9 @@ camera_numero_codcet AS (
   FROM normalized_readings a
   LEFT JOIN {{ ref('equipamento_codcet_camera_numero') }} b
     ON a.camera_numero = b.camera_numero
+  LEFT JOIN {{ ref('quarentena_lpr') }} c
+    ON COALESCE(b.codcet, a.camera_numero) = c.codigo_equipamento
+  WHERE c.codigo_equipamento IS NULL
 ),
 lpr_cameras_readings AS (
   SELECT
@@ -86,6 +89,7 @@ lpr_cameras_readings AS (
   WHERE
     -- remove erroneous future readings
     TIMESTAMP_DIFF(datahora_captura, datahora, SECOND) > -300
+    AND placa NOT IN ('P0L1C14', 'POL1C14')
   QUALIFY
     (
       ROW_NUMBER()
@@ -115,7 +119,7 @@ SELECT
   c.bairro AS bairro,
   c.sentido,
   a.empresa
-FROM 
+FROM
   all_readings a
 JOIN {{ ref('equipamento') }} b ON a.camera_numero = b.codigo_equipamento AND a.empresa = b.origem_equipamento
 JOIN {{ ref('ponto_coleta_lpr') }} c ON b.codigo_ponto_coleta = c.codigo_ponto_coleta

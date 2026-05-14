@@ -24,6 +24,10 @@ sources:
         - name: fimContrato
         - name: empresa
         - name: locequiP45
+      - name: quarentena_lpr
+        columns:
+        - name: codigo_equipamento
+        - name: motivo
 
   - name: stg_disque_denuncia
     database: rj-civitas
@@ -213,7 +217,7 @@ sources:
       - name: readings_raw
         identifier: readings_*
       - name: cameras
-    
+
 
 exposures:
   - name: civitas-api
