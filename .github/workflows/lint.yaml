@@ -27,8 +27,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          poetry config virtualenvs.create false && poetry install --with dev --with ci
+          poetry install --with dev --with ci
 
       - name: Lint with black, isort and flake8
         run: |
-          task lint
+          poetry run task lint
