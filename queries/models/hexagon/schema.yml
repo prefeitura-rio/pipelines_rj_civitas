@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: camera
+    description: |
+      **Descrição**: Tabela de câmeras do VMS Hexagon dc3
+      **Frequência de atualização**: Diária
+      **Origem**: rj-civitas.hexagon_staging.camera
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: can_ptz
+        description: "Indica se a câmera é PTZ"
+      - name: entity_id
+        description: "ID da câmera"
+      - name: entity_name
+        description: "Nome da câmera"
+      - name: codigo_camera
+        description: "Código da câmera"

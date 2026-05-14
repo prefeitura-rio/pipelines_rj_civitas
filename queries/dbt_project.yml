@@ -77,6 +77,11 @@ models:
       +schema: lpr
       +meta:
         owner: "@nicolas.evilasio"
+    hexagon:
+      +materialized: table
+      +schema: hexagon
+      +meta:
+        owner: "@nicolas.evilasio"
 
 
 vars:
