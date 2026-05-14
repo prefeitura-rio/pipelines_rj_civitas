@@ -34,30 +34,43 @@ civitas_cameras_vms AS (
 civitas_base_cleaned AS (
   -- Extracting and standardizing data from the civitas staging table
   -- Pattern: "CODE - Name"
-  SELECT 
+  SELECT
     TRIM(REGEXP_EXTRACT(a.endereco, r'^(.+?)\s*-')) AS codigo_camera,
     INITCAP(TRIM(REGEXP_EXTRACT(a.endereco, r'-\s*(.+)$'))) AS nome_camera,
     CAST(NULL AS STRING) AS zona_camera,
     - ABS(SAFE_CAST(a.latitude AS FLOAT64)) AS latitude,
     - ABS(SAFE_CAST(a.longitude AS FLOAT64)) AS longitude,
-    CAST(NULL AS STRING) AS streaming_url,
     'DC3' AS sistema_origem,
     'CIVITAS' AS responsavel
   FROM {{ source('stg_cerco_digital', 'cameras_civitas') }} a
   JOIN civitas_cameras_vms b USING (host)
   -- Only include records that follow the "Code - Name" pattern
-  WHERE 
+  WHERE
   REGEXP_CONTAINS(a.endereco, r'-') AND
   a.modelo != 'LPR' -- Only videomonitoring cameras are included
   -- Deduplicate based on extracted codigo_camera
   QUALIFY ROW_NUMBER() OVER(PARTITION BY TRIM(REGEXP_EXTRACT(a.endereco, r'^(.+?)\s*-')) ORDER BY a.latitude DESC) = 1
 ),
 
+civitas_streaming_url AS (
+  SELECT
+    a.codigo_camera,
+    a.nome_camera,
+    a.zona_camera,
+    a.latitude,
+    a.longitude,
+    IF (b.entity_id IS NULL, CAST(NULL AS STRING), CONCAT('{{ env_var("HEXAGON_VMS__RTSP_URL_PREFIX") }}', b.entity_id)) AS streaming_url,
+    a.sistema_origem,
+    a.responsavel
+  FROM civitas_base_cleaned a
+  JOIN {{ ref('camera') }} b USING (codigo_camera)
+),
+
 merged_cameras AS (
   -- Combine both cleaned sources
   SELECT * FROM tixxi_base_cleaned
   UNION ALL
-  SELECT * FROM civitas_base_cleaned
+  SELECT * FROM civitas_streaming_url
 )
 
 SELECT
@@ -66,18 +79,18 @@ SELECT
   zona_camera,
   -- Specific hardcoded fix for camera 005859 (missing floating point in source)
   CASE
-    WHEN codigo_camera = '005859' AND latitude < -90 THEN latitude / 10000 
-    ELSE latitude 
+    WHEN codigo_camera = '005859' AND latitude < -90 THEN latitude / 10000
+    ELSE latitude
   END AS latitude,
   CASE
-    WHEN codigo_camera = '005859' AND longitude < -180 THEN longitude / 10000 
-    ELSE longitude 
+    WHEN codigo_camera = '005859' AND longitude < -180 THEN longitude / 10000
+    ELSE longitude
   END AS longitude,
   streaming_url,
   sistema_origem,
   responsavel
 FROM merged_cameras
-WHERE 
-  codigo_camera IS NOT NULL 
-  AND latitude IS NOT NULL 
+WHERE
+  codigo_camera IS NOT NULL
+  AND latitude IS NOT NULL
   AND longitude IS NOT NULL

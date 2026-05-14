@@ -28,6 +28,43 @@ sources:
         columns:
         - name: codigo_equipamento
         - name: motivo
+      - name: controle_implantacao_camera
+        columns:
+        - name: modelo
+        - name: ponto
+        - name: status_nos_sistemas_exati_zabbix
+        - name: ip_camera
+        - name: numero_serie
+        - name: data_arc
+        - name: data_implantacao_cameras
+        - name: mascara
+        - name: derivacao
+        - name: numero_camera
+        - name: latitude
+        - name: longitude
+        - name: bairro
+        - name: endereco
+        - name: reposicionamento
+        - name: observacao_k
+        - name: vms_ou_sentry
+        - name: data_enprodes
+        - name: energizada
+        - name: ligacao_direta_comando
+        - name: data_ip
+        - name: status_fibra
+        - name: data_status
+        - name: status
+        - name: data_noc
+        - name: visada
+        - name: pendencia_observacao_geral
+        - name: coordenadas
+        - name: camera_furtada
+        - name: data_identificacao_furto
+        - name: numero_bo
+        - name: prolumen
+        - name: data_energizacao
+        - name: remanejamento_camera_caixa
+        - name: estrutura_poste
 
   - name: stg_disque_denuncia
     database: rj-civitas
@@ -218,6 +255,11 @@ sources:
         identifier: readings_*
       - name: cameras
 
+  - name: hexagon_staging
+    database: rj-civitas
+    schema: hexagon_staging
+    tables:
+      - name: camera
 
 exposures:
   - name: civitas-api
