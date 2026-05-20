@@ -22,7 +22,7 @@ WITH cetrio_radars AS (
       IF(status = 'OPERANDO', true, false) AS status_ativo
     FROM {{ ref('radar') }}
     -- Excluindo pontos de coleta problemáticos e que não têm dados (desde 2024)
-    WHERE codigo_ponto_coleta NOT IN ('Av Sernambetiba PxSemaforo7627-St Pontal') 
+    WHERE codigo_ponto_coleta NOT IN ('Av Sernambetiba PxSemaforo7627-St Pontal')
 ),
 civitas_lpr AS (
   SELECT
@@ -54,9 +54,9 @@ all_equipments_cleaned AS (
         -- Remove todos os espaços em branco do código do ponto de coleta
         TRIM(REGEXP_REPLACE(codigo_ponto_coleta, r'\s+', '')) AS codigo_ponto_coleta,
         -- Remove espaços extras (mais de um espaço) e substitui por um espaço simples
-        UPPER(TRIM(REGEXP_REPLACE(local, r'\s+', ' '))) AS local,
-        UPPER(TRIM(REGEXP_REPLACE(sentido, r'\s+', ' '))) AS sentido,
-        UPPER(TRIM(REGEXP_REPLACE(bairro, r'\s+', ' '))) AS bairro,
+        REGEXP_REPLACE(REGEXP_REPLACE(NORMALIZE(UPPER(TRIM(local)), NFD), r'\pM', ''), r'\s+', ' ') AS local,
+        REGEXP_REPLACE(REGEXP_REPLACE(NORMALIZE(UPPER(TRIM(sentido)), NFD), r'\pM', ''), r'\s+', ' ') AS sentido,
+        REGEXP_REPLACE(REGEXP_REPLACE(NORMALIZE(UPPER(TRIM(bairro)), NFD), r'\pM', ''), r'\s+', ' ') AS bairro,
         latitude,
         longitude,
         geography,
