@@ -36,8 +36,7 @@ civitas_lpr AS (
       a.longitude,
       ST_GEOGPOINT(SAFE_CAST(a.longitude AS FLOAT64), SAFE_CAST(a.latitude AS FLOAT64)) AS geography,
       status AS status_ativo
-    {# FROM {{ source('lpr', 'cameras') }} a #}
-    FROM rj-civitas-dev.lpr.cameras a
+    FROM {{ ref('lpr_cameras') }} a
     LEFT JOIN {{ source('datario', 'bairro') }} b ON ST_WITHIN(ST_GEOGPOINT(a.longitude, a.latitude), b.geometry)
 ),
 all_equipments AS (
