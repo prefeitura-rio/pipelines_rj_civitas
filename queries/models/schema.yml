@@ -261,6 +261,136 @@ sources:
     tables:
       - name: camera
 
+  - name: palver_staging
+    database: rj-civitas-dev
+    schema: palver_staging
+    tables:
+      - name: palver_news_messages
+        columns:
+        - name: id
+        - name: chat_id
+        - name: datetime
+        - name: datetime_search
+        - name: text
+        - name: c_title_search
+        - name: c_subtitle_search
+        - name: c_url
+        - name: ca_authors
+        - name: tags
+        - name: locations
+        - name: specific_locations
+        - name: best_location_text
+        - name: best_location_full_address
+        - name: latitude
+        - name: longitude
+        - name: timestamp_insercao
+
+      - name: palver_press_messages
+        columns:
+        - name: id
+        - name: chat_id
+        - name: datetime
+        - name: c_processed_at
+        - name: text
+        - name: c_title_search
+        - name: media_path
+        - name: tags
+        - name: is_relevant
+        - name: locations
+        - name: main_location
+        - name: main_location_full_address
+        - name: latitude
+        - name: longitude
+        - name: timestamp_insercao
+
+      - name: palver_radio_medias_messages
+        columns:
+        - name: id
+        - name: chat_id
+        - name: datetime
+        - name: city
+        - name: transcript
+        - name: transcript_sentiment
+        - name: c_radio_id
+        - name: c_radio_name
+        - name: c_program_title
+        - name: media_path
+        - name: tags
+        - name: is_relevant
+        - name: locations
+        - name: main_location
+        - name: main_location_full_address
+        - name: latitude
+        - name: longitude
+        - name: timestamp_insercao
+
+      - name: palver_television_messages
+        columns:
+        - name: id
+        - name: chat_id
+        - name: datetime
+        - name: city
+        - name: transcript
+        - name: transcript_sentiment
+        - name: c_channel_id
+        - name: c_channel_name
+        - name: program_title
+        - name: program_category
+        - name: media_path
+        - name: tags
+        - name: is_relevant
+        - name: locations
+        - name: main_location
+        - name: main_location_full_address
+        - name: latitude
+        - name: longitude
+        - name: timestamp_insercao
+
+      - name: palver_twitter_messages
+        columns:
+        - name: id
+        - name: chat_id
+        - name: datetime
+        - name: text
+        - name: c_url
+        - name: c_city
+        - name: c_username
+        - name: c_user_id
+        - name: hashtags
+        - name: tags
+        - name: is_relevant
+        - name: locations
+        - name: main_location
+        - name: main_location_full_address
+        - name: latitude
+        - name: longitude
+        - name: timestamp_insercao
+
+      - name: palver_whatsapp_messages
+        columns:
+        - name: id
+        - name: chat_id
+        - name: datetime
+        - name: text
+        - name: urls
+        - name: text_sentiment
+        - name: is_news_related
+        - name: news_related_score
+        - name: spam
+        - name: spam_score
+        - name: is_potentially_fraud
+        - name: fraud_score
+        - name: is_potentially_misleading
+        - name: misleading_score
+        - name: tags
+        - name: is_relevant
+        - name: locations
+        - name: main_location
+        - name: main_location_full_address
+        - name: latitude
+        - name: longitude
+        - name: timestamp_insercao
+
 exposures:
   - name: civitas-api
     type: application

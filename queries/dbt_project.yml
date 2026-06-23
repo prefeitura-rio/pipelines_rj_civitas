@@ -82,6 +82,11 @@ models:
       +schema: hexagon
       +meta:
         owner: "@nicolas.evilasio"
+    palver:
+      +materialized: table
+      +schema: palver
+      +meta:
+        owner: "@jorge.mendes"
 
 
 vars:
