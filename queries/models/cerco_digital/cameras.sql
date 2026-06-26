@@ -62,7 +62,7 @@ civitas_streaming_url AS (
     a.zona_camera,
     a.latitude,
     a.longitude,
-    IF (b.entity_id IS NULL, CAST(NULL AS STRING), CONCAT('{{ env_var("HEXAGON_VMS__RTSP_URL_PREFIX", "dummy") }}', b.entity_id)) AS streaming_url,
+    IF (b.entity_id IS NULL, CAST(NULL AS STRING), CONCAT('{{ env_var("HEXAGON_VMS__RTSP_URL_PREFIX") }}', b.entity_id)) AS streaming_url,
     a.sistema_origem,
     a.responsavel,
     FALSE AS camera_interna
