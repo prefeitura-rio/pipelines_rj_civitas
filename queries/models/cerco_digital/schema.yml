@@ -274,6 +274,10 @@ models:
               value_set: ['COR', 'CIVITAS']
               meta:
                 description: "Verifica se responsavel é um dos valores aceitos: COR, CIVITAS"
+      
+      - name: camera_interna
+        description: "É uma câmera que aponta para local interno"
+        
 
   - name: radares_cameras_proximas
     description: |
