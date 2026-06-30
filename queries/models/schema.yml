@@ -6,6 +6,10 @@ sources:
     schema: cerco_digital_staging
     tables:
       - name: cameras
+      - name: cameras_tixxi_indoor
+        columns:
+        - name: unidade
+        - name: codigo_tixxi
       - name: equipamento_codcet_to_camera_numero
       - name: cameras_civitas
       - name: hosts_cameras_civitas
