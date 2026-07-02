@@ -266,7 +266,7 @@ sources:
       - name: camera
 
   - name: palver_staging
-    database: rj-civitas-dev
+    database: rj-civitas
     schema: palver_staging
     tables:
       - name: palver_news_messages
