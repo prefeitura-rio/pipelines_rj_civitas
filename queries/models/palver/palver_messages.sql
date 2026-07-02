@@ -29,6 +29,7 @@ SELECT
   datetime,
   locations,
   main_location,
+  main_location_city,
   main_location_full_address,
   SAFE_CAST(latitude AS FLOAT64) AS latitude,
   SAFE_CAST(longitude AS FLOAT64) AS longitude
@@ -36,7 +37,7 @@ SELECT
 FROM {{ source('palver_staging', 'palver_news_messages') }}
 WHERE text IS NOT NULL
 {% if is_incremental() %}
-AND datetime > (SELECT MAX(datetime) FROM {{ this }} WHERE source = 'news')
+AND datetime >= (SELECT MAX(datetime) FROM {{ this }} WHERE source = 'news')
 {% endif %}
 QUALIFY ROW_NUMBER() OVER(PARTITION BY id ORDER BY timestamp_insercao DESC) = 1
 
@@ -55,6 +56,7 @@ SELECT
   c_processed_at AS datetime,
   locations,
   main_location,
+  main_location_city,
   main_location_full_address,
   SAFE_CAST(latitude AS FLOAT64) AS latitude,
   SAFE_CAST(longitude AS FLOAT64) AS longitude
@@ -83,6 +85,7 @@ SELECT
   datetime,
   locations,
   main_location,
+  main_location_city,
   main_location_full_address,
   SAFE_CAST(latitude AS FLOAT64) AS latitude,
   SAFE_CAST(longitude AS FLOAT64) AS longitude
@@ -90,7 +93,7 @@ SELECT
 FROM {{ source('palver_staging', 'palver_radio_medias_messages') }}
 WHERE transcript IS NOT NULL
 {% if is_incremental() %}
-AND datetime > (SELECT MAX(datetime) FROM {{ this }} WHERE source = 'radio.medias')
+AND datetime >= (SELECT MAX(datetime) FROM {{ this }} WHERE source = 'radio.medias')
 {% endif %}
 QUALIFY ROW_NUMBER() OVER(PARTITION BY id ORDER BY timestamp_insercao DESC) = 1
 
@@ -110,6 +113,7 @@ SELECT
   datetime,
   locations,
   main_location,
+  main_location_city,
   main_location_full_address,
   SAFE_CAST(latitude AS FLOAT64) AS latitude,
   SAFE_CAST(longitude AS FLOAT64) AS longitude
@@ -117,7 +121,7 @@ SELECT
 FROM {{ source('palver_staging', 'palver_television_messages') }}
 WHERE transcript IS NOT NULL
 {% if is_incremental() %}
-AND datetime > (SELECT MAX(datetime) FROM {{ this }} WHERE source = 'television')
+AND datetime >= (SELECT MAX(datetime) FROM {{ this }} WHERE source = 'television')
 {% endif %}
 QUALIFY ROW_NUMBER() OVER(PARTITION BY id ORDER BY timestamp_insercao DESC) = 1
 
@@ -132,6 +136,7 @@ SELECT
   datetime,
   locations,
   main_location,
+  main_location_city,
   main_location_full_address,
   SAFE_CAST(latitude AS FLOAT64) AS latitude,
   SAFE_CAST(longitude AS FLOAT64) AS longitude
@@ -139,7 +144,7 @@ SELECT
 FROM {{ source('palver_staging', 'palver_twitter_messages') }}
 WHERE text IS NOT NULL
 {% if is_incremental() %}
-AND datetime > (SELECT MAX(datetime) FROM {{ this }} WHERE source = 'twitter')
+AND datetime >= (SELECT MAX(datetime) FROM {{ this }} WHERE source = 'twitter')
 {% endif %}
 QUALIFY ROW_NUMBER() OVER(PARTITION BY id ORDER BY timestamp_insercao DESC) = 1
 
@@ -154,6 +159,7 @@ SELECT
   datetime,
   locations,
   main_location,
+  main_location_city,
   main_location_full_address,
   SAFE_CAST(latitude AS FLOAT64) AS latitude,
   SAFE_CAST(longitude AS FLOAT64) AS longitude
@@ -161,6 +167,6 @@ SELECT
 FROM {{ source('palver_staging', 'palver_whatsapp_messages') }}
 WHERE text IS NOT NULL
 {% if is_incremental() %}
-AND datetime > (SELECT MAX(datetime) FROM {{ this }} WHERE source = 'whatsapp')
+AND datetime >= (SELECT MAX(datetime) FROM {{ this }} WHERE source = 'whatsapp')
 {% endif %}
 QUALIFY ROW_NUMBER() OVER(PARTITION BY id ORDER BY timestamp_insercao DESC) = 1
