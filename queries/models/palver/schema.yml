@@ -1,0 +1,54 @@
+version: 2
+
+models:
+  - name: palver_messages
+    description: >-
+      **Descrição**: Tabela que contém todos os dados de notícias e postagens de redes sociais 
+      relacionados a ocorrências de crimes no estado do Rio de Janeiro extraídos da Palver.
+
+      **Fonte**: [API Palver]
+
+      **Frequência de atualização**: 
+
+      **Cobertura temporal**: 
+
+      **Publicado por**: Jorge Mendes
+
+      **Publicado por (email)**: jorge.mendes@prefeitura.rio
+
+    columns:
+      - name: id
+        description: Identificador único para cada registro no banco de dados.
+
+      - name: source
+        description: Fonte do registro ("whatsapp", "news", "press", "radio.medias", "television" ou "twitter").
+
+      - name: text
+        description: Texto da notícia ou postagem de rede social.
+
+      - name: is_relevant
+        description: O texto contém de fato algum relato de crimes (Informação extraído por LLM).
+
+      - name: tags
+        description: Lista de tags associadas ao texto ("tiroteio", "assalto", "roubo", "tráfico", "milícia" e/ou "homicídio"). 
+
+      - name: datetime
+        description: Timestamp UTC do registro.
+
+      - name: locations
+        description: Lista de todos as localizações que aparecem no texto (Informação extraído por LLM). 
+
+      - name: main_location
+        description: Localização mais específica associada ao principal evento do texto (Informação extraído por LLM). 
+
+      - name: main_location_city
+        description: Cidade do principal evento do texto (Informação oriunda da API Google Maps). 
+
+      - name: main_location_full_address
+        description: Endereço completo da localização mais específica associada ao principal evento do texto (Informação oriunda da API Google Maps). 
+
+      - name: latitude
+        description: Latitude da main_location (Informação oriunda da API Google Maps).
+
+      - name: longitude
+        description: Longitude da main_location (Informação oriunda da API Google Maps).
