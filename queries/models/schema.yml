@@ -281,10 +281,11 @@ sources:
         - name: c_url
         - name: ca_authors
         - name: tags
+        - name: is_relevant
         - name: locations
-        - name: specific_locations
-        - name: best_location_text
-        - name: best_location_full_address
+        - name: main_location
+        - name: main_location_city
+        - name: main_location_full_address
         - name: latitude
         - name: longitude
         - name: timestamp_insercao
@@ -302,6 +303,7 @@ sources:
         - name: is_relevant
         - name: locations
         - name: main_location
+        - name: main_location_city
         - name: main_location_full_address
         - name: latitude
         - name: longitude
@@ -323,6 +325,7 @@ sources:
         - name: is_relevant
         - name: locations
         - name: main_location
+        - name: main_location_city
         - name: main_location_full_address
         - name: latitude
         - name: longitude
@@ -345,6 +348,7 @@ sources:
         - name: is_relevant
         - name: locations
         - name: main_location
+        - name: main_location_city
         - name: main_location_full_address
         - name: latitude
         - name: longitude
@@ -365,6 +369,7 @@ sources:
         - name: is_relevant
         - name: locations
         - name: main_location
+        - name: main_location_city
         - name: main_location_full_address
         - name: latitude
         - name: longitude
@@ -390,6 +395,7 @@ sources:
         - name: is_relevant
         - name: locations
         - name: main_location
+        - name: main_location_city
         - name: main_location_full_address
         - name: latitude
         - name: longitude
