@@ -285,6 +285,8 @@ sources:
         - name: locations
         - name: main_location
         - name: main_location_city
+        - name: main_location_neighborhood
+        - name: main_location_street
         - name: main_location_full_address
         - name: latitude
         - name: longitude
@@ -304,6 +306,8 @@ sources:
         - name: locations
         - name: main_location
         - name: main_location_city
+        - name: main_location_neighborhood
+        - name: main_location_street
         - name: main_location_full_address
         - name: latitude
         - name: longitude
@@ -326,6 +330,8 @@ sources:
         - name: locations
         - name: main_location
         - name: main_location_city
+        - name: main_location_neighborhood
+        - name: main_location_street
         - name: main_location_full_address
         - name: latitude
         - name: longitude
@@ -349,6 +355,8 @@ sources:
         - name: locations
         - name: main_location
         - name: main_location_city
+        - name: main_location_neighborhood
+        - name: main_location_street
         - name: main_location_full_address
         - name: latitude
         - name: longitude
@@ -370,6 +378,8 @@ sources:
         - name: locations
         - name: main_location
         - name: main_location_city
+        - name: main_location_neighborhood
+        - name: main_location_street
         - name: main_location_full_address
         - name: latitude
         - name: longitude
@@ -396,6 +406,8 @@ sources:
         - name: locations
         - name: main_location
         - name: main_location_city
+        - name: main_location_neighborhood
+        - name: main_location_street
         - name: main_location_full_address
         - name: latitude
         - name: longitude
