@@ -2,6 +2,7 @@
     config(
         materialized='incremental',
         incremental_strategy='merge',
+        on_schema_change='append_new_columns',
         unique_key='id',
         partition_by={
             "field": "datetime",
