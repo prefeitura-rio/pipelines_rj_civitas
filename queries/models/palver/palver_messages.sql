@@ -2,6 +2,7 @@
     config(
         materialized='incremental',
         incremental_strategy='merge',
+        on_schema_change='append_new_columns',
         unique_key='id',
         partition_by={
             "field": "datetime",
@@ -30,6 +31,8 @@ SELECT
   locations,
   main_location,
   main_location_city,
+  main_location_neighborhood,
+  main_location_street,
   main_location_full_address,
   SAFE_CAST(latitude AS FLOAT64) AS latitude,
   SAFE_CAST(longitude AS FLOAT64) AS longitude
@@ -57,6 +60,8 @@ SELECT
   locations,
   main_location,
   main_location_city,
+  main_location_neighborhood,
+  main_location_street,
   main_location_full_address,
   SAFE_CAST(latitude AS FLOAT64) AS latitude,
   SAFE_CAST(longitude AS FLOAT64) AS longitude
@@ -86,6 +91,8 @@ SELECT
   locations,
   main_location,
   main_location_city,
+  main_location_neighborhood,
+  main_location_street,
   main_location_full_address,
   SAFE_CAST(latitude AS FLOAT64) AS latitude,
   SAFE_CAST(longitude AS FLOAT64) AS longitude
@@ -114,6 +121,8 @@ SELECT
   locations,
   main_location,
   main_location_city,
+  main_location_neighborhood,
+  main_location_street,
   main_location_full_address,
   SAFE_CAST(latitude AS FLOAT64) AS latitude,
   SAFE_CAST(longitude AS FLOAT64) AS longitude
@@ -137,6 +146,8 @@ SELECT
   locations,
   main_location,
   main_location_city,
+  main_location_neighborhood,
+  main_location_street,
   main_location_full_address,
   SAFE_CAST(latitude AS FLOAT64) AS latitude,
   SAFE_CAST(longitude AS FLOAT64) AS longitude
@@ -160,6 +171,8 @@ SELECT
   locations,
   main_location,
   main_location_city,
+  main_location_neighborhood,
+  main_location_street,
   main_location_full_address,
   SAFE_CAST(latitude AS FLOAT64) AS latitude,
   SAFE_CAST(longitude AS FLOAT64) AS longitude

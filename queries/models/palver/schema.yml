@@ -44,6 +44,12 @@ models:
       - name: main_location_city
         description: Cidade do principal evento do texto (Informação oriunda da API Google Maps). 
 
+      - name: main_location_neighborhood
+        description: Bairro do principal evento do texto (Informação oriunda da API Google Maps). 
+
+      - name: main_location_street
+        description: Rua do principal evento do texto (Informação oriunda da API Google Maps). 
+
       - name: main_location_full_address
         description: Endereço completo da localização mais específica associada ao principal evento do texto (Informação oriunda da API Google Maps). 
 
