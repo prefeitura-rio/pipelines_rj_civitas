@@ -21,9 +21,7 @@ SELECT
     COALESCE(c_title_search, ''), 
     '\nSubtítulo: ', 
     COALESCE(c_subtitle_search, ''), 
-    '\n', text, 
-    '\nAutoria: ', 
-    COALESCE(ca_authors, '')
+    '\n', text
     ) AS text,
   is_relevant,
   tags,
@@ -78,13 +76,7 @@ UNION ALL
 SELECT
   id,
   'radio.medias' AS source,
-  concat(
-    'Rádio: ', 
-    COALESCE(c_radio_name, ''), 
-    '\nPrograma: ', 
-    COALESCE(c_program_title, ''), 
-    '\n', transcript
-    ) AS text,
+  transcript AS text,
   is_relevant,
   tags,
   datetime,
@@ -109,12 +101,7 @@ UNION ALL
 SELECT
   id,
   'television' AS source,
-  concat(
-    'Canal: ', 
-    COALESCE(c_channel_name, ''), 
-    "\nPrograma: ", 
-    COALESCE(program_title, ''), 
-    '\n', transcript) AS text,
+  transcript AS text,
   is_relevant,
   tags,
   datetime,
