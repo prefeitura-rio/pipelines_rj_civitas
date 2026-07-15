@@ -49,3 +49,43 @@ SELECT
   *
 FROM
     {{ ref('reports_twitter') }}
+
+UNION ALL
+
+SELECT
+  CONCAT(id_source, id_report_original) AS id_report,
+  *
+FROM
+    {{ ref('reports_whatsapp') }}
+
+UNION ALL
+
+SELECT
+  CONCAT(id_source, id_report_original) AS id_report,
+  *
+FROM
+    {{ ref('reports_news') }}
+
+UNION ALL
+
+SELECT
+  CONCAT(id_source, id_report_original) AS id_report,
+  *
+FROM
+    {{ ref('reports_press') }}
+
+UNION ALL
+
+SELECT
+  CONCAT(id_source, id_report_original) AS id_report,
+  *
+FROM
+    {{ ref('reports_radio_medias') }}
+
+UNION ALL
+
+SELECT
+  CONCAT(id_source, id_report_original) AS id_report,
+  *
+FROM
+    {{ ref('reports_television') }}

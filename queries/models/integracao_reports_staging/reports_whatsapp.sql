@@ -13,7 +13,7 @@
 }}
 
 SELECT
-  'twitter' AS id_source,
+  'whatsapp' AS id_source,
   id AS id_report_original,
   datetime AS data_report,
   [''] AS orgaos,
@@ -44,4 +44,3 @@ WHERE
   {% endif %}
 GROUP BY ALL
 QUALIFY ROW_NUMBER() OVER(PARTITION BY id ORDER BY timestamp_insercao DESC) = 1
-
