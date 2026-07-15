@@ -13,16 +13,22 @@
 }}
 
 SELECT
-  'twitter' AS id_source,
+  'notícia online' AS id_source,
   id AS id_report_original,
   datetime AS data_report,
   [''] AS orgaos,
-  'Redes Sociais' AS categoria,
+  'Notícias' AS categoria,
   ARRAY_AGG(STRUCT(
     tag AS tipo,
     [''] AS subtipo
       )) AS tipo_subtipo,
-  text AS descricao,
+  CONCAT(
+      'Título: ', 
+      COALESCE(c_title_search, ''), 
+      '\nSubtítulo: ', 
+      COALESCE(c_subtitle_search, ''), 
+      '\n', text
+      ) AS descricao,
   CASE 
     WHEN COALESCE(main_location_street, '') != '' THEN main_location_street 
     ELSE COALESCE(main_location_neighborhood, '')
@@ -34,7 +40,7 @@ SELECT
     NULL, SAFE_CAST(longitude AS FLOAT64)) AS longitude,
   timestamp_insercao AS updated_at
 
-FROM {{ source('palver_staging', 'palver_whatsapp_messages') }}
+FROM {{ source('palver_staging', 'palver_news_messages') }}
 LEFT JOIN UNNEST(tags) AS tag
 WHERE
   is_relevant = TRUE
@@ -44,4 +50,3 @@ WHERE
   {% endif %}
 GROUP BY ALL
 QUALIFY ROW_NUMBER() OVER(PARTITION BY id ORDER BY timestamp_insercao DESC) = 1
-
