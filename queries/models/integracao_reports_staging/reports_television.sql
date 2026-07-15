@@ -43,6 +43,7 @@ FROM {{ source('palver_staging', 'palver_television_messages') }}
 LEFT JOIN UNNEST(tags) AS tag
 WHERE
   is_relevant = TRUE
+  AND ARRAY_LENGTH(tags) > 0
   AND main_location_city = 'Rio de Janeiro'
   {% if is_incremental() %}
   AND datetime >= (SELECT MAX(data_report) FROM {{ this }} )
