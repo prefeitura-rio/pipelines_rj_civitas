@@ -183,6 +183,70 @@ models:
       - name: empresa
         description: "Empresa responsável pelo equipamento."
 
+  - name: cameras_civitas
+    description: |
+      **Descrição**: Tabela com todas as câmeras da CIVITAS, com as limpezas e transformações necessárias em cada coluna.
+      Filtros aplicados:
+      - codigo_camera deve ser uma string com exatamente 7 dígitos
+      - host deve ser um número de IP válido
+      - modelo precisa ter um dos seguintes valores: 'FIXA', 'PTZ', 'PANORÂMICA', 'LPR'
+      - sistema precisa ter um dos seguintes valores: 'VMS', 'SENTRY'
+      - latitude e longitude precisam ser um float válido
+
+      Transformações:
+      - status passa a ter apenas os valores 'UP' (online) e 'DOWN' (offline)
+
+      **Frequência de atualização**: Diária
+      **Origens**: Tabela bruta oriunda do pipeline cameras_civitas (stg_cerco_digital.cameras_civitas_staging).
+      **Publicado por**: Jorge Mendes
+      **Publicado por (email)**: jorge.mendes@prefeitura.rio
+    columns:
+      - name: record_id
+        description: "ID único do registro do banco de origem"
+
+      - name: codigo_camera
+        description: "Código identificador da câmera no sistema de videomonitoramento. É composto exclusivamente por 7 caracteres numéricos"
+
+      - name: endereco
+        description: "Endereço de localização do equipamento."
+
+      - name: host
+        description: "IP do equipamento."
+
+      - name: modelo
+        description: "Modelo do equipamento ['FIXA', 'PTZ', 'PANORÂMICA', 'LPR']."
+
+      - name: sistema
+        description: "Sistema do monitoramento ['VMS', 'SENTRY']."
+
+      - name: latitude
+        description: "Latitude da câmera."
+
+      - name: longitude
+        description: "Longitude da câmera."
+
+      - name: status
+        description: "Status do equipamento ['UP', 'DOWN'].
+
+      - name: camera_furtada
+        description: "A câmera já foi furtada"
+
+      - name: data_furto
+        description: "Data do furto, caso a câmera tenha sido furtada"
+
+      - name: data_implantacao
+        description: "Data da implantação da câmera"
+
+      - name: data_aprovacao_rdo
+        description: "Data da aprovação RDO"
+
+      - name: updated_at
+        description: "Timestamp UTC da última atualização do registro pela empresa."
+
+      - name: timestamp_insercao
+        description: "Timestamp UTC da inserção do registro no banco"
+
+
   - name: cameras
     description: |
       **Descrição**: Tabela unificada de câmeras de videomonitoramento do VMS TIXXI e da CIVITAS (DC3).
