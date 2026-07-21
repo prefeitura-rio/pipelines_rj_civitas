@@ -226,7 +226,7 @@ models:
         description: "Longitude da câmera."
 
       - name: status
-        description: "Status do equipamento ['UP', 'DOWN'].
+        description: "Status do equipamento ['UP', 'DOWN']."
 
       - name: camera_furtada
         description: "A câmera já foi furtada"
