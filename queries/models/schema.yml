@@ -11,7 +11,7 @@ sources:
         - name: unidade
         - name: codigo_tixxi
       - name: equipamento_codcet_to_camera_numero
-      - name: cameras_civitas
+      - name: cameras_civitas_staging
       - name: hosts_cameras_civitas
       - name: radar
         columns:

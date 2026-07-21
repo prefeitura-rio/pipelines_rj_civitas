@@ -24,35 +24,18 @@ WITH tixxi_base_cleaned AS (
   QUALIFY ROW_NUMBER() OVER(PARTITION BY a.CameraCode ORDER BY Latitude DESC) = 1
 ),
 
-civitas_cameras_vms AS (
-  SELECT
-    host,
-    sistema
-  FROM
-    {{ source('stg_cerco_digital', 'hosts_cameras_civitas') }}
-  WHERE
-    sistema = 'VMS'
-),
-
 civitas_base_cleaned AS (
-  -- Extracting and standardizing data from the civitas staging table
-  -- Pattern: "CODE - Name"
   SELECT
-    TRIM(REGEXP_EXTRACT(a.endereco, r'^(.+?)\s*-')) AS codigo_camera,
-    INITCAP(TRIM(REGEXP_EXTRACT(a.endereco, r'-\s*(.+)$'))) AS nome_camera,
+    codigo_camera,
+    endereco AS nome_camera,
     CAST(NULL AS STRING) AS zona_camera,
-    - ABS(SAFE_CAST(a.latitude AS FLOAT64)) AS latitude,
-    - ABS(SAFE_CAST(a.longitude AS FLOAT64)) AS longitude,
+    latitude,
+    longitude,
     'DC3' AS sistema_origem,
     'CIVITAS' AS responsavel
-  FROM {{ source('stg_cerco_digital', 'cameras_civitas') }} a
-  JOIN civitas_cameras_vms b USING (host)
-  -- Only include records that follow the "Code - Name" pattern
-  WHERE
-  REGEXP_CONTAINS(a.endereco, r'-') AND
-  a.modelo != 'LPR' -- Only videomonitoring cameras are included
-  -- Deduplicate based on extracted codigo_camera
-  QUALIFY ROW_NUMBER() OVER(PARTITION BY TRIM(REGEXP_EXTRACT(a.endereco, r'^(.+?)\s*-')) ORDER BY a.latitude DESC) = 1
+  FROM {{ ref('cameras_civitas') }}
+  WHERE modelo != 'LPR'
+    AND sistema = 'VMS'
 ),
 
 civitas_streaming_url AS (
