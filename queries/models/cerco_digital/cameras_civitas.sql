@@ -15,7 +15,7 @@ WITH all_cameras AS (
   COALESCE(SAFE.PARSE_DATE('%d/%m/%Y', data_da_aprovacao_rdo), DATE(SAFE.TIMESTAMP(data_da_aprovacao_rdo))) AS data_aprovacao_rdo,
   TIMESTAMP_TRUNC(SAFE_CAST(updated_at AS TIMESTAMP), SECOND) AS updated_at,
   timestamp_insercao  
-FROM {{ source('stg_cerco_digital', 'cameras_civitas_staging') }}
+FROM {{ source('stg_cerco_digital', 'cameras_civitas') }}
 QUALIFY ROW_NUMBER() OVER(PARTITION BY mascara ORDER BY updated_at DESC) = 1
 )
 
