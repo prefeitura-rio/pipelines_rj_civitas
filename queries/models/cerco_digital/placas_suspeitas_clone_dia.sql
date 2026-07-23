@@ -80,14 +80,14 @@ pares_consecutivos AS (
     camera_b,
     ST_GEOGPOINT(longitude_a, latitude_a) AS geolocation_a,
     ST_GEOGPOINT(longitude_b, latitude_b) AS geolocation_b,
-    SAFE_DIVIDE(
+    ROUND(SAFE_DIVIDE(
       ST_DISTANCE(
         ST_GEOGPOINT(longitude_a, latitude_a),
         ST_GEOGPOINT(longitude_b, latitude_b)
       ),
       1000.0
-    ) AS distancia_km,
-    SAFE_DIVIDE(TIMESTAMP_DIFF(datahora_b, datahora_a, SECOND), 3600.0) AS delta_horas,
+    ), 2) AS distancia_km,
+    ROUND(SAFE_DIVIDE(TIMESTAMP_DIFF(datahora_b, datahora_a, SECOND), 3600.0), 2) AS delta_horas,
     total_leituras_placa
   FROM leituras_pares
   WHERE datahora_a IS NOT NULL
@@ -110,10 +110,10 @@ pares_suspeitos_validados AS (
     geolocation_b,
     distancia_km,
     delta_horas,
-    SAFE_DIVIDE(distancia_km, delta_horas) AS velocidade_implicita_kmh
+    ROUND(SAFE_DIVIDE(distancia_km, delta_horas), 2) AS velocidade_implicita_kmh
   FROM pares_consecutivos
   WHERE distancia_km >= {{ var('distance_threshold_km') }}
-    AND SAFE_DIVIDE(distancia_km, delta_horas) >= {{ var('speed_threshold_kmh') }}
+    AND ROUND(SAFE_DIVIDE(distancia_km, delta_horas), 2) >= {{ var('speed_threshold_kmh') }}
 )
 
 SELECT
@@ -137,10 +137,10 @@ SELECT
       )
       ORDER BY datahora_a
   ) AS pares_suspeitos,
-  MAX(distancia_km) AS distancia_maxima,
-  MIN(distancia_km) AS distancia_minima,
-  AVG(velocidade_implicita_kmh) AS velocidade_implicita_media,
-  MAX(velocidade_implicita_kmh) AS velocidade_implicita_maxima
+  ROUND(MAX(distancia_km), 2) AS distancia_maxima,
+  ROUND(MIN(distancia_km), 2) AS distancia_minima,
+  ROUND(AVG(velocidade_implicita_kmh), 2) AS velocidade_implicita_media,
+  ROUND(MAX(velocidade_implicita_kmh), 2) AS velocidade_implicita_maxima
   FROM pares_suspeitos_validados
   GROUP BY placa, data_dia, total_leituras_placa
   HAVING ARRAY_LENGTH(pares_suspeitos) >= {{ var('min_pairs_per_day') }}
