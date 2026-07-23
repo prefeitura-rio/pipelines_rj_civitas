@@ -44,6 +44,7 @@ leituras_validas AS (
 leituras_pares AS (
   SELECT
     placa,
+    total_leituras_placa,
     datahora AS datahora_b,
     id_ponto_coleta AS ponto_b,
     camera_numero AS camera_b,
