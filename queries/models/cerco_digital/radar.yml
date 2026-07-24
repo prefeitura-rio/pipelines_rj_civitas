@@ -1,0 +1,106 @@
+version: 2
+
+models:
+  - name: radar
+    description: |
+      **Descrição**: Tabela que contém os dados dos radares da CETRIO.
+      **Frequência de atualização**: Diária
+      **Origem**: rj-civitas.cerco_digital_staging.radar
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+
+    columns:
+      - name: codigo_ponto_coleta
+        description: "Código do ponto de coleta."
+        data_tests:
+          - not_null:
+              name: radar__codigo_ponto_coleta__not_null
+
+      - name: codigo_contrato
+        description: "Código do contrato."
+        data_tests:
+          - not_null:
+              name: radar__codigo_contrato__not_null
+
+      - name: codcet
+        description: "Código identificador do radar."
+        constraints:
+          - type: primary_key
+        data_tests:
+          - not_null:
+              name: radar__codcet__not_null
+          - unique:
+              name: radar__codcet__unique
+          - dbt_expectations.expect_column_value_lengths_to_equal:
+              name: radar__codcet__length_equal_10
+              value: 10
+              meta:
+                description: "Verifica se codcet tem 10 dígitos"
+          - dbt_expectations.expect_column_values_to_match_regex:
+              name: radar__codcet__only_numbers
+              regex: "^[0-9]+$"
+              meta:
+                description: "Verifica se codcet é apenas números"
+
+      - name: local
+        description: "Local do radar."
+        data_tests:
+          - not_null:
+              name: radar__local__not_null
+
+      - name: bairro
+        description: "Bairro do radar."
+        data_tests:
+          - not_null:
+              name: radar__bairro__not_null
+
+      - name: latitude
+        description: "Latitude do radar."
+        data_tests:
+          - not_null:
+              name: radar__latitude__not_null
+
+      - name: longitude
+        description: "Longitude do radar."
+        data_tests:
+          - not_null:
+              name: radar__longitude__not_null
+
+      - name: logradouro
+        description: "Logradouro do radar."
+        data_tests:
+          - not_null:
+              name: radar__logradouro__not_null
+
+      - name: sentido
+        description: "Sentido do radar."
+        data_tests:
+          - not_null:
+              name: radar__sentido__not_null
+
+      - name: suspenso
+        description: "Suspenso do radar."
+        data_tests:
+          - not_null:
+              name: radar__suspenso__not_null
+
+      - name: status
+        description: "Status do radar."
+        data_tests:
+          - not_null:
+              name: radar__status__not_null
+          - accepted_values:
+              name: radar__status__accepted_values
+              values: ['OPERANDO', 'DESLIGADO', 'IMPLANTACAO']
+
+      - name: inicio_operacao
+        description: "Data de início da operação do radar."
+
+      - name: fim_contrato
+        description: "Data de fim do contrato do radar."
+
+      - name: empresa
+        description: "Empresa responsável pelo radar."
+        data_tests:
+          - not_null:
+              name: radar__empresa__not_null

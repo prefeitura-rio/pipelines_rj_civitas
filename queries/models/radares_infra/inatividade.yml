@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: inatividade
+    description: |
+      **Descrição**: Esta tabela fornece informações sobre períodos de inatividade das câmeras,
+      incluindo a quantidade de períodos em que a inatividade excedeu determinados limites.
+      Também inclui estatísticas de latência média e mediana para as câmeras.
+      **Frequência de Atualização**: Diária.
+      **Publicado Por**: |
+        Amanda Amaro
+        Nicolas Evilasio
+      **Publicado Por (email)**: |
+        amanda.amaro@prefeitura.rio
+        nicolas.evilasio@prefeitura.rio
+
+
+    columns:
+      - name: camera_numero
+        description: "Identificador único da câmera."
+
+      - name: date
+        description: "Data da leitura, ajustada para o fuso horário 'America/Sao_Paulo'."
+
+      - name: empresa
+        description: "Empresa ou organização responsável pela câmera."
+
+      - name: periods_exceeding_1h
+        description: "Número de períodos em que a inatividade excedeu 1 hora."
+
+      - name: periods_exceeding_3h
+        description: "Número de períodos em que a inatividade excedeu 3 horas."
+
+      - name: periods_exceeding_6h
+        description: "Número de períodos em que a inatividade excedeu 6 horas."
+
+      - name: periods_exceeding_12h
+        description: "Número de períodos em que a inatividade excedeu 12 horas."
+
+      - name: periods_exceeding_24h
+        description: "Número de períodos em que a inatividade excedeu 24 horas."
+
+      - name: avg_latency
+        description: "Latência média em segundos entre o tempo de captura e o tempo registrado da leitura."
+
+      - name: median_latency
+        description: "Latência mediana em segundos entre o tempo de captura e o tempo registrado da leitura."
