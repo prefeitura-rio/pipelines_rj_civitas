@@ -1,0 +1,28 @@
+version: 2
+
+exposures:
+  - name: civitas-api
+    type: application
+    maturity: high
+    url: https://api.civitas.rio/
+    description: "API da CIVITAS"
+    depends_on:
+      - ref('cameras')
+      - ref('lpr_cameras')
+      - ref('vw_all_readings')
+      - ref('vw_readings')
+      - ref('reports')
+    owner:
+      name: "Nicolas Evilasio"
+      email: "nicolas.evilasio@prefeitura.rio"
+
+  - name: atlas-civitas-api
+    type: application
+    maturity: high
+    url: https://api-atlas.civitas.rio/
+    description: "API do Atlas CIVITAS"
+    depends_on:
+      - ref('cameras')
+    owner:
+      name: "Ricardo Stuckert"
+      email: "ricardo.stuckert@prefeitura.rio"

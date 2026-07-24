@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: mapeamento_id_ponto_coleta
+    description: |
+      **Descrição**: Criação de um ID interno estável para cada chave de negócio (ponto de coleta), enquanto atributos podem mudar em outro modelo.
+      **Frequência de atualização**: Diária
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+
+    columns:
+      - name: id_ponto_coleta
+        description: "Identificador estável do ponto de coleta."
+
+      - name: origem_equipamento
+        description: "Origem do equipamento (CETRIO / CIVITAS)."
+
+      - name: codigo_ponto_coleta
+        description: "Código de negócio do ponto de coleta."
+
+      - name: sentido
+        description: "Sentido da via."
+
+      - name: created_at
+        description: "Timestamp de criação do registro na tabela."
+
+      - name: updated_at
+        description: "Timestamp da última atualização na tabela."

@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: lpr_staging
+    database: rj-civitas
+    schema: lpr_staging
+    tables:
+      - name: lanes

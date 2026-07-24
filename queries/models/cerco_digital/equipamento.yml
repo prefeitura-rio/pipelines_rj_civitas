@@ -1,0 +1,113 @@
+version: 2
+
+models:
+  - name: equipamento
+    description: |
+      **Descrição**: Tabela unificada de equipamentos que realizam a captura de dados de veículos (Câmeras LPR e Radares).
+      **Frequência de atualização**: Diária
+      **Origens**: rj-cetrio.ocr_radar.equipamento e rj-civitas.lpr.cameras
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+
+    columns:
+      - name: origem_equipamento
+        description: "Origem do equipamento."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento__origem_equipamento__not_null
+              meta:
+                description: "Verifica se origem_equipamento não é nulo"
+
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              name: equipamento__origem_equipamento__accepted_values
+              value_set: ['CETRIO', 'CIVITAS']
+              meta:
+                description: "Verifica se origem_equipamento é um dos valores aceitos: CETRIO, CIVITAS"
+
+      - name: codigo_equipamento
+        description: "Código identificador do equipamento."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento__codigo_equipamento__not_null
+              meta:
+                description: "Verifica se codigo_equipamento não é nulo"
+
+      - name: codigo_ponto_coleta
+        description: "Código do ponto de coleta. Ponto de coleta é a combinação de equipamentos, que estão localizados no mesmo ponto geográfico ou próximos, realizando leituras da mesma via, no mesmo sentido."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento__codigo_ponto_coleta__not_null
+              meta:
+                description: "Verifica se codigo_ponto_coleta não é nulo"
+
+      - name: local
+        description: "Local do equipamento."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento__local__not_null
+              meta:
+                description: "Verifica se local não é nulo"
+
+      - name: sentido
+        description: "Sentido da via do equipamento."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento__sentido__not_null
+              meta:
+                description: "Verifica se sentido não é nulo"
+              config:
+                severity: warn
+
+      - name: bairro
+        description: "Bairro do equipamento."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento__bairro__not_null
+              meta:
+                description: "Verifica se bairro não é nulo"
+
+      - name: latitude
+        description: "Latitude do equipamento."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento__latitude__not_null
+              meta:
+                description: "Verifica se latitude não é nulo"
+
+          - dbt_expectations.expect_column_values_to_be_between:
+              name: equipamento__latitude__between_minus_90_and_0
+              min_value: -90.0
+              max_value: 0.0
+              meta:
+                description: "Verifica se latitude está entre -90 e 0 [Hemisfério Sul]"
+
+      - name: longitude
+        description: "Longitude do equipamento."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento__longitude__not_null
+              meta:
+                description: "Verifica se longitude não é nulo"
+
+          - dbt_expectations.expect_column_values_to_be_between:
+              name: equipamento__longitude__between_minus_180_and_0
+              min_value: -180.0
+              max_value: 0.0
+              meta:
+                description: "Verifica se longitude está entre -180 e 0 [Hemisfério Sul]"
+
+      - name: geography
+        description: "Geography do equipamento. [ST_GEOGPOINT(longitude, latitude)]"
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento__geography__not_null
+              meta:
+                description: "Verifica se geography não é nulo"
+
+      - name: status_ativo
+        description: "Status ativo do equipamento."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento__status_ativo__not_null
+              meta:
+                description: "Verifica se status_ativo não é nulo"

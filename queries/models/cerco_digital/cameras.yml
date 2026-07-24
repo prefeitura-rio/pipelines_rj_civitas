@@ -1,0 +1,97 @@
+version: 2
+
+models:
+  - name: cameras
+    description: |
+      **Descrição**: Tabela unificada de câmeras de videomonitoramento do VMS TIXXI e da CIVITAS (DC3).
+      **Frequência de atualização**: Diária
+      **Origens**: API TIXXI (stg_cerco_digital.cameras) e CIVITAS (stg_cerco_digital.cameras_civitas). Câmeras LPR da CIVITAS não são incluídas.
+      **Publicado por**: Nicolas Evilasio
+      **Publicado por (email)**: nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: codigo_camera
+        description: "Código identificador da câmera no sistema de videomonitoramento. [Esse código não é único entre as câmeras do VMS TIXXI e da CIVITAS]."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: cameras__codigo_camera__not_null
+              meta:
+                description: "Verifica se id_camera não é nulo"
+
+      - name: nome_camera
+        description: "Nome que a empresa atribui ao equipamento."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: cameras__nome_camera__not_null
+              meta:
+                description: "Verifica se nome_camera não é nulo"
+
+      - name: zona_camera
+        description: "Zona da câmera."
+
+      - name: latitude
+        description: "Latitude da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: cameras__latitude__not_null
+              meta:
+                description: "Verifica se latitude não é nulo"
+
+          - dbt_expectations.expect_column_values_to_be_between:
+              name: cameras__latitude__between_minus_90_and_0
+              min_value: -90.0
+              max_value: 0.0
+              meta:
+                description: "Verifica se latitude está entre -90 e 0 [Hemisfério Sul]"
+
+      - name: longitude
+        description: "Longitude da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: cameras__longitude__not_null
+              meta:
+                description: "Verifica se longitude não é nulo"
+
+          - dbt_expectations.expect_column_values_to_be_between:
+              name: cameras__longitude__between_minus_180_and_0
+              min_value: -180.0
+              max_value: 0.0
+              meta:
+                description: "Verifica se longitude está entre -180 e 0 [Hemisfério Sul]"
+
+      - name: streaming_url
+        description: "URL de streaming ao vivo da câmera."
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: cameras__streaming_url__not_null
+              where: "sistema_origem = 'TIXXI'" # TODO: add DC3 when streaming urls are available
+              meta:
+                description: "Verifica se streaming_url não é nulo para câmeras do VMS TIXXI"
+
+      - name: sistema_origem
+        description: "Sistema de origem da câmera. [TIXXI, DC3]"
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: cameras__sistema_origem__not_null
+              meta:
+                description: "Verifica se sistema_origem não é nulo"
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              name: cameras__sistema_origem__accepted_values
+              value_set: ['TIXXI', 'DC3']
+              meta:
+                description: "Verifica se sistema_origem é um dos valores aceitos: TIXXI, DC3"
+
+      - name: responsavel
+        description: "Responsável pela câmera. [COR, CIVITAS]"
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: cameras__responsavel__not_null
+              meta:
+                description: "Verifica se responsavel não é nulo"
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              name: cameras__responsavel__accepted_values
+              value_set: ['COR', 'CIVITAS']
+              meta:
+                description: "Verifica se responsavel é um dos valores aceitos: COR, CIVITAS"
+      
+      - name: camera_interna
+        description: "É uma câmera que aponta para local interno"

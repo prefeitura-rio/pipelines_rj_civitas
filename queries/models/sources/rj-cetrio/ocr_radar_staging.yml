@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: ocr_radar_staging
+    database: rj-cetrio
+    schema: ocr_radar_staging
+    tables:
+      - name: equipamento_codcet_to_camera_numero

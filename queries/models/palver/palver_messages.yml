@@ -6,11 +6,11 @@ models:
       **Descrição**: Tabela que contém todos os dados de notícias e postagens de redes sociais 
       relacionados a ocorrências de crimes no estado do Rio de Janeiro extraídos da Palver.
 
-      **Fonte**: [API Palver]
+      **Fonte**: [API Palver] -> palver_staging.palver_*_messages
 
-      **Frequência de atualização**: 
+      **Frequência de atualização**: A cada 5 minutos
 
-      **Cobertura temporal**: 
+      **Cobertura temporal**: Julho de 2026
 
       **Publicado por**: Jorge Mendes
 

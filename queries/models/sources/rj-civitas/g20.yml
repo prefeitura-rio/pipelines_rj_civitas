@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: g20
+    database: rj-civitas
+    schema: g20
+    tables:
+      - name: contextos
