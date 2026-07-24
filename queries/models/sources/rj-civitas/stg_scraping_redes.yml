@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: stg_scraping_redes
+    database: rj-civitas
+    schema: scraping_redes_staging
+    tables:
+      - name: telegram_georreferenciado
+      - name: telegram_messages
+      - name: telegram_chats
+      - name: twitter_georreferenciado
+      - name: twitter_messages
+      - name: twitter_chats

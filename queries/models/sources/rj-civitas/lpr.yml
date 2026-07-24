@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: lpr
+    database: rj-civitas
+    schema: lpr
+    tables:
+      - name: readings_raw
+        identifier: readings_*
+      - name: cameras

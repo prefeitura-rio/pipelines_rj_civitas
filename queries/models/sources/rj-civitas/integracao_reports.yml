@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: integracao_reports
+    database: rj-civitas
+    schema: integracao_reports
+    tables:
+      - name: tipos_interesse_1746

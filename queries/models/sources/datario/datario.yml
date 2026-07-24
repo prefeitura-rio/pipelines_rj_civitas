@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: datario
+    database: datario
+    schema: dados_mestres
+    tables:
+      - name: logradouro
+      - name: bairro

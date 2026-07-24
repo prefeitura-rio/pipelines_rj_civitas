@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: hexagon_staging
+    database: rj-civitas
+    schema: hexagon_staging
+    tables:
+      - name: camera
