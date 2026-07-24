@@ -2,7 +2,12 @@ version: 2
 
 sources:
   - name: stg_scraping_redes
-    database: rj-civitas
+    database: >
+      {% if target.name == 'staging' %}
+      rj-civitas-dev
+      {% else %}
+      rj-civitas
+      {% endif %}
     schema: scraping_redes_staging
     tables:
       - name: telegram_georreferenciado
