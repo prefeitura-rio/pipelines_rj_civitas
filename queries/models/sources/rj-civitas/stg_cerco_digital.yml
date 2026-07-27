@@ -3,11 +3,7 @@ version: 2
 sources:
   - name: stg_cerco_digital
     database: >
-      {% if target.name == 'staging' %}
-      rj-civitas-dev
-      {% else %}
-      rj-civitas
-      {% endif %}
+      {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
     schema: cerco_digital_staging
     tables:
       - name: cameras

@@ -3,11 +3,7 @@ version: 2
 sources:
   - name: g20
     database: >
-      {% if target.name == 'staging' %}
-      rj-civitas-dev
-      {% else %}
-      rj-civitas
-      {% endif %}
+      {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
     schema: g20
     tables:
       - name: contextos

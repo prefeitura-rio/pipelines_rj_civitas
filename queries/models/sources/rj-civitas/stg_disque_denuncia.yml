@@ -3,11 +3,7 @@ version: 2
 sources:
   - name: stg_disque_denuncia
     database: >
-      {% if target.name == 'staging' %}
-      rj-civitas-dev
-      {% else %}
-      rj-civitas
-      {% endif %}
+      {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
     schema: disque_denuncia_staging
     tables:
       - name: denuncias
