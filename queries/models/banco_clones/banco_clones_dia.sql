@@ -63,7 +63,6 @@ placas_isoladas AS (
     {% else %}
       data_dia >= DATE('{{ var("start_date") }}')
     {% endif %}
-    AND data_dia < CURRENT_DATE('America/Sao_Paulo')
 ),
 
 --SEPARAÇÃO DE SEQUÊNCIAS DE CARACTERES
@@ -123,7 +122,6 @@ placas_suspeitas AS (
     {% else %}
       data_dia >= DATE_SUB(DATE('{{ var("start_date") }}'), INTERVAL 60 DAY)
     {% endif %}
-    AND data_dia < CURRENT_DATE('America/Sao_Paulo')
     AND placa IN (SELECT * FROM placas_isoladas)
     GROUP BY placa
 ),
@@ -145,7 +143,6 @@ leituras_validas AS (
     {% else %}
       datahora >= TIMESTAMP_SUB(TIMESTAMP('{{ var("start_date") }}', 'America/Sao_Paulo'), INTERVAL 60 DAY)
     {% endif %}
-    AND datahora < TIMESTAMP(CURRENT_DATE(), 'America/Sao_Paulo')
     AND placa IN (SELECT * FROM placas_isoladas)
     AND id_ponto_coleta != '949' -- TODO: Tirar esses filtros manuais de câmera inválida
     AND camera_numero != '0530511121' -- TODO: Tirar esses filtros manuais de câmera inválida
