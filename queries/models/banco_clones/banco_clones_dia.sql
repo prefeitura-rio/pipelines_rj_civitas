@@ -112,7 +112,7 @@ placas_suspeitas AS (
         SUM(pares_suspeitos) AS total_pares_suspeitos,
         COUNT(*) AS dias_com_suspeita,
         MAX(velocidade_implicita_maxima) AS velocidade_implicita_maxima,
-        AVG(velocidade_implicita_media) AS velocidade_implicita_media,
+        SUM(velocidade_implicita_media * pares_suspeitos) / SUM(pares_suspeitos) AS velocidade_implicita_media,
         MAX(distancia_maxima) AS distancia_maxima,
         MIN(distancia_minima) AS distancia_minima
 
