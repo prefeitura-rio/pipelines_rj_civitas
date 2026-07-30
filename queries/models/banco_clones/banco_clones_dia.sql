@@ -63,6 +63,7 @@ placas_isoladas AS (
     {% else %}
       data_dia >= DATE('{{ var("start_date") }}')
     {% endif %}
+    AND pares_suspeitos >=4 --Threshold mínimo pares suspeitos/dia
 ),
 
 --SEPARAÇÃO DE SEQUÊNCIAS DE CARACTERES
@@ -224,16 +225,25 @@ SELECT
         SELECT
           caractere,
           COUNT(*) AS qtd
-        FROM UNNEST(REGEXP_EXTRACT_ALL(mt.placa_letras, r'.')) caractere
+        FROM UNNEST(REGEXP_EXTRACT_ALL(RIGHT(mt.placa_letras, 4), r'.')) caractere
         GROUP BY caractere
       )
   ) AS maior_repeticao_caracteres,
-  ( SELECT - ROUND( SUM( (qtd / 7) * LOG(qtd / 7, 2) ), 3) 
+  ( SELECT MAX(qtd)
       FROM (
         SELECT
           caractere,
           COUNT(*) AS qtd
         FROM UNNEST(REGEXP_EXTRACT_ALL(mt.placa_letras, r'.')) caractere
+        GROUP BY caractere
+      )
+  ) AS maior_repeticao_ultimos_4_caracteres,
+  ( SELECT - ROUND( SUM( (qtd / 7) * LOG(qtd / 7, 2) ), 3) 
+      FROM (
+        SELECT
+          caractere,
+          COUNT(*) AS qtd
+        FROM UNNEST(REGEXP_EXTRACT_ALL(mt.placa, r'.')) caractere
         GROUP BY caractere
       )
   ) AS entropia,
@@ -436,4 +446,4 @@ SELECT
   temperatura
 FROM placas_score_temperatura
 WHERE score_trajeto < 90
-  AND (score_ocr < 60 OR score_trajeto < 10)
+  AND (score_ocr < 60 OR score_trajeto <= 10)

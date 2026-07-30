@@ -37,10 +37,10 @@ SELECT
   placa,
   data_dia,
   COUNT(*) AS pares_suspeitos,
-  ROUND(MAX(distancia_km), 2) AS distancia_maxima,
-  ROUND(MIN(distancia_km), 2) AS distancia_minima,
-  ROUND(AVG(velocidade_implicita_kmh), 2) AS velocidade_implicita_media,
-  ROUND(MAX(velocidade_implicita_kmh), 2) AS velocidade_implicita_maxima
+  MAX(distancia_km) AS distancia_maxima,
+  MIN(distancia_km) AS distancia_minima,
+  AVG(velocidade_implicita_kmh) AS velocidade_implicita_media,
+  MAX(velocidade_implicita_kmh) AS velocidade_implicita_maxima
   FROM {{ ref("pares_suspeitos") }}
   WHERE 
     {% if is_incremental() %}
@@ -49,4 +49,3 @@ SELECT
       datahora_posterior >= TIMESTAMP('{{ var("start_date") }}', 'America/Sao_Paulo')
     {% endif %}
   GROUP BY placa, data_dia
-  HAVING COUNT(*) >= 4  --Thresholhd: número mínimo de detecções por dia

@@ -92,14 +92,14 @@ pares_consecutivos AS (
     camera_posterior,
     ST_GEOGPOINT(longitude_anterior, latitude_anterior) AS geolocation_anterior,
     ST_GEOGPOINT(longitude_posterior, latitude_posterior) AS geolocation_posterior,
-    ROUND(SAFE_DIVIDE(
+    SAFE_DIVIDE(
       ST_DISTANCE(
         ST_GEOGPOINT(longitude_anterior, latitude_anterior),
         ST_GEOGPOINT(longitude_posterior, latitude_posterior)
       ),
       1000.0
-    ), 2) AS distancia_km,
-    ROUND(SAFE_DIVIDE(TIMESTAMP_DIFF(datahora_posterior, datahora_anterior, SECOND), 3600.0), 2) AS delta_horas
+    ) AS distancia_km,
+    SAFE_DIVIDE(TIMESTAMP_DIFF(datahora_posterior, datahora_anterior, SECOND), 3600.0) AS delta_horas
   FROM leituras_pares
   WHERE datahora_anterior IS NOT NULL
     AND TIMESTAMP_DIFF(datahora_posterior, datahora_anterior, SECOND) > 0
@@ -124,7 +124,7 @@ SELECT
   geolocation_posterior,
   distancia_km,
   delta_horas,
-  ROUND(SAFE_DIVIDE(distancia_km, delta_horas), 2) AS velocidade_implicita_kmh
+  SAFE_DIVIDE(distancia_km, delta_horas) AS velocidade_implicita_kmh
 FROM pares_consecutivos
 WHERE distancia_km >= 1  --Thresholhd distância mínima entre detecções
-  AND ROUND(SAFE_DIVIDE(distancia_km, delta_horas), 2) >= 110  --Thresholhd velocidade implícita mínima entre detecções
+  AND SAFE_DIVIDE(distancia_km, delta_horas) >= 110  --Thresholhd velocidade implícita mínima entre detecções
