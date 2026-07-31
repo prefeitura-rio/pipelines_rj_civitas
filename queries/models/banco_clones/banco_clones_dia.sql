@@ -5,14 +5,13 @@
         on_schema_change='append_new_columns',
         unique_key='id',
         partition_by={
-            "field": "data_insercao",
-            "data_type": "date",
+            "field": "timestamp_insercao",
+            "data_type": "timestamp",
             "granularity": "month",
         },
         cluster_by = ['placa'],
-        merge_exclude_columns = ['data_insercao'],
         incremental_predicates=[
-            "DBT_INTERNAL_DEST.data_insercao >= DATE_TRUNC(DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 1 MONTH), MONTH)" 
+            "DBT_INTERNAL_DEST.timestamp_insercao >= TIMESTAMP_TRUNC(TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 DAY), MONTH)" 
         ]
     )
 }}
@@ -20,7 +19,7 @@
 
 {% if is_incremental() %}
     {%- set max_date_query -%}
-        SELECT MAX(data_insercao) FROM {{ this }}
+        SELECT DATE(MAX(timestamp_insercao), 'America/Sao_Paulo') FROM {{ this }}
     {%- endset -%}
     {%- set results = run_query(max_date_query) -%}
 
@@ -262,7 +261,7 @@ ON mt.placa = ps.placa
 placas_score_temperatura AS (
 SELECT
     mj.placa,
-    CURRENT_DATE('America/Sao_Paulo') AS data_insercao,
+    CURRENT_TIMESTAMP() AS timestamp_insercao,
     mj.ultimo_dia_suspeito,
 
     /*
@@ -439,7 +438,7 @@ ON cpms.placa = mj.placa
 SELECT
   CONCAT(placa, CAST(ultimo_dia_suspeito AS STRING)) AS id,
   placa,
-  data_insercao,
+  timestamp_insercao,
   ultimo_dia_suspeito,
   score_ocr,
   score_trajeto,
