@@ -2,7 +2,8 @@ version: 2
 
 sources:
   - name: stg_fogo_cruzado
-    database: rj-civitas
+    database: >
+      {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
     schema: fogo_cruzado_staging
     tables:
       - name: ocorrencias

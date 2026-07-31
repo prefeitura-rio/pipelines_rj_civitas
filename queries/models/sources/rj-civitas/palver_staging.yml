@@ -2,7 +2,8 @@ version: 2
 
 sources:
   - name: palver_staging
-    database: rj-civitas
+    database: >
+      {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
     schema: palver_staging
     tables:
       - name: palver_news_messages
