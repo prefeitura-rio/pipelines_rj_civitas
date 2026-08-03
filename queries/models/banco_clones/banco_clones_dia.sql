@@ -103,18 +103,17 @@ chars_placas_max_sequencia AS (
   GROUP BY placa
 ),
 
-
-placas_suspeitas AS (
+placas_suspeitas_pre_window_filter AS (
     SELECT 
         placa,
-        MAX(data_dia) as ultimo_dia_suspeito,
-        SUM(pares_suspeitos) AS total_pares_suspeitos,
-        COUNT(*) AS dias_com_suspeita,
-        MAX(velocidade_implicita_maxima) AS velocidade_implicita_maxima,
-        SUM(velocidade_implicita_media * pares_suspeitos) / SUM(pares_suspeitos) AS velocidade_implicita_media,
-        MAX(distancia_maxima) AS distancia_maxima,
-        MIN(distancia_minima) AS distancia_minima
-
+        data_dia,
+        MAX(data_dia) OVER(PARTITION BY placa) as ultimo_dia_suspeito,
+        DATE_SUB(MAX(data_dia) OVER(PARTITION BY placa), INTERVAL 60 DAY) AS primeiro_dia_janela,
+        pares_suspeitos,
+        velocidade_implicita_maxima,
+        velocidade_implicita_media,
+        distancia_maxima,
+        distancia_minima
     FROM {{ ref('placas_suspeitas_dia') }}
     WHERE 
     {% if is_incremental() %}
@@ -123,18 +122,35 @@ placas_suspeitas AS (
       data_dia >= DATE_SUB(DATE('{{ var("start_date") }}'), INTERVAL 60 DAY)
     {% endif %}
     AND placa IN (SELECT * FROM placas_isoladas)
-    GROUP BY placa
 ),
 
-leituras_validas AS (
+placas_suspeitas AS (
+    SELECT 
+        placa,
+        ultimo_dia_suspeito,
+        primeiro_dia_janela,
+        SUM(pares_suspeitos) AS total_pares_suspeitos,
+        COUNT(*) AS dias_com_suspeita,
+        MAX(velocidade_implicita_maxima) AS velocidade_implicita_maxima,
+        SUM(velocidade_implicita_media * pares_suspeitos) / SUM(pares_suspeitos) AS velocidade_implicita_media,
+        MAX(distancia_maxima) AS distancia_maxima,
+        MIN(distancia_minima) AS distancia_minima
+
+    FROM placas_suspeitas_pre_window_filter
+    WHERE data_dia >= primeiro_dia_janela
+      AND data_dia <= ultimo_dia_suspeito
+    GROUP BY placa, ultimo_dia_suspeito, primeiro_dia_janela
+),
+
+leituras_validas_pre_window_filter AS (
   SELECT
+    DATE(datahora, 'America/Sao_Paulo') AS dia, 
     datahora,
     placa,
     id_ponto_coleta,
     camera_numero,
     camera_latitude AS latitude,
-    camera_longitude AS longitude,
-    COUNT(*) OVER (PARTITION BY placa) AS total_leituras_placa
+    camera_longitude AS longitude
   --FROM {{ ref('vw_all_readings') }} TODO
   FROM `rj-civitas.cerco_digital.vw_all_readings`
   WHERE 
@@ -146,6 +162,23 @@ leituras_validas AS (
     AND placa IN (SELECT * FROM placas_isoladas)
     AND id_ponto_coleta != '949' -- TODO: Tirar esses filtros manuais de câmera inválida
     AND camera_numero != '0530511121' -- TODO: Tirar esses filtros manuais de câmera inválida
+),
+
+leituras_validas AS (
+  SELECT
+    lv.dia,
+    lv.datahora,
+    lv.placa,
+    lv.id_ponto_coleta,
+    lv.camera_numero,
+    lv.latitude,
+    lv.longitude,
+    COUNT(*) OVER (PARTITION BY lv.placa) AS total_leituras_placa
+  FROM leituras_validas_pre_window_filter lv
+  JOIN placas_suspeitas ps
+  ON lv.placa = ps.placa
+  WHERE lv.dia >= ps.primeiro_dia_janela
+    AND lv.dia <= ps.ultimo_dia_suspeito
 ),
 
 leituras_pares AS (
@@ -207,7 +240,6 @@ SELECT
   SAFE_DIVIDE(COUNTIF(distancia_km < 1), COUNT(*)) AS pct_transicoes_menor_1km
 FROM transicoes
 GROUP BY placa, placa_letras, total_leituras_placa
-ORDER BY placa
 ),
 metricas_join AS (
 SELECT
