@@ -107,8 +107,8 @@ placas_suspeitas_pre_window_filter AS (
     SELECT 
         placa,
         data_dia,
-        MAX(data_dia) OVER(PARTITION BY placa) as ultimo_dia_suspeito,
-        DATE_SUB(MAX(data_dia) OVER(PARTITION BY placa), INTERVAL 60 DAY) AS primeiro_dia_janela,
+        MAX(IF(pares_suspeitos>=4, data_dia, NULL)) OVER(PARTITION BY placa) as ultimo_dia_suspeito,
+        DATE_SUB(MAX(IF(pares_suspeitos>=4, data_dia, NULL)) OVER(PARTITION BY placa), INTERVAL 60 DAY) AS primeiro_dia_janela,
         pares_suspeitos,
         velocidade_implicita_maxima,
         velocidade_implicita_media,
