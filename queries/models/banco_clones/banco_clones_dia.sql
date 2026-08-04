@@ -259,15 +259,6 @@ SELECT
         FROM UNNEST(REGEXP_EXTRACT_ALL(RIGHT(mt.placa_letras, 4), r'.')) caractere
         GROUP BY caractere
       )
-  ) AS maior_repeticao_caracteres,
-  ( SELECT MAX(qtd)
-      FROM (
-        SELECT
-          caractere,
-          COUNT(*) AS qtd
-        FROM UNNEST(REGEXP_EXTRACT_ALL(mt.placa_letras, r'.')) caractere
-        GROUP BY caractere
-      )
   ) AS maior_repeticao_ultimos_4_caracteres,
   ( SELECT - ROUND( SUM( (qtd / 7) * LOG(qtd / 7, 2) ), 3) 
       FROM (
@@ -349,9 +340,9 @@ SELECT
     mj.peso_token_confundivel
       +
     CASE
-      WHEN mj.maior_repeticao_caracteres = 7 THEN 25
-      WHEN mj.maior_repeticao_caracteres >= 5 THEN 18
-      WHEN mj.maior_repeticao_caracteres >= 4 THEN 8
+      WHEN mj.maior_repeticao_ultimos_4_caracteres = 4 THEN 25
+      WHEN mj.maior_repeticao_ultimos_4_caracteres = 3 THEN 18
+      WHEN mj.maior_repeticao_ultimos_4_caracteres = 2 THEN 8
       ELSE 0
       END
       +
