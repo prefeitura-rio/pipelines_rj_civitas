@@ -54,7 +54,7 @@ tokens_confundiveis AS (
 ),
 
 placas_isoladas AS (
-    SELECT DISTINCT placa 
+    SELECT DISTINCT placa, data_dia 
     FROM {{ ref('placas_suspeitas_dia') }}
     WHERE 
     {% if is_incremental() %}
@@ -62,6 +62,7 @@ placas_isoladas AS (
     {% else %}
       data_dia >= DATE('{{ var("start_date") }}')
     {% endif %}
+    AND data_dia < CURRENT_DATE('America/Sao_Paulo')
     AND pares_suspeitos >=4 --Threshold mínimo pares suspeitos/dia
 ),
 
@@ -105,23 +106,25 @@ chars_placas_max_sequencia AS (
 
 placas_suspeitas_pre_window_filter AS (
     SELECT 
-        placa,
-        data_dia,
-        MAX(IF(pares_suspeitos>=4, data_dia, NULL)) OVER(PARTITION BY placa) as ultimo_dia_suspeito,
-        DATE_SUB(MAX(IF(pares_suspeitos>=4, data_dia, NULL)) OVER(PARTITION BY placa), INTERVAL 60 DAY) AS primeiro_dia_janela,
-        pares_suspeitos,
-        velocidade_implicita_maxima,
-        velocidade_implicita_media,
-        distancia_maxima,
-        distancia_minima
-    FROM {{ ref('placas_suspeitas_dia') }}
+        ps.placa,
+        ps.data_dia,
+        pi.data_dia as ultimo_dia_suspeito,
+        DATE_SUB(pi.data_dia, INTERVAL 60 DAY) AS primeiro_dia_janela,
+        ps.pares_suspeitos,
+        ps.velocidade_implicita_maxima,
+        ps.velocidade_implicita_media,
+        ps.distancia_maxima,
+        ps.distancia_minima
+    FROM {{ ref('placas_suspeitas_dia') }} ps
+    INNER JOIN placas_isoladas pi
+    ON ps.placa = pi.placa
     WHERE 
     {% if is_incremental() %}
-       data_dia >= DATE_SUB(DATE('{{ max_date }}'), INTERVAL 60 DAY)
+       ps.data_dia >= DATE_SUB(DATE('{{ max_date }}'), INTERVAL 60 DAY)
     {% else %}
-      data_dia >= DATE_SUB(DATE('{{ var("start_date") }}'), INTERVAL 60 DAY)
+      ps.data_dia >= DATE_SUB(DATE('{{ var("start_date") }}'), INTERVAL 60 DAY)
     {% endif %}
-    AND placa IN (SELECT * FROM placas_isoladas)
+    AND ps.data_dia < CURRENT_DATE('America/Sao_Paulo')
 ),
 
 placas_suspeitas AS (
@@ -159,7 +162,8 @@ leituras_validas_pre_window_filter AS (
     {% else %}
       datahora >= TIMESTAMP_SUB(TIMESTAMP('{{ var("start_date") }}', 'America/Sao_Paulo'), INTERVAL 60 DAY)
     {% endif %}
-    AND placa IN (SELECT * FROM placas_isoladas)
+    AND datahora < TIMESTAMP(CURRENT_DATE("America/Sao_Paulo"), "America/Sao_Paulo")
+    AND placa IN (SELECT DISTINCT placa FROM placas_isoladas)
     AND id_ponto_coleta != '949' -- TODO: Tirar esses filtros manuais de câmera inválida
     AND camera_numero != '0530511121' -- TODO: Tirar esses filtros manuais de câmera inválida
 ),
@@ -169,6 +173,7 @@ leituras_validas AS (
     lv.dia,
     lv.datahora,
     lv.placa,
+    ps.ultimo_dia_suspeito,
     lv.id_ponto_coleta,
     lv.camera_numero,
     lv.latitude,
@@ -184,6 +189,7 @@ leituras_validas AS (
 leituras_pares AS (
   SELECT
     placa,
+    ultimo_dia_suspeito,
     total_leituras_placa,
     datahora AS datahora_b,
     id_ponto_coleta AS ponto_b,
@@ -211,6 +217,7 @@ leituras_pares AS (
 transicoes AS (
 SELECT
     placa,
+    ultimo_dia_suspeito,
     total_leituras_placa,
     SAFE_DIVIDE(
       ST_DISTANCE(ST_GEOGPOINT(longitude_a, latitude_a), ST_GEOGPOINT(longitude_b, latitude_b)),
@@ -226,6 +233,7 @@ SELECT
 metricas_trajeto_e_placa AS (
 SELECT
   placa,
+  ultimo_dia_suspeito,
   TRANSLATE(
     placa,
     '01234678',
@@ -239,12 +247,11 @@ SELECT
   SAFE_DIVIDE(COUNTIF(distancia_km > 10), COUNT(*)) AS pct_transicoes_maior_10km,
   SAFE_DIVIDE(COUNTIF(distancia_km < 1), COUNT(*)) AS pct_transicoes_menor_1km
 FROM transicoes
-GROUP BY placa, placa_letras, total_leituras_placa
+GROUP BY placa, ultimo_dia_suspeito, placa_letras, total_leituras_placa
 ),
 metricas_join AS (
 SELECT
     mt.*,
-    ps.ultimo_dia_suspeito,
     ps.total_pares_suspeitos,
     ps.dias_com_suspeita,
     ps.velocidade_implicita_maxima,
@@ -278,7 +285,7 @@ SELECT
     ), 0) AS peso_token_confundivel
 FROM metricas_trajeto_e_placa mt 
 JOIN placas_suspeitas ps
-ON mt.placa = ps.placa
+ON mt.placa = ps.placa AND mt.ultimo_dia_suspeito = ps.ultimo_dia_suspeito
 ),
 
 placas_score_temperatura AS (
