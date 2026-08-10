@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: kpis_consolidados_civitas
+    description: |
+      View que consolida os princiais KPIs da CIVITAS desde o início das operações (2024).
+
+      Publicado por: Jorge Mendes
+      Publicado por (email): jorge.mendes@prefeitura.rio
+
+    columns:
+      - name: veiculos_monitorados_agora
+        description: "Total de veículos que estão sendo monitorados para envio de alertas de passagem no momento de realização da query."
+      - name: veiculos_monitorados_total
+        description: "Total de veículos que monitorados para envio de alertas de passagem desde o início das operações."
+      - name: alertas_gerados_total
+        description: "Número de alertas de passagem de veículo monitorado pela CIVITAS enviados aos requisitantes desde o início das operações."
+      - name: casos_apoiados_total
+        description: "Número de casos apoiados pela CIVITAS desde o início das operações."
