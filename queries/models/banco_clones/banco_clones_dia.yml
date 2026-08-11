@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: pares_suspeitos
+  - name: banco_clones_dia
     description: |
       **Descrição**: Tabela com os registros de placas com ao menos 4 suspeitas de clone em cada dia e com filtro para retirar possíveis erros de leitura. 
         Os filtros se dão a partir de scores construídos sobre todas as detecções da placa em uma janela de 60 dias anteriores ao dia identificado com 4 ou mais suspeitas.
