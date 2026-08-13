@@ -9,10 +9,10 @@ models:
       Publicado por (email): jorge.mendes@prefeitura.rio
 
     columns:
-      - name: veiculos_monitorados_agora
+      - name: placas_monitoradas_agora
         description: "Total de veículos que estão sendo monitorados para envio de alertas de passagem no momento de realização da query."
-      - name: veiculos_monitorados_total
-        description: "Total de veículos que monitorados para envio de alertas de passagem desde o início das operações."
+      - name: placas_monitoradas_total
+        description: "Total de veículos monitorados para envio de alertas de passagem desde o início das operações."
       - name: alertas_gerados_total
         description: "Número de alertas de passagem de veículo monitorado pela CIVITAS enviados aos requisitantes desde o início das operações."
       - name: casos_apoiados_total

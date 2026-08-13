@@ -13,4 +13,4 @@ models:
         description: "Número de casos apoiados."
 
       - name: mes
-        description: "Mês de conclusão da demanda."
+        description: "Mês de conclusão da demanda. Valores NULL para casos ainda não encerrados ou casos antigos em que a data de conclusão não foi informada."

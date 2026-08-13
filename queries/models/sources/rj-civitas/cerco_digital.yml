@@ -7,3 +7,4 @@ sources:
     schema: cerco_digital
     tables:
       - name: alertas
+      - name: vw_total_alertas_enviados

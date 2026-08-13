@@ -43,6 +43,5 @@ SELECT
   COUNT(DISTINCT(id)) as casos_apoiados,
   DATE_TRUNC(data_saida, MONTH) as mes
   FROM all_tickets
-WHERE data_saida IS NOT NULL
 group by mes
 order by mes
