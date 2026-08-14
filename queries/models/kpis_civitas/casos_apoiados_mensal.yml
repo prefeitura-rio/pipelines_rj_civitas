@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: casos_apoiados_mensal
+    description: |
+      View que consolida a contagem de todos os casos apoiados pela CIVITAS por mês de entrada da demanda.
+
+      Publicado por: Jorge Mendes
+      Publicado por (email): jorge.mendes@prefeitura.rio
+
+    columns:
+      - name: casos_apoiados
+        description: "Número de casos apoiados."
+
+      - name: mes
+        description: "Mês de entrada da demanda."
