@@ -28,14 +28,16 @@ WITH tixxi_base_cleaned AS (
 
 civitas_base_cleaned AS (
   SELECT
-    codigo_camera,
-    endereco AS nome_camera,
-    CAST(NULL AS STRING) AS zona_camera,
-    latitude,
-    longitude,
+    a.codigo_camera,
+    a.endereco AS nome_camera,
+    COALESCE(b.subprefeitura, 'Não identificado') AS zona_camera,
+    a.latitude,
+    a.longitude,
     'DC3' AS sistema_origem,
     'CIVITAS' AS responsavel
-  FROM {{ ref('cameras_civitas') }}
+  FROM {{ ref('cameras_civitas') }} a
+  LEFT JOIN {{ source('datario', 'subprefeitura') }} b
+  ON ST_WITHIN(ST_GEOGPOINT(SAFE_CAST(a.longitude AS FLOAT64), SAFE_CAST(a.latitude AS FLOAT64)), b.geometria)
   WHERE modelo != 'LPR'
     AND sistema = 'VMS'
 ),
