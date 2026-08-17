@@ -87,6 +87,11 @@ models:
       +schema: palver
       +meta:
         owner: "@jorge.mendes"
+    kpis_civitas:
+      +materialized: table
+      +schema: kpis_civitas
+      +meta:
+        owner: "@jorge.mendes"
 
 
 vars:

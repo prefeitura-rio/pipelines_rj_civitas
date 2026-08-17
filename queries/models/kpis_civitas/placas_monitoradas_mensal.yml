@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: placas_monitoradas_mensal
+    description: |
+      View que consolida a contagem de todos os veículos monitorados pela CIVITAS por mês de início do monitoramento.
+
+      Publicado por: Jorge Mendes
+      Publicado por (email): jorge.mendes@prefeitura.rio
+
+    columns:
+      - name: placas_monitoradas
+        description: "Número de placas/veículos monitorados."
+
+      - name: mes
+        description: "Mês de início do monitoramento."

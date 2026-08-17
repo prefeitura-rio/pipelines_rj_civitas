@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: brutos_app_civitas
+    database: >
+      {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
+    schema: brutos_app_civitas
+    tables:
+      - name: monitoredplate
+      - name: monitoredplateauthority
+      - name: reporthistory
+      - name: tickets
+      - name: userhistory
