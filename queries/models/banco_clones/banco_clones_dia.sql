@@ -469,7 +469,7 @@ SELECT
   CONCAT(placa, CAST(ultimo_dia_suspeito AS STRING)) AS id,
   placa,
   timestamp_insercao,
-  ultimo_dia_suspeito,
+  ultimo_dia_suspeito AS dia,
   score_ocr,
   score_trajeto,
   temperatura

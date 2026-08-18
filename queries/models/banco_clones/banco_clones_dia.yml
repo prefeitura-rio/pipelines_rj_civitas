@@ -3,17 +3,17 @@ version: 2
 models:
   - name: banco_clones_dia
     description: |
-      **Descrição**: Tabela com os registros de placas com ao menos 4 suspeitas de clone em cada dia e com filtro para retirar possíveis erros de leitura. 
-        Os filtros se dão a partir de scores construídos sobre todas as detecções da placa em uma janela de 60 dias anteriores ao dia identificado com 4 ou mais suspeitas.
+      **Descrição**: Tabela com os registros de placas com ao menos 4 suspeitas de clone em cada dia e com filtros aplicados para retirar possíveis erros de leitura. 
+        Os filtros se dão a partir de scores construídos sobre todas as detecções da placa em uma janela de 60 dias anteriores ao dia de referência identificado com 4 ou mais pares suspeitos.
         Scores:
-        -Score OCR -> probabilidade de haver erro de leitura por ser uma placa passível de erros (Ex: COO0000)
-        -Score de Trajeto -> probabilidade de haver erro de leitura por fazer trajetos pouco naturais
-        -Temperatura -> quão clara é a divisão de trajetos entre dois veículos distintos
+        - Score OCR -> probabilidade de haver erro de leitura por ser uma placa passível de erros (Ex: COO0000, RIO1746)
+        - Score de Trajeto -> probabilidade de haver erro de leitura por fazer trajetos pouco naturais
+        - Temperatura -> quão clara é a divisão de trajetos entre dois veículos distintos
 
         Filtros aplicados:
-        -Mínimo de 4 detecções suspeitas no dia
-        -Score de trajeto < 90
-        -Score OCR < 60 ou Score de trajeto <=10 (trajetos muito claros e naturais superam uma placa muito passível de erros de leitura) 
+        - Mínimo de 4 detecções suspeitas no dia
+        - Score de trajeto < 90
+        - Score OCR < 60 ou Score de trajeto <=10 (trajetos muito claros e naturais superam uma placa muito passível de erros de leitura) 
 
       **Frequência de atualização**: Diária
       **Origem**: rj-civitas.cerco_digital.vw_all_readings, rj-civitas.banco_clones_staging.placas_suspeitas_dia
@@ -29,8 +29,8 @@ models:
       - name: timestamp_insercao
         description: "Timestamp UTC da inserção do registro no banco de clones"
 
-      - name: ultimo_dia_suspeito
-        description: "Data do último dia da placa com ao menos 4 pares suspeitos. Usado como base para o cálculo dos scores (utiliza todas as detecções da placa em uma janela de 60 dias antes do ultimo_dia_suspeito)"
+      - name: dia
+        description: "Data de referência. Usada como base para o cálculo dos scores (utiliza todas as detecções da placa em uma janela de 60 dias antes do dia de referência)"
 
       - name: score_ocr
         description: "Score de 0 a 100 que avalia o quanto a placa do veículo é confundível em termos de leitura OCR. Quanto menor o score, mais provável de serem leituras corretas. Valor máximo permitido -> 59 (a não ser que o score de trajeto seja <=10)"
