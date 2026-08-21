@@ -26,9 +26,6 @@ models:
       - name: placa
         description: "Placa do veículo suspeito de clonagem"
 
-      - name: timestamp_insercao
-        description: "Timestamp UTC da inserção do registro no banco de clones"
-
       - name: dia
         description: "Data de referência. Usada como base para o cálculo dos scores (utiliza todas as detecções da placa em uma janela de 60 dias antes do dia de referência)"
 
@@ -40,3 +37,6 @@ models:
 
       - name: temperatura
         description: "Score de 0 a 100 sobre quão clara é a divisão de trajetos entre dois veículos distintos. Quanto maior a temperatura, maior a probabilidade de ser um registro correto de clone"
+
+      - name: timestamp_insercao
+        description: "Timestamp UTC da inserção do registro no banco de clones"

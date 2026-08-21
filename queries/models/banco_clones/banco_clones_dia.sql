@@ -5,13 +5,13 @@
         on_schema_change='append_new_columns',
         unique_key='id',
         partition_by={
-            "field": "timestamp_insercao",
-            "data_type": "timestamp",
+            "field": "dia",
+            "data_type": "date",
             "granularity": "month",
         },
         cluster_by = ['placa'],
         incremental_predicates=[
-            "DBT_INTERNAL_DEST.timestamp_insercao >= TIMESTAMP_TRUNC(TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 DAY), MONTH)" 
+            "DBT_INTERNAL_DEST.dia >= DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY), MONTH)" 
         ]
     )
 }}
@@ -19,7 +19,7 @@
 
 {% if is_incremental() %}
     {%- set max_date_query -%}
-        SELECT DATE(MAX(timestamp_insercao), 'America/Sao_Paulo') FROM {{ this }}
+        SELECT MAX(dia) FROM {{ this }}
     {%- endset -%}
     {%- set results = run_query(max_date_query) -%}
 
@@ -58,7 +58,7 @@ placas_isoladas AS (
     FROM {{ ref('placas_suspeitas_dia') }}
     WHERE 
     {% if is_incremental() %}
-       data_dia >= DATE('{{ max_date }}')
+       data_dia > DATE('{{ max_date }}')
     {% else %}
       data_dia >= DATE('{{ var("start_date") }}')
     {% endif %}
@@ -120,7 +120,7 @@ placas_suspeitas_pre_window_filter AS (
     ON ps.placa = pi.placa
     WHERE 
     {% if is_incremental() %}
-       ps.data_dia >= DATE_SUB(DATE('{{ max_date }}'), INTERVAL 60 DAY)
+       ps.data_dia > DATE_SUB(DATE('{{ max_date }}'), INTERVAL 60 DAY)
     {% else %}
       ps.data_dia >= DATE_SUB(DATE('{{ var("start_date") }}'), INTERVAL 60 DAY)
     {% endif %}
@@ -468,11 +468,11 @@ ON cpms.placa = mj.placa
 SELECT
   CONCAT(placa, CAST(ultimo_dia_suspeito AS STRING)) AS id,
   placa,
-  timestamp_insercao,
   ultimo_dia_suspeito AS dia,
   score_ocr,
   score_trajeto,
-  temperatura
+  temperatura,
+  timestamp_insercao
 FROM placas_score_temperatura
 WHERE score_trajeto < 90
   AND (score_ocr < 60 OR score_trajeto <= 10)
