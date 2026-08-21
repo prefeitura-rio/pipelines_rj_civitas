@@ -128,3 +128,4 @@ SELECT
 FROM pares_consecutivos
 WHERE distancia_km >= 1  --Thresholhd distância mínima entre detecções
   AND SAFE_DIVIDE(distancia_km, delta_horas) >= 110  --Thresholhd velocidade implícita mínima entre detecções
+  AND DATE(datahora_anterior, 'America/Sao_Paulo') = DATE(datahora_posterior, 'America/Sao_Paulo')
