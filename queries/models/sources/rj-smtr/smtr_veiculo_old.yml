@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: smtr_veiculo_old
+    database: rj-smtr
+    schema: veiculo
+    tables:
+      - name: licenciamento

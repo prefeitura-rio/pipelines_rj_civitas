@@ -1,0 +1,49 @@
+version: 2
+
+models:
+  - name: vw_ponto_coleta_lpr_agg
+    description: |
+      View que consolida e normaliza os dados dos pontos de coleta da CETRIO e CIVITAS e traz métricas de leituras por ponto de coleta.
+      Atenção: Utilizar esta view para consultas que necessitam de métricas de leituras por ponto de coleta.
+      Caso contrario, utilizar a tabela ponto_coleta_lpr.
+
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+
+    columns:
+      - name: id_ponto_coleta
+        description: "Código identificador do ponto de coleta."
+
+      - name: origem_equipamento
+        description: "Origem do equipamento."
+
+      - name: codigo_ponto_coleta
+        description: "Código do ponto de coleta."
+
+      - name: local
+        description: "Local do ponto de coleta."
+
+      - name: bairro
+        description: "Bairro do ponto de coleta."
+
+      - name: sentido
+        description: "Sentido do ponto de coleta."
+
+      - name: latitude
+        description: "Latitude do ponto de coleta."
+
+      - name: longitude
+        description: "Longitude do ponto de coleta."
+      - name: status_ativo
+
+      - name: status_ativo
+        description: "Status ativo do ponto de coleta."
+
+      - name: datahora_ultima_leitura
+        description: "Data e hora da última leitura do ponto de coleta."
+
+      - name: total_leituras
+        description: "Total de leituras do ponto de coleta."
+
+      - name: ativo_ultimas_24h
+        description: "Indica se o ponto de coleta está ativo nas últimas 24 horas."

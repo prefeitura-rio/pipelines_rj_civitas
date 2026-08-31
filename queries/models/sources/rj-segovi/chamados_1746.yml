@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: chamados_1746
+    database: rj-segovi
+    schema: adm_central_atendimento_1746
+    tables:
+      - name: chamado

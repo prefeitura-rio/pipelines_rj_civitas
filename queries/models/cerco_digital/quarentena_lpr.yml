@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: quarentena_lpr
+    description: |
+      Tabela com os equipamentos LPR com algum tipo de problema nas leituras.
+
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+
+    columns:
+      - name: codigo_equipamento
+        description: "Código identificador do equipamento."
+
+      - name: motivo
+        description: "Motivo da inclusão do equipamento na quarentena."
