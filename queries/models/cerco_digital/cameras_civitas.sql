@@ -16,6 +16,7 @@ WITH all_cameras AS (
   TIMESTAMP_TRUNC(SAFE_CAST(updated_at AS TIMESTAMP), SECOND) AS updated_at,
   timestamp_insercao  
 FROM {{ source('stg_cerco_digital', 'cameras_civitas') }}
+WHERE timestamp_insercao >= TIMESTAMP_TRUNC(TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 DAY), MONTH)
 QUALIFY ROW_NUMBER() OVER(PARTITION BY mascara ORDER BY updated_at DESC) = 1
 )
 
