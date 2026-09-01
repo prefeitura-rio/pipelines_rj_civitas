@@ -1,5 +1,10 @@
-WITH all_cameras AS (
-  SELECT
+{{
+    config(
+        materialized='table'
+    )
+}}
+
+SELECT
   record_id,
   mascara as codigo_camera,
   endereco,
@@ -16,14 +21,11 @@ WITH all_cameras AS (
   TIMESTAMP_TRUNC(SAFE_CAST(updated_at AS TIMESTAMP), SECOND) AS updated_at,
   timestamp_insercao  
 FROM {{ source('stg_cerco_digital', 'cameras_civitas') }}
-WHERE timestamp_insercao >= TIMESTAMP_TRUNC(TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 DAY), MONTH)
+WHERE timestamp_insercao >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 60 DAY)
+  AND REGEXP_CONTAINS(mascara, r'^[0-9]{7}$')
+  AND REGEXP_CONTAINS(ip_da_camera, r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$')
+  AND UPPER(modelo) IN ('FIXA', 'PTZ', 'PANORÂMICA', 'LPR')
+  AND UPPER(vms_ou_sentry) IN ('VMS', 'SENTRY')
+  AND SAFE_CAST(latitude AS FLOAT64) IS NOT NULL
+  AND SAFE_CAST(longitude AS FLOAT64) IS NOT NULL
 QUALIFY ROW_NUMBER() OVER(PARTITION BY mascara ORDER BY updated_at DESC) = 1
-)
-
-SELECT * FROM all_cameras
-  WHERE REGEXP_CONTAINS(codigo_camera, r'^[0-9]{7}$')
-    AND REGEXP_CONTAINS(host, r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$')
-    AND modelo IN ('FIXA', 'PTZ', 'PANORÂMICA', 'LPR')
-    AND sistema IN ('VMS', 'SENTRY')
-    AND latitude IS NOT NULL
-    AND longitude IS NOT NULL
