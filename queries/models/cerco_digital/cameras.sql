@@ -12,7 +12,7 @@ WITH tixxi_base_cleaned AS (
     COALESCE(c.subprefeitura, 'Não identificado') AS zona_camera,
     SAFE_CAST(a.Latitude AS FLOAT64) AS latitude,
     SAFE_CAST(a.Longitude AS FLOAT64) AS longitude,
-    REPLACE(REPLACE(TRIM(a.Streamming), 'app', 'dev'), 'outvideo', 'outvideo3') AS streaming_url,
+    '' AS streaming_url,
     'TIXXI' AS sistema_origem,
     'COR' AS responsavel,
     b.codigo_tixxi IS NOT NULL AS camera_interna
