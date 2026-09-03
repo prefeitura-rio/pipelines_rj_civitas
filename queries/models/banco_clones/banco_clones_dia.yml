@@ -12,6 +12,7 @@ models:
 
         Filtros aplicados:
         - Mínimo de 4 detecções suspeitas no dia
+        - Velocidade máxima entre detecções suspeitas no dia >= 150km/h e/ou distância máxima >= 10km (tirar carros em alta velocidade com falsos positivos de clone)
         - Score de trajeto < 90
         - Score OCR < 60 ou Score de trajeto <=10 (trajetos muito claros e naturais superam uma placa muito passível de erros de leitura) 
 

@@ -64,6 +64,7 @@ placas_isoladas AS (
     {% endif %}
     AND data_dia < CURRENT_DATE('America/Sao_Paulo')
     AND pares_suspeitos >=4 --Threshold mínimo pares suspeitos/dia
+    AND (velocidade_implicita_maxima >= 150 OR distancia_maxima >= 10) --Filtrar falsos positivos de carros em alta velocidade
 ),
 
 --SEPARAÇÃO DE SEQUÊNCIAS DE CARACTERES
