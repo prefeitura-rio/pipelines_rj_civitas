@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: cerco_digital
+    database: >
+      {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
+    schema: cerco_digital
+    tables:
+      - name: alertas
+      - name: vw_total_alertas_enviados
