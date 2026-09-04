@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: cerco_digital_dev
+    database: rj-civitas-dev
+    schema: cerco_digital
+    tables:
+      - name: controle_demandas_operacional_2025
+      - name: controle_demandas_operacional_2024

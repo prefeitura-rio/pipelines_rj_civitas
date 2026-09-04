@@ -1,0 +1,34 @@
+version: 2
+
+models:
+  - name: latencia
+    description: |
+      **Descrição**: Esta tabela fornece estatísticas de latência para leituras de câmeras,
+      calculadas com base no tempo de captura e no tempo registrado da leitura.
+      A latência é medida em segundos e inclui percentis para diferentes quantis.
+      **Frequência de Atualização**: Diária.
+      **Publicado Por**: |
+        Amanda Amaro
+        Nicolas Evilasio
+      **Publicado Por (email)**: |
+        amanda.amaro@prefeitura.rio
+        nicolas.evilasio@prefeitura.rio
+
+    columns:
+      - name: empresa
+        description: "Empresa responsável pela câmera."
+
+      - name: data
+        description: "Data truncada para a hora mais próxima, fuso horário GTM-3."
+
+      - name: latency_50th
+        description: "Latência no 50º percentil (mediana) em segundos entre o tempo de captura e o tempo registrado da leitura."
+
+      - name: latency_75th
+        description: "Latência no 75º percentil em segundos entre o tempo de captura e o tempo registrado da leitura."
+
+      - name: latency_95th
+        description: "Latência no 95º percentil em segundos entre o tempo de captura e o tempo registrado da leitura."
+
+      - name: latency_99th
+        description: "Latência no 99º percentil em segundos entre o tempo de captura e o tempo registrado da leitura."

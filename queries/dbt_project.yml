@@ -97,6 +97,11 @@ models:
       +schema: banco_clones_staging
       +meta:
         owner: "@jorge.mendes"   
+    kpis_civitas:
+      +materialized: table
+      +schema: kpis_civitas
+      +meta:
+        owner: "@jorge.mendes"
 
 
 vars:

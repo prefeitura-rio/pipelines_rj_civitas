@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: smtr_veiculo
+    database: rj-smtr
+    schema: cadastro
+    tables:
+      - name: veiculo_licenciamento_dia

@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: integracao_reports
+    database: >
+      {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
+    schema: integracao_reports
+    tables:
+      - name: tipos_interesse_1746

@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: hexagon_staging
+    database: >
+      {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
+    schema: hexagon_staging
+    tables:
+      - name: camera
