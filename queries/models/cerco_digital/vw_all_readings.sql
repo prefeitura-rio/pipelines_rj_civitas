@@ -99,10 +99,33 @@ lpr_cameras_readings AS (
         ))
     = 1
 ),
+gabriel_readings AS (
+  SELECT
+    datahora_captura,
+    placa,
+    CAST(NULL AS STRING) AS tipoveiculo,
+    0 AS velocidade,
+    datahora,
+    camera_numero,
+    camera_latitude,
+    camera_longitude,
+    'GABRIEL' AS empresa
+    FROM {{ source('brutos_gabriel', 'readings_raw') }}
+    WHERE datahora <= CURRENT_TIMESTAMP()
+  QUALIFY
+    (
+      ROW_NUMBER() OVER (
+        PARTITION BY datahora, placa, camera_numero
+        ORDER BY datahora_captura DESC
+      )
+    ) = 1
+),
 all_readings AS (
   SELECT * FROM camera_numero_codcet
   UNION ALL
   SELECT * FROM lpr_cameras_readings
+  UNION ALL
+  SELECT * FROM gabriel_readings
 )
 SELECT
   a.datahora_captura,
