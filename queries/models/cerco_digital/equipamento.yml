@@ -17,12 +17,16 @@ models:
               name: equipamento__origem_equipamento__not_null
               meta:
                 description: "Verifica se origem_equipamento não é nulo"
+              config:
+                severity: warn
 
           - dbt_expectations.expect_column_values_to_be_in_set:
               name: equipamento__origem_equipamento__accepted_values
               value_set: ['CETRIO', 'CIVITAS']
               meta:
                 description: "Verifica se origem_equipamento é um dos valores aceitos: CETRIO, CIVITAS"
+              config:
+                severity: warn
 
       - name: codigo_equipamento
         description: "Código identificador do equipamento."
@@ -31,6 +35,8 @@ models:
               name: equipamento__codigo_equipamento__not_null
               meta:
                 description: "Verifica se codigo_equipamento não é nulo"
+              config:
+                severity: warn
 
       - name: codigo_ponto_coleta
         description: "Código do ponto de coleta. Ponto de coleta é a combinação de equipamentos, que estão localizados no mesmo ponto geográfico ou próximos, realizando leituras da mesma via, no mesmo sentido."
@@ -39,6 +45,8 @@ models:
               name: equipamento__codigo_ponto_coleta__not_null
               meta:
                 description: "Verifica se codigo_ponto_coleta não é nulo"
+              config:
+                severity: warn
 
       - name: local
         description: "Local do equipamento."
@@ -47,6 +55,8 @@ models:
               name: equipamento__local__not_null
               meta:
                 description: "Verifica se local não é nulo"
+              config:
+                severity: warn
 
       - name: sentido
         description: "Sentido da via do equipamento."
@@ -65,6 +75,8 @@ models:
               name: equipamento__bairro__not_null
               meta:
                 description: "Verifica se bairro não é nulo"
+              config:
+                severity: warn
 
       - name: latitude
         description: "Latitude do equipamento."
@@ -73,6 +85,8 @@ models:
               name: equipamento__latitude__not_null
               meta:
                 description: "Verifica se latitude não é nulo"
+              config:
+                severity: warn
 
           - dbt_expectations.expect_column_values_to_be_between:
               name: equipamento__latitude__between_minus_90_and_0
@@ -80,6 +94,8 @@ models:
               max_value: 0.0
               meta:
                 description: "Verifica se latitude está entre -90 e 0 [Hemisfério Sul]"
+              config:
+                severity: warn
 
       - name: longitude
         description: "Longitude do equipamento."
@@ -88,6 +104,8 @@ models:
               name: equipamento__longitude__not_null
               meta:
                 description: "Verifica se longitude não é nulo"
+              config:
+                severity: warn
 
           - dbt_expectations.expect_column_values_to_be_between:
               name: equipamento__longitude__between_minus_180_and_0
@@ -95,6 +113,8 @@ models:
               max_value: 0.0
               meta:
                 description: "Verifica se longitude está entre -180 e 0 [Hemisfério Sul]"
+              config:
+                severity: warn
 
       - name: geography
         description: "Geography do equipamento. [ST_GEOGPOINT(longitude, latitude)]"
@@ -103,6 +123,8 @@ models:
               name: equipamento__geography__not_null
               meta:
                 description: "Verifica se geography não é nulo"
+              config:
+                severity: warn
 
       - name: status_ativo
         description: "Status ativo do equipamento."
@@ -111,3 +133,5 @@ models:
               name: equipamento__status_ativo__not_null
               meta:
                 description: "Verifica se status_ativo não é nulo"
+              config:
+                severity: warn

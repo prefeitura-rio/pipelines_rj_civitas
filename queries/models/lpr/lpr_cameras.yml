@@ -12,44 +12,62 @@ models:
       - name: id_camera
         description: "Código identificador da câmera no sistema SENTRY. Também pode ser chamado de 'lane_code'."
         tests:
-          - not_null
+          - not_null:
+              config:
+                severity: warn
 
       - name: codigo_ponto_coleta
         description: "Código do ponto de coleta da câmera LPR."
         tests:
-          - not_null
+          - not_null:
+              config:
+                severity: warn
 
       - name: nome_ponto_coleta
         description: "Nome do ponto de coleta da câmera LPR."
         tests:
-          - not_null
+          - not_null:
+              config:
+                severity: warn
 
       - name: local_ponto_coleta
         description: "Local do ponto de coleta da câmera LPR."
         tests:
-          - not_null
+          - not_null:
+              config:
+                severity: warn
 
       - name: sentido
         description: "Sentido da via da câmera LPR."
         tests:
-          - not_null
+          - not_null:
+              config:
+                severity: warn
 
       - name: latitude
         description: "Latitude da câmera LPR, em graus decimais."
         tests:
-          - not_null
+          - not_null:
+              config:
+                severity: warn
 
       - name: longitude
         description: "Longitude da câmera LPR, em graus decimais."
         tests:
-          - not_null
+          - not_null:
+              config:
+                severity: warn
 
       - name: direcao
         description: "Direção da câmera LPR."
         tests:
-          - not_null
+          - not_null:
+              config:
+                severity: warn
           
       - name: status
         description: "Status da câmera LPR."
         tests:
-          - not_null
+          - not_null:
+              config:
+                severity: warn

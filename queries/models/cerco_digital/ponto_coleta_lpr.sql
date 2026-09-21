@@ -12,9 +12,14 @@ WITH ranked_equipamentos AS (
     ) AS rn
   FROM {{ ref('equipamento') }}
   WHERE
-    origem_equipamento IS NOT NULL AND
+    codigo_equipamento IS NOT NULL AND
+    origem_equipamento IN ('CETRIO', 'CIVITAS') AND
     codigo_ponto_coleta IS NOT NULL AND
-    sentido IS NOT NULL
+    sentido IS NOT NULL AND
+    latitude BETWEEN -90 AND 0 AND
+    longitude BETWEEN -90 AND 0 AND
+    status_ativo IS NOT NULL AND
+    bairro IS NOT NULL
 ),
 aggregated_points AS (
   SELECT
