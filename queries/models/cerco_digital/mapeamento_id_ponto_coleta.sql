@@ -17,9 +17,13 @@ WITH point_keys AS (
     sentido
   FROM {{ ref('equipamento') }}
   WHERE
-    origem_equipamento IS NOT NULL
+    origem_equipamento IN ('CETRIO', 'CIVITAS')
     AND codigo_ponto_coleta IS NOT NULL
     AND sentido IS NOT NULL
+    AND latitude BETWEEN -90 AND 0
+    AND longitude BETWEEN -90 AND 0
+    AND status_ativo IS NOT NULL
+    AND bairro IS NOT NULL
 ),
 point_key_id_map AS (
   {% if is_incremental() %}
