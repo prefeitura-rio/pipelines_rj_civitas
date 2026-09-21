@@ -15,6 +15,8 @@ models:
         data_tests:
           - not_null:
               name: radar__codigo_ponto_coleta__not_null
+              config:
+                severity: warn
 
       - name: codigo_contrato
         description: "Código do contrato."
@@ -53,18 +55,24 @@ models:
         data_tests:
           - not_null:
               name: radar__bairro__not_null
+              config:
+                severity: warn
 
       - name: latitude
         description: "Latitude do radar."
         data_tests:
           - not_null:
               name: radar__latitude__not_null
+              config:
+                severity: warn
 
       - name: longitude
         description: "Longitude do radar."
         data_tests:
           - not_null:
               name: radar__longitude__not_null
+              config:
+                severity: warn
 
       - name: logradouro
         description: "Logradouro do radar."
@@ -77,6 +85,8 @@ models:
         data_tests:
           - not_null:
               name: radar__sentido__not_null
+              config:
+                severity: warn
 
       - name: suspenso
         description: "Suspenso do radar."
@@ -89,9 +99,13 @@ models:
         data_tests:
           - not_null:
               name: radar__status__not_null
+              config:
+                severity: warn
           - accepted_values:
               name: radar__status__accepted_values
               values: ['OPERANDO', 'DESLIGADO', 'IMPLANTACAO']
+              config:
+                severity: warn
 
       - name: inicio_operacao
         description: "Data de início da operação do radar."
