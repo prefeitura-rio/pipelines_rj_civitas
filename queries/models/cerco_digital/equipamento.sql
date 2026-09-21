@@ -31,13 +31,15 @@ civitas_lpr AS (
       a.codigo_ponto_coleta AS codigo_ponto_coleta,
       a.local_ponto_coleta AS local,
       a.sentido AS sentido,
-      b.nome AS bairro,
+      COALESCE(b.nome, c.nome_bairro) AS bairro,
       a.latitude,
       a.longitude,
       ST_GEOGPOINT(SAFE_CAST(a.longitude AS FLOAT64), SAFE_CAST(a.latitude AS FLOAT64)) AS geography,
       status AS status_ativo
     FROM {{ ref('lpr_cameras') }} a
     LEFT JOIN {{ source('datario', 'bairro') }} b ON ST_WITHIN(ST_GEOGPOINT(a.longitude, a.latitude), b.geometry)
+    LEFT JOIN {{ source('dados_geograficos', 'bairros_rj')}} c ON ST_WITHIN(ST_GEOGPOINT(a.longitude, a.latitude), c.geometria)
+    QUALIFY ROW_NUMBER() OVER(PARTITION BY codigo_equipamento ORDER BY bairro) = 1
 ),
 all_equipments AS (
     SELECT * FROM cetrio_radars
