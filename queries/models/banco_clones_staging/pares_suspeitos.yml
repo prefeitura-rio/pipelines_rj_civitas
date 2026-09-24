@@ -1,0 +1,54 @@
+version: 2
+
+models:
+  - name: pares_suspeitos
+    description: |
+      **Descrição**: Tabela com todos os registros de suspeita de clone. 
+      A identificação da suspeita de clone se dá quando ocorrem duas detecções consecutivas da mesma placa
+      a uma distância de pelo menos 1km e velocidade presumida entre os dois pontos superior a 110km/h.
+      **Frequência de atualização**: Diária
+      **Origem**: rj-civitas.cerco_digital.vw_all_readings -> rj-civitas.lpr.readings_* e rj-civitas.ocr_radar.all_readings_*
+      **Publicado por**: Jorge Mendes
+      **Publicado por (email)**: jorge.mendes@prefeitura.rio
+    columns:
+      - name: id
+        description: "Identificador único do registro (concatenação da placa com os pontos de detecção e seus timestamps)"
+
+      - name: placa
+        description: "Placa do veículo suspeito de clonagem"
+
+      - name: data_dia
+        description: "Data das detecções"
+
+      - name: datahora_anterior
+        description: "Timestamp UTC da primeira detecção do par"
+
+      - name: datahora_posterior
+        description: "Timestamp UTC da segunda detecção do par"
+
+      - name: ponto_anterior
+        description: "ID do ponto da primeira detecção do par"
+
+      - name: ponto_posterior
+        description: "ID do ponto da segunda detecção do par"
+
+      - name: camera_anterior
+        description: "Número da câmera da primeira detecção do par"
+
+      - name: camera_posterior
+        description: "Número da câmera da segunda detecção do par"
+
+      - name: geolocation_anterior
+        description: "Geolocalização (latitude/longitude) da primeira detecção do par"
+
+      - name: geolocation_posterior
+        description: "Geolocalização (latitude/longitude) da segunda detecção do par"
+
+      - name: distancia_km
+        description: "Distância física em km entre as duas detecções em linha reta"
+
+      - name: delta_horas
+        description: "Distância temporal em horas entre as duas detecções"
+
+      - name: velocidade_implicita_kmh
+        description: "Velocidade em km/h necessária para ir de um ponto de detecção ao outro em linha reta (distancia_km/delta_horas)"
