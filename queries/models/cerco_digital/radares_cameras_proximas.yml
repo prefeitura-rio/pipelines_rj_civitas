@@ -63,6 +63,8 @@ models:
 
       - name: streaming_url
         description: "URL de streaming da câmera."
+        policy_tags:
+          - '{{ var("TAG_ENDPOINT_VIDEOMONITORAMENTO") }}'
 
       - name: latitude
         description: "Latitude da câmera."
