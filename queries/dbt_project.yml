@@ -106,6 +106,7 @@ models:
 
 vars:
   start_date: "2025-08-17 23:00:00"
+  TAG_ENDPOINT_VIDEOMONITORAMENTO: "projects/rj-civitas/locations/us/taxonomies/8778380172501826904/policyTags/6285111703886765971"
 
 flags:
   require_explicit_package_overrides_for_builtin_materializations: False
