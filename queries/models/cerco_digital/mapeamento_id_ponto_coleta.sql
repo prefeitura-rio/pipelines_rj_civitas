@@ -10,20 +10,42 @@
 
 -- Tabela de mapeamento (append-like): (origem_equipamento, codigo_ponto_coleta, sentido) -> id_ponto_coleta
 -- Objetivo: preservar um ID interno estável para cada chave de negócio, enquanto atributos podem mudar em outro modelo.
-WITH point_keys AS (
+WITH pontos_com_duplicatas as (
+  SELECT codigo_ponto_coleta AS ponto_duplicado, COUNT(DISTINCT CONCAT(sentido, bairro, local)) qtd
+  FROM {{ ref('equipamento')}}
+  WHERE status_ativo = TRUE AND COALESCE(codigo_ponto_coleta, '') != ''
+  GROUP BY codigo_ponto_coleta
+  HAVING qtd > 1
+),
+latlong_distante AS (
+    SELECT 
+      codigo_ponto_coleta AS codigo_latlong_distante,
+      geography,
+      LAG(geography) OVER (PARTITION BY codigo_ponto_coleta ORDER BY latitude) AS lag_geo 
+    FROM {{ ref('equipamento') }}
+    WHERE status_ativo = TRUE AND COALESCE(codigo_ponto_coleta, '') != ''
+    QUALIFY ST_DISTANCE(geography, lag_geo) > 1000
+),
+point_keys AS (
   SELECT DISTINCT
-    origem_equipamento,
-    codigo_ponto_coleta,
-    sentido
-  FROM {{ ref('equipamento') }}
+    a.origem_equipamento,
+    a.codigo_ponto_coleta,
+    a.sentido
+  FROM {{ ref('equipamento') }} a
+  LEFT JOIN pontos_com_duplicatas b
+  ON a.codigo_ponto_coleta = b.ponto_duplicado
+  LEFT JOIN latlong_distante c
+  ON a.codigo_ponto_coleta = c.codigo_latlong_distante
   WHERE
-    origem_equipamento IN ('CETRIO', 'CIVITAS')
-    AND codigo_ponto_coleta IS NOT NULL
-    AND sentido IS NOT NULL
-    AND latitude BETWEEN -90 AND 0
-    AND longitude BETWEEN -90 AND 0
-    AND status_ativo IS NOT NULL
-    AND bairro IS NOT NULL
+    b.ponto_duplicado IS NULL
+    AND c.codigo_latlong_distante IS NULL
+    AND a.origem_equipamento IN ('CETRIO', 'CIVITAS')
+    AND a.codigo_ponto_coleta IS NOT NULL
+    AND a.sentido IS NOT NULL
+    AND a.latitude BETWEEN -90 AND 0
+    AND a.longitude BETWEEN -90 AND 0
+    AND a.status_ativo IS NOT NULL
+    AND a.bairro IS NOT NULL
 ),
 point_key_id_map AS (
   {% if is_incremental() %}
