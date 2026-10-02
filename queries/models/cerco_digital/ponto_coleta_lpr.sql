@@ -7,7 +7,7 @@
 WITH pontos_com_duplicatas as (
   SELECT codigo_ponto_coleta AS ponto_duplicado, COUNT(DISTINCT CONCAT(sentido, bairro, local)) qtd
   FROM {{ ref('equipamento')}}
-  WHERE status_ativo = TRUE AND COALESCE(codigo_ponto_coleta, '') != ''
+  WHERE status_ativo = TRUE
   GROUP BY codigo_ponto_coleta
   HAVING qtd > 1
 ),
@@ -17,7 +17,7 @@ latlong_distante AS (
       geography,
       LAG(geography) OVER (PARTITION BY codigo_ponto_coleta ORDER BY latitude) AS lag_geo 
     FROM {{ ref('equipamento') }}
-    WHERE status_ativo = TRUE AND COALESCE(codigo_ponto_coleta, '') != ''
+    WHERE status_ativo = TRUE
     QUALIFY ST_DISTANCE(geography, lag_geo) > 1000
 ),
 ranked_equipamentos AS (
@@ -36,7 +36,7 @@ ranked_equipamentos AS (
     c.codigo_latlong_distante IS NULL AND
     a.codigo_equipamento IS NOT NULL AND
     a.origem_equipamento IN ('CETRIO', 'CIVITAS') AND
-    a.codigo_ponto_coleta IS NOT NULL AND
+    COALESCE(a.codigo_ponto_coleta, '') != '' AND
     a.sentido IS NOT NULL AND
     a.latitude BETWEEN -90 AND 0 AND
     a.longitude BETWEEN -90 AND 0 AND

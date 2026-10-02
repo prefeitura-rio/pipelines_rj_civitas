@@ -4,7 +4,7 @@
     error_if = '> 50'
 ) }}
 
--- Verifica se há câmeras ativas com latlong com distância maior que 1km em um mesmo código de ponto de coleta
+-- Verifica se há câmeras ativas com latlong com código de ponto de coleta como string vazia
 SELECT 
     codigo_ponto_coleta
 FROM {{ ref('equipamento') }}
