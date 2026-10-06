@@ -58,6 +58,7 @@ normalized_readings AS (
 ),
 camera_numero_codcet AS (
   SELECT
+    CONCAT(COALESCE(b.codcet, a.camera_numero), a.placa, a.datahora) as id_evento,
     a.datahora_captura,
     a.placa,
     a.tipoveiculo,
@@ -76,6 +77,7 @@ camera_numero_codcet AS (
 ),
 lpr_cameras_readings AS (
   SELECT
+    CONCAT(camera_numero, placa, datahora) as id_evento,
     datahora_captura,
     placa,
     tipoveiculo,
@@ -101,6 +103,7 @@ lpr_cameras_readings AS (
 ),
 gabriel_readings AS (
   SELECT
+    id_evento,
     datahora_captura,
     placa,
     CAST(NULL AS STRING) AS tipoveiculo,
@@ -128,6 +131,7 @@ all_readings AS (
   SELECT * FROM gabriel_readings
 )
 SELECT
+  a.id_evento,
   a.datahora_captura,
   a.placa,
   a.tipoveiculo,

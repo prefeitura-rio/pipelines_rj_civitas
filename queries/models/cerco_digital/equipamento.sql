@@ -45,20 +45,18 @@ gabriel_lpr AS (
     SELECT
       'GABRIEL' AS origem_equipamento,
       a.camera_numero AS codigo_equipamento,
-      CONCAT(TRUNC(camera_latitude, 6), TRUNC(camera_longitude, 6)) AS codigo_ponto_coleta,
       --ponto de coleta é o latlong, pegando apenas os pares de câmeras em cada endereço como uma só
+      CONCAT(TRUNC(camera_latitude, 6), TRUNC(camera_longitude, 6)) AS codigo_ponto_coleta,
       a.camera_logradouro AS local,
-      CASE
-        WHEN MOD(COALESCE(SAFE_CAST(a.camera_numero_rua AS INT), 0), 2) = 0 THEN 'PAR' --SENTIDO É O LADO DA RUA PELO NÚMERO DO ENDEREÇO
-        ELSE 'ÍMPAR'
-        END AS sentido,
-      b.nome AS bairro,
+      'UNICO' AS sentido,
+      COALESCE(b.nome, c.nome_bairro) AS bairro,
       a.camera_latitude AS latitude,
       a.camera_longitude AS longitude,
       ST_GEOGPOINT(SAFE_CAST(a.camera_longitude AS FLOAT64), SAFE_CAST(a.camera_latitude AS FLOAT64)) AS geography,
       TRUE AS status_ativo
     FROM {{ source('brutos_gabriel', 'devices') }} a
     LEFT JOIN {{ source('datario', 'bairro') }} b ON ST_WITHIN(ST_GEOGPOINT(a.camera_longitude, a.camera_latitude), b.geometry)
+    LEFT JOIN {{ source('dados_geograficos', 'bairros_rj')}} c ON ST_WITHIN(ST_GEOGPOINT(a.longitude, a.latitude), c.geometria)
     QUALIFY
     (
       ROW_NUMBER() OVER (
