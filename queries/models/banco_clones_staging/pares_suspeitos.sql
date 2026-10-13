@@ -35,24 +35,27 @@
 
 WITH leituras_validas AS (
   SELECT
-    datahora,
-    placa,
-    id_ponto_coleta,
-    camera_numero,
-    camera_latitude AS latitude,
-    camera_longitude AS longitude
+    a.datahora,
+    a.placa,
+    a.id_ponto_coleta,
+    a.camera_numero,
+    a.camera_latitude AS latitude,
+    a.camera_longitude AS longitude
   --FROM {{ ref('vw_all_readings') }} TODO 
-  FROM `rj-civitas.cerco_digital.vw_all_readings`
+  FROM `rj-civitas-dev.cerco_digital.teste_integracao_gabriel` a
+  LEFT JOIN {{ ref('licenciamento_veiculos') }} b
+  ON a.placa = b.placa
   WHERE 
     {% if is_incremental() %}
-      datahora > TIMESTAMP_SUB(TIMESTAMP('{{ max_datahora }}'), INTERVAL 2 HOUR) --Intervalo de 2 horas para pegar pares entre duas janelas de tempo da query
+      a.datahora > TIMESTAMP_SUB(TIMESTAMP('{{ max_datahora }}'), INTERVAL 2 HOUR) --Intervalo de 2 horas para pegar pares entre duas janelas de tempo da query
     {% else %}
-      datahora >= TIMESTAMP('{{ var("start_date") }}', 'America/Sao_Paulo')
+      a.datahora >= TIMESTAMP('{{ var("start_date") }}', 'America/Sao_Paulo')
     {% endif %}
-  
-    AND REGEXP_CONTAINS(placa, r'^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$')
-    AND id_ponto_coleta != '949' -- TODO: Tirar esses filtros manuais de câmera inválida
-    AND camera_numero != '0530511121' -- TODO: Tirar esses filtros manuais de câmera inválida
+    
+    AND b.placa IS NULL  --Filtra ônibus por conter muitos erros de leitura e baixíssima probabilidade de clone
+    AND REGEXP_CONTAINS(a.placa, r'^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$')
+    AND a.id_ponto_coleta != '949' -- TODO: Tirar esses filtros manuais de câmera inválida
+    AND a.camera_numero != '0530511121' -- TODO: Tirar esses filtros manuais de câmera inválida
 ),
 
 leituras_pares AS (
