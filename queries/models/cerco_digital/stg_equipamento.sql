@@ -79,12 +79,12 @@ SELECT
     COALESCE(a.codigo_equipamento, '') = '' AS codigo_equipamento_ausente,
     a.repeticoes_codigo_ponto_coleta > 1 AS ponto_duplicado,
     b.codigo_ponto_coleta IS NOT NULL AS ponto_com_latlongs_distantes,
-    a.origem_equipamento NOT IN ('CETRIO', 'CIVITAS') AS origem_equipamento_nao_reconhecida,
+    COALESCE(a.origem_equipamento, '') NOT IN ('CETRIO', 'CIVITAS') AS origem_equipamento_nao_reconhecida,
     a.sentido IS NULL AS sentido_nulo,
     a.bairro IS NULL AS bairro_nulo,
     a.local IS NULL AS local_nulo,
-    a.latitude NOT BETWEEN -90 AND 0 AS latitude_errada,
-    a.longitude NOT BETWEEN -90 AND 0 AS longitude_errada,
+    COALESCE(a.latitude, 1) NOT BETWEEN -90 AND 0 AS latitude_errada,
+    COALESCE(a.longitude, 1) NOT BETWEEN -90 AND 0 AS longitude_errada,
     a.status_ativo IS NULL AS status_nulo
     
 FROM all_equipments_cleaned a
