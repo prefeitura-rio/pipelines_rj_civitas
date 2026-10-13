@@ -5,8 +5,7 @@
 ) }}
 
 -- Verifica se há câmeras ativas em bairros diferentes em um mesmo código de ponto de coleta
-SELECT codigo_ponto_coleta, COUNT(DISTINCT bairro)
-FROM {{ ref('equipamento') }}
-WHERE status_ativo = TRUE 
-GROUP BY codigo_ponto_coleta 
+SELECT codigo_ponto_coleta, origem_equipamento, COUNT(DISTINCT bairro)
+FROM {{ ref('stg_equipamento') }}
+GROUP BY codigo_ponto_coleta, origem_equipamento
 HAVING COUNT(DISTINCT bairro) > 1
