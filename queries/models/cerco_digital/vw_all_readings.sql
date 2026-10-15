@@ -114,7 +114,7 @@ gabriel_readings AS (
     camera_longitude,
     'GABRIEL' AS empresa
     FROM {{ source('brutos_gabriel', 'readings_raw') }}
-    WHERE datahora <= CURRENT_TIMESTAMP()
+    WHERE TIMESTAMP_DIFF(datahora_captura, datahora, SECOND) > -300
   QUALIFY
     (
       ROW_NUMBER() OVER (

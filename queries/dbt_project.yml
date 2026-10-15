@@ -92,6 +92,11 @@ models:
       +schema: kpis_civitas
       +meta:
         owner: "@jorge.mendes"
+    dados_geograficos:
+      +materialized: table
+      +schema: dados_geograficos
+      +meta:
+        owner: "@jorge.mendes"
 
 
 vars:

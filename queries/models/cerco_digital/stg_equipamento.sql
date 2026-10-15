@@ -40,24 +40,67 @@ civitas_lpr AS (
 gabriel_lpr AS (
     SELECT
       'GABRIEL' AS origem_equipamento,
-      a.camera_numero AS codigo_equipamento,
+      camera_numero AS codigo_equipamento,
       --ponto de coleta é o latlong, pegando apenas os pares de câmeras em cada endereço como uma só
       CONCAT(TRUNC(camera_latitude, 6), TRUNC(camera_longitude, 6)) AS codigo_ponto_coleta,
-      a.camera_logradouro AS local,
-      'UNICO' AS sentido,
-      COALESCE(b.nome, c.nome_bairro) AS bairro,
-      a.camera_latitude AS latitude,
-      a.camera_longitude AS longitude,
-      ST_GEOGPOINT(SAFE_CAST(a.camera_longitude AS FLOAT64), SAFE_CAST(a.camera_latitude AS FLOAT64)) AS geography,
+      camera_logradouro AS local,
+      camera_bairro AS bairro,
+      camera_latitude AS latitude,
+      camera_longitude AS longitude,
+      ST_GEOGPOINT(SAFE_CAST(camera_longitude AS FLOAT64), SAFE_CAST(camera_latitude AS FLOAT64)) AS geography,
       TRUE AS status_ativo
-    FROM {{ source('brutos_gabriel', 'devices') }} a
-    LEFT JOIN {{ source('datario', 'bairro') }} b ON ST_WITHIN(ST_GEOGPOINT(a.camera_longitude, a.camera_latitude), b.geometry)
-    LEFT JOIN {{ source('dados_geograficos', 'bairros_rj')}} c ON ST_WITHIN(ST_GEOGPOINT(a.longitude, a.latitude), c.geometria)
+    FROM {{ source('brutos_gabriel', 'devices') }} 
+
     QUALIFY
     (
       ROW_NUMBER() OVER (
         PARTITION BY codigo_equipamento
         ORDER BY created_at DESC
+      )
+    ) = 1
+),
+gabriel_lpr_with_sentido AS (
+    SELECT
+      a.origem_equipamento,
+      a.codigo_equipamento,
+      a.codigo_ponto_coleta,
+      a.local,
+      COALESCE(b.sentido, 'INDEFINIDO') as sentido,
+      a.bairro,
+      a.latitude,
+      a.longitude,
+      a.geography,
+      a.status_ativo
+    FROM gabriel_lpr a
+    LEFT JOIN {{ ref('trechos_logradouros_sentido') }}  b
+    ON (
+            REGEXP_REPLACE(
+                REGEXP_REPLACE(
+                    NORMALIZE_AND_CASEFOLD(a.local, NFD),
+                    r'\p{M}',
+                    ''
+                ),
+                r'[^a-z]',
+                ''
+            )
+            =
+            REGEXP_REPLACE(
+                REGEXP_REPLACE(
+                    NORMALIZE_AND_CASEFOLD(b.nome_completo, NFD),
+                    r'\p{M}',
+                    ''
+                ),
+                r'[^a-z]',
+                ''
+            )
+        )
+        AND ST_DWITHIN(a.geography, b.geometry, 100)
+
+    QUALIFY
+    (
+      ROW_NUMBER() OVER (
+        PARTITION BY codigo_equipamento
+        ORDER BY ST_DISTANCE(a.geography, b.geometry) ASC
       )
     ) = 1
 ),
@@ -70,7 +113,7 @@ all_equipments AS (
 
     UNION ALL
 
-    SELECT * FROM gabriel_lpr
+    SELECT * FROM gabriel_lpr_with_sentido
 ),
 all_equipments_cleaned AS (
     SELECT
@@ -86,7 +129,7 @@ all_equipments_cleaned AS (
         longitude,
         geography,
         status_ativo,
-        COUNT(DISTINCT CONCAT(sentido, bairro, local)) OVER(PARTITION BY codigo_ponto_coleta) repeticoes_codigo_ponto_coleta
+        COUNT(DISTINCT CONCAT(sentido, bairro, local)) OVER(PARTITION BY codigo_ponto_coleta, origem_equipamento) AS repeticoes_codigo_ponto_coleta
     FROM all_equipments
 ),
 latlong_distante AS (
@@ -107,7 +150,7 @@ SELECT
     COALESCE(a.codigo_equipamento, '') = '' AS codigo_equipamento_ausente,
     a.repeticoes_codigo_ponto_coleta > 1 AS ponto_duplicado,
     b.codigo_ponto_coleta IS NOT NULL AS ponto_com_latlongs_distantes,
-    COALESCE(a.origem_equipamento, '') NOT IN ('CETRIO', 'CIVITAS') AS origem_equipamento_nao_reconhecida,
+    COALESCE(a.origem_equipamento, '') NOT IN ('CETRIO', 'CIVITAS', 'GABRIEL') AS origem_equipamento_nao_reconhecida,
     a.sentido IS NULL AS sentido_nulo,
     a.bairro IS NULL AS bairro_nulo,
     a.local IS NULL AS local_nulo,
