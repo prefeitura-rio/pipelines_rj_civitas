@@ -17,7 +17,7 @@ WITH radar_readings AS (
     camera_longitude,
     empresa,
     image_url
-  FROM {{ source('ocr_radar', 'all_readings_raw') }}
+  FROM {{ source('cetrio_lpr', 'all_readings_raw') }}
   WHERE  -- remove erroneous future readings
     TIMESTAMP_DIFF(datahora_captura, datahora, SECOND) > -300
     AND
