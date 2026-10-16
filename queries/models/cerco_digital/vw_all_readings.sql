@@ -58,6 +58,7 @@ normalized_readings AS (
 ),
 camera_numero_codcet AS (
   SELECT
+    CONCAT(COALESCE(b.codcet, a.camera_numero), a.placa, a.datahora) as id_evento,
     a.datahora_captura,
     a.placa,
     a.tipoveiculo,
@@ -76,6 +77,7 @@ camera_numero_codcet AS (
 ),
 lpr_cameras_readings AS (
   SELECT
+    CONCAT(camera_numero, placa, datahora) as id_evento,
     datahora_captura,
     placa,
     tipoveiculo,
@@ -99,12 +101,37 @@ lpr_cameras_readings AS (
         ))
     = 1
 ),
+gabriel_readings AS (
+  SELECT
+    id_evento,
+    datahora_captura,
+    placa,
+    CAST(NULL AS STRING) AS tipoveiculo,
+    0 AS velocidade,
+    datahora,
+    camera_numero,
+    camera_latitude,
+    camera_longitude,
+    'GABRIEL' AS empresa
+    FROM {{ source('brutos_gabriel', 'readings_raw') }}
+    WHERE TIMESTAMP_DIFF(datahora_captura, datahora, SECOND) > -300
+  QUALIFY
+    (
+      ROW_NUMBER() OVER (
+        PARTITION BY datahora, placa, camera_numero
+        ORDER BY datahora_captura DESC
+      )
+    ) = 1
+),
 all_readings AS (
   SELECT * FROM camera_numero_codcet
   UNION ALL
   SELECT * FROM lpr_cameras_readings
+  UNION ALL
+  SELECT * FROM gabriel_readings
 )
 SELECT
+  a.id_evento,
   a.datahora_captura,
   a.placa,
   a.tipoveiculo,
