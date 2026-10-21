@@ -1,0 +1,63 @@
+version: 2
+
+models:
+  - name: dados_veiculos_teste
+    description: |
+      **Descrição**: Tabela com informações oriundas da PRF sobre veículos. 
+      Os dados vêm nas leituras LPR da CIVITAS e são salvos nesta tabela para consulta otimizada por placa.
+      **Frequência de atualização**: A cada hora
+      **Origens**: lpr.readings_*
+      **Publicado por**: Jorge Mendes
+      **Publicado por (email)**: jorge.mendes@prefeitura.rio
+    columns:
+      - name: placa
+        description: "Placa do veículo"
+
+      - name: tipo_veiculo_prf
+        description: "Tipo de veículo (MOTOCICLETA, CARRO, etc)"
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: dados_veiculos__tipo_veiculo_prf__not_null
+              meta:
+                description: "Verifica se tipo_veiculo_prf não é nulo"
+
+      - name: cor_veiculo_prf
+        description: "Cor do veículo"
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: dados_veiculos__cor_veiculo_prf__not_null
+              meta:
+                description: "Verifica se cor_veiculo_prf não é nulo"
+
+      - name: marca_modelo_prf
+        description: "Marca e modelo do veículo"
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: dados_veiculos__marca_modelo__not_null
+              meta:
+                description: "Verifica se marca_modelo não é nulo"
+      
+      - name: ano_modelo_prf
+        description: "Ano de lançamento do modelo do veículo"
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: dados_veiculos__ano_modelo__not_null
+              meta:
+                description: "Verifica se ano_modelo não é nulo"
+
+      - name: ano_fabricacao_prf
+        description: "Ano de fabricação do veículo"
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: dados_veiculos__ano_fabricacao__not_null
+              meta:
+                description: "Verifica se ano_fabricacao não é nulo"
+
+      - name: datahora_primeira_insercao
+        description: "Timestamp UTC da primeira inclusão da placa nesta tabela"
+
+      - name: datahora_ultima_deteccao
+        description: "Timestamp UTC da última detecção desta placa em câmeras CIVITAS"
+
+      - name: max_datahora_lote
+        description: "Timestamp UTC máximo do lote de placas inseridas. Coluna usada para controle de inserção incremental."
