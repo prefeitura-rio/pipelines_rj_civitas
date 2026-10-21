@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: dados_veiculos_teste
+  - name: dados_veiculos
     description: |
       **Descrição**: Tabela com informações oriundas da PRF sobre veículos. 
       Os dados vêm nas leituras LPR da CIVITAS e são salvos nesta tabela para consulta otimizada por placa.

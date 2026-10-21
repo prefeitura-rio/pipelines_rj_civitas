@@ -30,7 +30,7 @@ COALESCE(tipo_veiculo_prf, '') != '' AND
 {% if is_incremental() %}
 datahora > (SELECT ultima_datahora FROM max_datahora)
 {% else %}
-datahora >= '2026-10-15 03:00:00'
+datahora >= '2026-08-01 03:00:00'
 {% endif %}
 
 QUALIFY ROW_NUMBER() OVER (
