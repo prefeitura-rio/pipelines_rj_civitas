@@ -1,0 +1,129 @@
+version: 2
+
+models:
+  - name: stg_equipamento
+    description: |
+      Tabela efêmera unificada de equipamentos que realizam a captura de dados de veículos (Câmeras LPR e Radares).
+      Utilizada como base para `equipamento`, agregando lógica de negócio e testes.
+      A tabela final apenas realiza os filtros relativos aos testes, evitando que a materialização quebre 
+      e garantindo, ao mesmo tempo, o monitoramento da qualidade dos dados com warnings.
+
+    columns:
+      - name: origem_equipamento_nao_reconhecida
+        tests:
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              name: equipamento__origem_equipamento_nao_reconhecida__accepted_values
+              value_set: [FALSE]
+              quote_values: false
+              meta:
+                description: "Verifica se origem_equipamento é um dos valores aceitos: CETRIO, CIVITAS"
+              config:
+                severity: warn
+
+      - name: codigo_equipamento_ausente
+        tests:
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              name: equipamento__codigo_equipamento_ausente__accepted_values
+              value_set: [FALSE]
+              quote_values: false
+              meta:
+                description: "Verifica se codigo_equipamento não é nulo ou vazio"
+              config:
+                severity: warn
+
+      - name: ponto_coleta_ausente
+        tests:
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              name: equipamento__ponto_coleta_ausente__accepted_values
+              value_set: [FALSE]
+              quote_values: false
+              meta:
+                description: "Verifica se codigo_ponto_coleta não é nulo ou vazio"
+              config:
+                severity: warn
+
+      - name: local_nulo
+        tests:
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              name: equipamento__local_nulo__accepted_values
+              value_set: [FALSE]
+              quote_values: false
+              meta:
+                description: "Verifica se local não é nulo"
+              config:
+                severity: warn
+
+      - name: sentido_nulo
+        tests:
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              name: equipamento__sentido_nulo__accepted_values
+              value_set: [FALSE]
+              quote_values: false
+              meta:
+                description: "Verifica se sentido não é nulo"
+              config:
+                severity: warn
+
+      - name: bairro_nulo
+        tests:
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              name: equipamento__bairro_nulo__accepted_values
+              value_set: [FALSE]
+              quote_values: false
+              meta:
+                description: "Verifica se bairro não é nulo"
+              config:
+                severity: warn
+
+      - name: latitude_errada
+        tests:
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              name: equipamento__latitude_errada__accepted_values
+              value_set: [FALSE]
+              quote_values: false
+              meta:
+                description: "Verifica se latitude está entre -90 e 0 [Hemisfério Sul]"
+              config:
+                severity: warn
+
+      - name: longitude_errada
+        tests:
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              name: equipamento__longitude_errada__accepted_values
+              value_set: [FALSE]
+              quote_values: false
+              meta:
+                description: "Verifica se longitude está entre -90 e 0"
+              config:
+                severity: warn
+
+      - name: ponto_com_latlongs_distantes
+        tests:
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              name: equipamento__ponto_com_latlongs_distantes__accepted_values
+              value_set: [FALSE]
+              quote_values: false
+              meta:
+                description: "Verifica se há câmeras em um mesmo código de ponto de coleta com distância maior que 1km"
+              config:
+                severity: warn
+
+      - name: geography
+        tests:
+          - dbt_expectations.expect_column_values_to_not_be_null:
+              name: equipamento__geography__not_null
+              meta:
+                description: "Verifica se geography não é nulo"
+              config:
+                severity: warn
+
+      - name: status_nulo
+        tests:
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              name: equipamento__status_nulo__accepted_values
+              value_set: [FALSE]
+              quote_values: false
+              meta:
+                description: "Verifica se status_ativo não é nulo"
+              config:
+                severity: warn

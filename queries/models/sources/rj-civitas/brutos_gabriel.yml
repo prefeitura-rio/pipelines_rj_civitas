@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: brutos_gabriel
+    database: >
+      {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
+    schema: brutos_gabriel
+    tables:
+      - name: readings_raw
+        identifier: readings_*
+      - name: devices
