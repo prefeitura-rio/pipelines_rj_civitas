@@ -1,5 +1,6 @@
 {{
     config(
+        tags = ['hourly'],
         materialized = 'incremental',
         incremental_strategy='merge',
         unique_key=['placa'],
