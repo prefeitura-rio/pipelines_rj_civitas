@@ -155,8 +155,7 @@ leituras_validas_pre_window_filter AS (
     camera_numero,
     camera_latitude AS latitude,
     camera_longitude AS longitude
-  --FROM {{ ref('vw_all_readings') }} TODO
-  FROM `rj-civitas-dev.cerco_digital.teste_integracao_gabriel`
+  FROM {{ ref('vw_all_readings') }}
   WHERE 
     {% if is_incremental() %}
       datahora >= TIMESTAMP_SUB(TIMESTAMP('{{ max_date }}', 'America/Sao_Paulo'), INTERVAL 60 DAY)

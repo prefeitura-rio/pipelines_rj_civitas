@@ -41,8 +41,7 @@ WITH leituras_validas AS (
     a.camera_numero,
     a.camera_latitude AS latitude,
     a.camera_longitude AS longitude
-  --FROM {{ ref('vw_all_readings') }} TODO 
-  FROM `rj-civitas-dev.cerco_digital.teste_integracao_gabriel` a
+  FROM {{ ref('vw_all_readings') }} a
   LEFT JOIN {{ ref('licenciamento_veiculos') }} b
   ON a.placa = b.placa
   WHERE 
@@ -54,8 +53,7 @@ WITH leituras_validas AS (
     
     AND b.placa IS NULL  --Filtra ônibus por conter muitos erros de leitura e baixíssima probabilidade de clone
     AND REGEXP_CONTAINS(a.placa, r'^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$')
-    AND a.id_ponto_coleta != '949' -- TODO: Tirar esses filtros manuais de câmera inválida
-    AND a.camera_numero != '0530511121' -- TODO: Tirar esses filtros manuais de câmera inválida
+    AND a.camera_numero NOT IN ('299', '300', '309') -- TODO: Câmeras sobre água com latlong errado devido a limitações da Sentry
 ),
 
 leituras_pares AS (
