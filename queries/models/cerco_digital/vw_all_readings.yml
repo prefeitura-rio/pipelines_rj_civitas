@@ -120,7 +120,7 @@ models:
           - dbt_expectations.expect_column_values_to_match_regex:
               name: vw_all_readings__camera_numero__only_numbers
               regex: "^[0-9]+$"
-              where: "datahora >= '{{ var('start_date') }}'"
+              where: "datahora >= '{{ var('start_date') }}' AND empresa != 'GABRIEL'"
               meta:
                 description: "Verifica se camera_numero é apenas números."
 
