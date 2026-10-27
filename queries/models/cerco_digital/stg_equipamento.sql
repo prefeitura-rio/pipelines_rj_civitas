@@ -100,7 +100,7 @@ gabriel_lpr_with_sentido AS (
     (
       ROW_NUMBER() OVER (
         PARTITION BY codigo_equipamento
-        ORDER BY ST_DISTANCE(a.geography, b.geometry) ASC
+        ORDER BY ST_DISTANCE(a.geography, b.geometry) ASC, b.id_trecho
       )
     ) = 1
 ),
