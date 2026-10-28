@@ -164,8 +164,7 @@ leituras_validas_pre_window_filter AS (
     {% endif %}
     AND datahora < TIMESTAMP(CURRENT_DATE("America/Sao_Paulo"), "America/Sao_Paulo")
     AND placa IN (SELECT DISTINCT placa FROM placas_isoladas)
-    AND id_ponto_coleta != '949' -- TODO: Tirar esses filtros manuais de câmera inválida
-    AND camera_numero != '0530511121' -- TODO: Tirar esses filtros manuais de câmera inválida
+    AND camera_numero NOT IN ('299', '300', '309') -- Câmeras sobre água com latlong errado devido a limitações da Sentry
 ),
 
 leituras_validas AS (

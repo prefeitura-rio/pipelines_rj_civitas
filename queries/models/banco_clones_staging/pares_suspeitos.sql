@@ -53,7 +53,7 @@ WITH leituras_validas AS (
     
     AND b.placa IS NULL  --Filtra ônibus por conter muitos erros de leitura e baixíssima probabilidade de clone
     AND REGEXP_CONTAINS(a.placa, r'^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$')
-    AND a.camera_numero NOT IN ('299', '300', '309') -- TODO: Câmeras sobre água com latlong errado devido a limitações da Sentry
+    AND a.camera_numero NOT IN ('299', '300', '309') -- Câmeras sobre água com latlong errado devido a limitações da Sentry
 ),
 
 leituras_pares AS (
