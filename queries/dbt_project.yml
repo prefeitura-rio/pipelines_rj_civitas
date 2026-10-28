@@ -97,6 +97,16 @@ models:
       +schema: dados_geograficos
       +meta:
         owner: "@jorge.mendes"
+    banco_clones:
+      +materialized: table
+      +schema: banco_clones
+      +meta:
+        owner: "@jorge.mendes"    
+    banco_clones_staging:
+      +materialized: table
+      +schema: banco_clones_staging
+      +meta:
+        owner: "@jorge.mendes"   
 
 
 vars:
