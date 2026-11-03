@@ -22,7 +22,7 @@ SELECT
   timestamp_insercao  
 FROM {{ source('stg_cerco_digital', 'cameras_civitas') }}
 WHERE timestamp_insercao >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 60 DAY)
-  AND REGEXP_CONTAINS(mascara, r'^[0-9]{7}$')
+  AND ((REGEXP_CONTAINS(mascara, r'^[0-9PST]{7}$') AND UPPER(vms_ou_sentry) = 'VMS') OR REGEXP_CONTAINS(mascara, r'^[0-9]{7}$'))
   AND REGEXP_CONTAINS(ip_da_camera, r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$')
   AND UPPER(modelo) IN ('FIXA', 'PTZ', 'PANORÂMICA', 'LPR')
   AND UPPER(vms_ou_sentry) IN ('VMS', 'SENTRY')
