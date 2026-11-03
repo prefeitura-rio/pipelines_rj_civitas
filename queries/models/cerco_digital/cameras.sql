@@ -9,16 +9,18 @@ WITH tixxi_base_cleaned AS (
   SELECT
     TRIM(a.CameraCode) AS codigo_camera,
     INITCAP(TRIM(a.CameraName)) AS nome_camera,
-    INITCAP(TRIM(a.CameraZone)) AS zona_camera,
+    COALESCE(c.subprefeitura, 'Não identificado') AS zona_camera,
     SAFE_CAST(a.Latitude AS FLOAT64) AS latitude,
     SAFE_CAST(a.Longitude AS FLOAT64) AS longitude,
-    REPLACE(REPLACE(TRIM(a.Streamming), 'app', 'dev'), 'outvideo', 'outvideo3') AS streaming_url,
+    '' AS streaming_url,
     'TIXXI' AS sistema_origem,
     'COR' AS responsavel,
     b.codigo_tixxi IS NOT NULL AS camera_interna
   FROM {{ source('stg_cerco_digital', 'cameras') }} a
   LEFT JOIN {{ source('stg_cerco_digital', 'cameras_tixxi_indoor')}} b
   ON SAFE_CAST(a.CameraCode AS INT64) = SAFE_CAST(b.codigo_tixxi AS INT64)
+  LEFT JOIN {{ source('datario', 'subprefeitura') }} c
+  ON ST_WITHIN(ST_GEOGPOINT(SAFE_CAST(a.Longitude AS FLOAT64), SAFE_CAST(a.Latitude AS FLOAT64)), c.geometria)
   WHERE a.CameraCode IS NOT NULL
   -- Deduplicate based on codigo_camera at source level
   QUALIFY ROW_NUMBER() OVER(PARTITION BY a.CameraCode ORDER BY Latitude DESC) = 1
@@ -26,14 +28,16 @@ WITH tixxi_base_cleaned AS (
 
 civitas_base_cleaned AS (
   SELECT
-    codigo_camera,
-    endereco AS nome_camera,
-    CAST(NULL AS STRING) AS zona_camera,
-    latitude,
-    longitude,
+    a.codigo_camera,
+    a.endereco AS nome_camera,
+    COALESCE(b.subprefeitura, 'Não identificado') AS zona_camera,
+    a.latitude,
+    a.longitude,
     'DC3' AS sistema_origem,
     'CIVITAS' AS responsavel
-  FROM {{ ref('cameras_civitas') }}
+  FROM {{ ref('cameras_civitas') }} a
+  LEFT JOIN {{ source('datario', 'subprefeitura') }} b
+  ON ST_WITHIN(ST_GEOGPOINT(SAFE_CAST(a.longitude AS FLOAT64), SAFE_CAST(a.latitude AS FLOAT64)), b.geometria)
   WHERE modelo != 'LPR'
     AND sistema = 'VMS'
 ),

@@ -1,0 +1,40 @@
+version: 2
+
+models:
+  - name: trechos_logradouros_sentido
+    description: |
+      Tabela com os trechos de logradouros da cidade do Rio de Janeiro enriquecidos com o campo `sentido`: 
+      o próximo logradouro que o veículo cruzará ao seguir pelo trecho se o sentido da via for unidirecional.
+      
+      Fonte: datario.dados_mestres.logradouro
+
+      Publicado por: Jorge Mendes
+      Publicado por (email): jorge.mendes@prefeitura.rio
+
+    columns:
+      - name: id_bairro
+        description: "ID do bairro onde está localizado o trecho."
+
+      - name: id_logradouro
+        description: "ID do logradouro."
+
+      - name: id_trecho
+        description: "ID do trecho do logradouro."
+
+      - name: nome_completo
+        description: "Nome completo do logradouro."
+
+      - name: nome_bairro
+        description: "Nome do bairro onde está localizado o trecho."
+
+      - name: sentido_unico
+        description: "Direção do fluxo de veículos com relação ao desenho do logradouro em geometry (FT: do ponto inicial ao final, TF: do ponto final ao inicial, B: bidirecional, N: não definido ou não aplicável)."
+
+      - name: tipo_trecho
+        description: "Tipo de trecho do logradouro (Normal, Viaduto, Ponte, etc)."
+
+      - name: sentido
+        description: "Pŕoximo logradouro que um veículo cruzará ao seguir o fluxo do trecho."
+
+      - name: geometry
+        description: "Desenho geográfico do trecho no mapa por meio de pontos de latitude e longitude"

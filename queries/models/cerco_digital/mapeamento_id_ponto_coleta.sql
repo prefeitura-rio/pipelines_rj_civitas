@@ -16,10 +16,6 @@ WITH point_keys AS (
     codigo_ponto_coleta,
     sentido
   FROM {{ ref('equipamento') }}
-  WHERE
-    origem_equipamento IS NOT NULL
-    AND codigo_ponto_coleta IS NOT NULL
-    AND sentido IS NOT NULL
 ),
 point_key_id_map AS (
   {% if is_incremental() %}

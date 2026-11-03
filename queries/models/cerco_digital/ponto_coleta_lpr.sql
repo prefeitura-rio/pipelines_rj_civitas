@@ -10,11 +10,7 @@ WITH ranked_equipamentos AS (
       PARTITION BY origem_equipamento, codigo_ponto_coleta, sentido
       ORDER BY codigo_equipamento DESC -- Quanto maior o código do equipamento, mais recente é o registro
     ) AS rn
-  FROM {{ ref('equipamento') }}
-  WHERE
-    origem_equipamento IS NOT NULL AND
-    codigo_ponto_coleta IS NOT NULL AND
-    sentido IS NOT NULL
+  FROM {{ ref('equipamento')}}
 ),
 aggregated_points AS (
   SELECT

@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: dados_geograficos
+    database: >
+      {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
+    schema: dados_geograficos
+    tables:
+      - name: bairros_rj
