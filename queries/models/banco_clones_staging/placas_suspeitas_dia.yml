@@ -1,0 +1,35 @@
+version: 2
+
+models:
+  - name: placas_suspeitas_dia
+    description: |
+      **Descrição**: Tabela com todos os registros de placas com ao menos uma suspeita de clone em cada dia, 
+      eriquecidos com informações agregadas acerca desses registros.
+      **Frequência de atualização**: Diária
+      **Origem**: rj-civitas.banco_clones_staging.pares_suspeitos
+      **Publicado por**: Jorge Mendes
+      **Publicado por (email)**: jorge.mendes@prefeitura.rio
+    columns:
+      - name: id
+        description: "Identificador único do registro (concatenação da placa com a data)"
+
+      - name: placa
+        description: "Placa do veículo suspeito de clonagem"
+
+      - name: data_dia
+        description: "Data das detecções"
+
+      - name: pares_suspeitos
+        description: "Número de pares suspeitos da placa identificados no dia"
+
+      - name: distancia_maxima
+        description: "Maior distância em km entre os pares suspeitos da placa no dia"
+
+      - name: distancia_minima
+        description: "Menor distância em km entre os pares suspeitos da placa no dia"
+
+      - name: velocidade_implicita_media
+        description: "Média de velocidade em km/h necessária para ir de um ponto de detecção do par ao outro em linha reta"
+
+      - name: velocidade_implicita_maxima
+        description: "Maior velocidade em km/h necessária para ir de um ponto de detecção do par ao outro em linha reta"
