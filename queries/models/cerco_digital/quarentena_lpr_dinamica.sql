@@ -2,15 +2,30 @@
     config(
         materialized='incremental',
         incremental_strategy='merge',
-        unique_key=['camera', 'origem_equipamento', 'data_dia'],
+        unique_key=['id_ponto_coleta', 'data_dia'],
         partition_by={
             'field': 'data_dia',
             'data_type': 'date',
             'granularity': 'month',
         },
-        cluster_by = ['data_dia', 'camera']
+        cluster_by = ['data_dia', 'id_ponto_coleta']
     )
 }}
+
+{% if is_incremental() %}
+    {%- set max_date_query -%}
+        SELECT MAX(data_dia) FROM {{ this }}
+    {%- endset -%}
+    {%- set results = run_query(max_date_query) -%}
+
+    {%- if execute and results and results.columns[0][0] is not none -%}
+        {%- set max_date = results.columns[0][0] -%}
+    {%- else -%}
+        {%- set max_date = 'ERRO_INCREMENTAL_DADOS_INVALIDOS' -%}
+
+    {%- endif -%}
+{% endif %}
+
 
 WITH leituras_validas AS (
   SELECT
@@ -23,9 +38,9 @@ WITH leituras_validas AS (
   FROM {{ ref('vw_all_readings_pre_filter') }}
   WHERE 
     {% if is_incremental() %}
-    datahora >= TIMESTAMP_ADD(TIMESTAMP((SELECT MAX(data_dia) FROM {{ this }}), 'America/Sao_Paulo'), INTERVAL 1 DAY)
+    datahora >= TIMESTAMP_ADD(TIMESTAMP('{{ max_date }}', 'America/Sao_Paulo'), INTERVAL 1 DAY)
     {% else %}
-    datahora >= TIMESTAMP('2026-10-20 03:00:00')
+    datahora >= TIMESTAMP('2026-11-01 03:00:00')
     {% endif %}
     AND datahora < TIMESTAMP(CURRENT_DATE(), 'America/Sao_Paulo')
     AND REGEXP_CONTAINS(placa, r'^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$')
@@ -203,7 +218,8 @@ SELECT
   a.origem_equipamento,
   c.registros AS total_pares_suspeitos,
   c.pares AS pares_suspeitos
-FROM {{ ref('ponto_coleta_lpr') }} a
+--FROM {{ ref('ponto_coleta_lpr') }} a
+FROM `rj-civitas.cerco_digital.ponto_coleta_lpr` a
 JOIN nucleos b  
 ON a.id_ponto_coleta = b.nucleo
 LEFT JOIN pares_contagem c 
