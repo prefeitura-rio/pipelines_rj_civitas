@@ -20,6 +20,9 @@ models:
               name: dados_veiculos__tipo_veiculo_prf__not_null
               meta:
                 description: "Verifica se tipo_veiculo_prf não é nulo"
+              config:
+                warn_if: "> 1000"
+                error_if: "> 10000"
 
       - name: cor_veiculo_prf
         description: "Cor do veículo"
@@ -28,6 +31,9 @@ models:
               name: dados_veiculos__cor_veiculo_prf__not_null
               meta:
                 description: "Verifica se cor_veiculo_prf não é nulo"
+              config:
+                warn_if: "> 1000"
+                error_if: "> 10000"
 
       - name: marca_modelo_prf
         description: "Marca e modelo do veículo"
@@ -36,6 +42,9 @@ models:
               name: dados_veiculos__marca_modelo__not_null
               meta:
                 description: "Verifica se marca_modelo não é nulo"
+              config:
+                warn_if: "> 1000"
+                error_if: "> 10000"
       
       - name: ano_modelo_prf
         description: "Ano de lançamento do modelo do veículo"
@@ -44,6 +53,9 @@ models:
               name: dados_veiculos__ano_modelo__not_null
               meta:
                 description: "Verifica se ano_modelo não é nulo"
+              config:
+                warn_if: "> 1000"
+                error_if: "> 10000"
 
       - name: ano_fabricacao_prf
         description: "Ano de fabricação do veículo"
@@ -52,6 +64,9 @@ models:
               name: dados_veiculos__ano_fabricacao__not_null
               meta:
                 description: "Verifica se ano_fabricacao não é nulo"
+              config:
+                warn_if: "> 1000"
+                error_if: "> 10000"
 
       - name: datahora_primeira_insercao
         description: "Timestamp UTC da primeira inclusão da placa nesta tabela"
