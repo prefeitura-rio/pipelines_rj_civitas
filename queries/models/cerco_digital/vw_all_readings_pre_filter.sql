@@ -18,10 +18,7 @@ WITH radar_readings AS (
     empresa,
     image_url
   FROM {{ source('cetrio_lpr', 'all_readings_raw') }}
-  WHERE  -- remove erroneous future readings
-    TIMESTAMP_DIFF(datahora_captura, datahora, SECOND) > -300
-    AND
-      -- camera_numero, camera_latitude and camera_longitude can't be mutually empty/null
+  WHERE  -- camera_numero, camera_latitude and camera_longitude can't be mutually empty/null
       (
         (camera_numero IS NOT NULL AND camera_numero NOT IN ('', '0'))
         OR (camera_latitude != 0.0 AND camera_longitude != 0.0))
@@ -88,10 +85,7 @@ lpr_cameras_readings AS (
     camera_longitude,
     'CIVITAS' AS empresa
   FROM {{ source('lpr', 'readings_raw') }} a
-  WHERE
-    -- remove erroneous future readings
-    TIMESTAMP_DIFF(datahora_captura, datahora, SECOND) > -300
-    AND placa NOT IN ('P0L1C14', 'POL1C14')
+  WHERE placa NOT IN ('P0L1C14', 'POL1C14')
   QUALIFY
     (
       ROW_NUMBER()
@@ -139,7 +133,6 @@ gabriel_readings AS (
     camera_longitude,
     'GABRIEL' AS empresa
     FROM {{ source('brutos_gabriel', 'readings_raw') }}
-    WHERE TIMESTAMP_DIFF(datahora_captura, datahora, SECOND) > -300
   QUALIFY
     (
       ROW_NUMBER() OVER (
