@@ -126,21 +126,21 @@ WHERE distancia_km >= 1  --Thresholhd distância mínima entre detecções
 cameras_separadas AS (
 SELECT 
   data_dia, 
-  camera_anterior as camera, 
-  ponto_anterior as ponto, 
+  camera_anterior AS camera, 
+  ponto_anterior AS ponto, 
   COUNT(*) AS registros
 FROM pares_suspeitos
-group by data_dia, camera_anterior, ponto_anterior
+GROUP BY data_dia, camera_anterior, ponto_anterior
 
-union all
+UNION ALL
 
 SELECT 
   data_dia, 
-  camera_posterior as camera,
-  ponto_posterior as ponto, 
+  camera_posterior AS camera,
+  ponto_posterior AS ponto, 
   COUNT(*) AS registros
 FROM pares_suspeitos
-group by data_dia, camera_posterior, ponto_posterior
+GROUP BY data_dia, camera_posterior, ponto_posterior
 ),
 
 cameras_unificadas AS (
@@ -152,25 +152,25 @@ cameras_unificadas AS (
 pontos_separados AS (
 SELECT 
   data_dia, 
-  ponto_anterior as ponto, 
+  ponto_anterior AS ponto, 
   count(*) AS registros, 
-  ARRAY_AGG(ponto_posterior) as pares_distintos,
+  ARRAY_AGG(ponto_posterior) AS pares_distintos,
   MAX(distancia_km) AS distancia_maxima,
   MAX(velocidade_implicita_kmh) AS velocidade_maxima
 FROM pares_suspeitos
-group by data_dia, ponto_anterior 
+GROUP BY data_dia, ponto_anterior 
 
-union all
+UNION ALL
 
 SELECT 
   data_dia, 
-  ponto_posterior as ponto, 
+  ponto_posterior AS ponto, 
   count(*) AS registros, 
-  ARRAY_AGG(ponto_anterior) as pares_distintos,
+  ARRAY_AGG(ponto_anterior) AS pares_distintos,
   MAX(distancia_km) AS distancia_maxima,
   MAX(velocidade_implicita_kmh) AS velocidade_maxima
 FROM pares_suspeitos
-group by data_dia, ponto_posterior
+GROUP BY data_dia, ponto_posterior
 ),
 
 unificados AS (
@@ -216,10 +216,10 @@ unnested AS (
 nucleos_base AS (
 SELECT 
   nucleo.data_dia,
-  dependente.par as nucleo, 
-  nucleo.registros as nucleo_registros, 
-  dependente.ponto as dependente, 
-  dependente.registros as dependente_registros
+  dependente.par AS nucleo, 
+  nucleo.registros AS nucleo_registros, 
+  dependente.ponto AS dependente, 
+  dependente.registros AS dependente_registros
 FROM unnested dependente
 LEFT JOIN unnested nucleo
 ON nucleo.ponto = dependente.par 
@@ -261,23 +261,23 @@ ON a.codigo_equipamento = b.camera
 
 latencia_base AS (
   SELECT
-    PERCENTILE_CONT(TIMESTAMP_DIFF(datahora_captura, datahora, minute), 0.5)
-      OVER (PARTITION BY COALESCE(b.empresa, a.empresa), date(datahora, 'America/Sao_Paulo'))
+    PERCENTILE_CONT(TIMESTAMP_DIFF(datahora_captura, datahora, MINUTE), 0.5)
+      OVER (PARTITION BY COALESCE(b.empresa, a.empresa), DATE(datahora, 'America/Sao_Paulo'))
         latencia_mediana_empresa,
     datahora,
     datahora_captura,
     COALESCE(b.empresa, a.empresa) AS empresa,
     camera_numero,
-    date(datahora, 'America/Sao_Paulo') AS data_dia
+    DATE(datahora, 'America/Sao_Paulo') AS data_dia
   FROM leituras_validas a
   LEFT JOIN `rj-civitas.cerco_digital.radar` b ON a.camera_numero = b.codcet AND a.empresa = 'CETRIO' 
 ),
 
 latencia_agrupado AS (
   SELECT
-    MIN(TIMESTAMP_DIFF(datahora_captura, datahora, minute))
+    MIN(TIMESTAMP_DIFF(datahora_captura, datahora, MINUTE))
       latencia_minima_camera,
-    APPROX_QUANTILES(TIMESTAMP_DIFF(datahora_captura, datahora, minute), 100)[
+    APPROX_QUANTILES(TIMESTAMP_DIFF(datahora_captura, datahora, MINUTE), 100)[
       OFFSET(50)]
       latencia_mediana_camera,
     COUNT(*) AS deteccoes,
@@ -310,7 +310,7 @@ uniao_razoes AS (
 SELECT 
   data_dia,
   codigo_equipamento,
-  CONCAT('Latência (', diferenca_latencia, ')') AS razao,
+  'Latência' AS razao,
   diferenca_latencia,
   0 AS deteccoes_suspeitas_clonagem
 FROM cameras_latencia_excessiva
@@ -320,7 +320,7 @@ UNION ALL
 SELECT
   data_dia,
   codigo_equipamento,
-  CONCAT('Pares suspeitos de clonagem (', pares_suspeitos,')') AS razao,
+  'Pares suspeitos de clonagem' AS razao,
   0 AS diferenca_latencia,
   pares_suspeitos AS deteccoes_suspeitas_clonagem
 FROM cameras_clones_excessivos
@@ -330,14 +330,20 @@ final AS (
 SELECT 
   data_dia, 
   codigo_equipamento, 
-  STRING_AGG(razao, ', ') AS razao,
-  MAX(diferenca_latencia) AS diferenca_latencia,
+  ARRAY_AGG(razao) AS razao,
+  MAX(diferenca_latencia) AS diferenca_latencia_minutos,
   MAX(deteccoes_suspeitas_clonagem) AS deteccoes_suspeitas_clonagem
 FROM uniao_razoes
 GROUP BY data_dia, codigo_equipamento
 )
 
-SELECT a.*, COUNT(b.placa) AS leituras_dia
+SELECT 
+  a.data_dia,
+  a.codigo_equipamento,
+  a.razao,
+  IF(a.diferenca_latencia_minutos = 0,NULL, a.diferenca_latencia_minutos) AS diferenca_latencia_minutos,
+  IF(a.deteccoes_suspeitas_clonagem = 0, NULL, a.deteccoes_suspeitas_clonagem) AS deteccoes_suspeitas_clonagem,
+  COUNT(b.placa) AS leituras_dia
 FROM final a
 LEFT JOIN leituras_validas b
 ON a.codigo_equipamento = b.camera_numero AND a.data_dia = DATE(b.datahora, 'America/Sao_Paulo')
