@@ -34,10 +34,12 @@ models:
 
       - name: longitude
         description: "Longitude do ponto de coleta."
-      - name: status_ativo
 
       - name: status_ativo
         description: "Status ativo do ponto de coleta."
+
+      - name: codigos_equipamento
+        description: "Lista de códigos dos equipamentos na origem agrupados neste ponto de coleta."
 
       - name: datahora_ultima_leitura
         description: "Data e hora da última leitura do ponto de coleta."
