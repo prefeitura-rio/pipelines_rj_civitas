@@ -21,7 +21,11 @@ aggregated_points AS (
     MAX(IF(rn = 1, bairro, NULL)) AS bairro, -- bairro do equipamento de maior código
     ROUND(AVG(latitude), 6) AS latitude,
     ROUND(AVG(longitude), 6) AS longitude,
-    LOGICAL_OR(status_ativo) AS status_ativo
+    LOGICAL_OR(status_ativo) AS status_ativo,
+    ARRAY_AGG(
+      codigo_equipamento
+      ORDER BY SAFE_CAST(codigo_equipamento AS INT64) ASC, codigo_equipamento ASC
+    ) AS codigos_equipamento
   FROM ranked_equipamentos
   GROUP BY
     origem_equipamento,
@@ -37,7 +41,8 @@ SELECT
   ap.sentido,
   ap.latitude,
   ap.longitude,
-  ap.status_ativo
+  ap.status_ativo,
+  ap.codigos_equipamento
 FROM aggregated_points ap
 INNER JOIN {{ ref('mapeamento_id_ponto_coleta') }} m
   ON ap.origem_equipamento = m.origem_equipamento

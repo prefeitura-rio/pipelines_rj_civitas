@@ -80,3 +80,6 @@ models:
               name: ponto_coleta_lpr__status_ativo__not_null
               meta:
                 description: "Verifica se status_ativo não é nula."
+
+      - name: codigos_equipamento
+        description: "Lista de códigos dos equipamentos na origem agrupados neste ponto de coleta."
