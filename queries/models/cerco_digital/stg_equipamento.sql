@@ -50,7 +50,15 @@ gabriel_lpr AS (
       ST_GEOGPOINT(SAFE_CAST(camera_longitude AS FLOAT64), SAFE_CAST(camera_latitude AS FLOAT64)) AS geography,
       TRUE AS status_ativo
     FROM {{ source('brutos_gabriel', 'devices') }} 
-
+    WHERE
+    ST_WITHIN(
+        ST_GEOGPOINT(
+        camera_longitude,
+        camera_latitude),
+        (
+        SELECT ST_UNION_AGG(geometry) AS city_geometry
+        FROM {{ source('datario', 'bairro') }}
+        ))
     QUALIFY
     (
       ROW_NUMBER() OVER (
