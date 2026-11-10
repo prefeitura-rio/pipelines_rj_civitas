@@ -23,6 +23,7 @@ SELECT
   ap.latitude,
   ap.longitude,
   ap.status_ativo,
+  ap.codigos_equipamento,
   rm.datahora_ultima_leitura,
   rm.total_leituras,
   CASE
