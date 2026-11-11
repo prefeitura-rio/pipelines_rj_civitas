@@ -97,3 +97,9 @@ models:
       
       - name: camera_interna
         description: "É uma câmera que aponta para local interno"
+
+      - name: status_codigo
+        description: "Código do status"
+
+      - name: status_descricao
+        description: "Descrição do status"
