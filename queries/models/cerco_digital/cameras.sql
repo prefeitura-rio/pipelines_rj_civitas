@@ -7,23 +7,25 @@
 WITH tixxi_base_cleaned AS (
   -- Standardizing data from tixxi cameras table
   SELECT
-    TRIM(a.CameraCode) AS codigo_camera,
-    INITCAP(TRIM(a.CameraName)) AS nome_camera,
+    TRIM(a.code) AS codigo_camera,
+    INITCAP(TRIM(a.name)) AS nome_camera,
     COALESCE(c.subprefeitura, 'Não identificado') AS zona_camera,
-    SAFE_CAST(a.Latitude AS FLOAT64) AS latitude,
-    SAFE_CAST(a.Longitude AS FLOAT64) AS longitude,
+    SAFE_CAST(a.latitude AS FLOAT64) AS latitude,
+    SAFE_CAST(a.longitude AS FLOAT64) AS longitude,
     '' AS streaming_url,
     'TIXXI' AS sistema_origem,
     'COR' AS responsavel,
-    b.codigo_tixxi IS NOT NULL AS camera_interna
+    b.codigo_tixxi IS NOT NULL AS camera_interna,
+    a.status_code AS status_codigo,
+    a.status_description AS status_descricao
   FROM {{ source('stg_cerco_digital', 'cameras') }} a
   LEFT JOIN {{ source('stg_cerco_digital', 'cameras_tixxi_indoor')}} b
-  ON SAFE_CAST(a.CameraCode AS INT64) = SAFE_CAST(b.codigo_tixxi AS INT64)
+  ON SAFE_CAST(a.code AS INT64) = SAFE_CAST(b.codigo_tixxi AS INT64)
   LEFT JOIN {{ source('datario', 'subprefeitura') }} c
-  ON ST_WITHIN(ST_GEOGPOINT(SAFE_CAST(a.Longitude AS FLOAT64), SAFE_CAST(a.Latitude AS FLOAT64)), c.geometria)
-  WHERE a.CameraCode IS NOT NULL
+  ON ST_WITHIN(ST_GEOGPOINT(SAFE_CAST(a.longitude AS FLOAT64), SAFE_CAST(a.latitude AS FLOAT64)), c.geometria)
+  WHERE a.code IS NOT NULL AND a.status_code IN ('0', '1', '3', '5')
   -- Deduplicate based on codigo_camera at source level
-  QUALIFY ROW_NUMBER() OVER(PARTITION BY a.CameraCode ORDER BY Latitude DESC) = 1
+  QUALIFY ROW_NUMBER() OVER(PARTITION BY a.code ORDER BY a.latitude DESC) = 1
 ),
 
 civitas_base_cleaned AS (
@@ -34,7 +36,9 @@ civitas_base_cleaned AS (
     a.latitude,
     a.longitude,
     'DC3' AS sistema_origem,
-    'CIVITAS' AS responsavel
+    'CIVITAS' AS responsavel,
+    IF(a.status = 'ONLINE', '0', '1') AS status_codigo,
+    a.status AS status_descricao
   FROM {{ ref('cameras_civitas') }} a
   LEFT JOIN {{ source('datario', 'subprefeitura') }} b
   ON ST_WITHIN(ST_GEOGPOINT(SAFE_CAST(a.longitude AS FLOAT64), SAFE_CAST(a.latitude AS FLOAT64)), b.geometria)
@@ -52,7 +56,9 @@ civitas_streaming_url AS (
     IF (b.entity_id IS NULL, CAST(NULL AS STRING), CONCAT('{{ env_var("HEXAGON_VMS__RTSP_URL_PREFIX") }}', b.entity_id)) AS streaming_url,
     a.sistema_origem,
     a.responsavel,
-    FALSE AS camera_interna
+    FALSE AS camera_interna,
+    a.status_codigo,
+    a.status_descricao
   FROM civitas_base_cleaned a
   JOIN {{ ref('camera') }} b USING (codigo_camera)
 ),
@@ -80,7 +86,9 @@ SELECT
   streaming_url,
   sistema_origem,
   responsavel,
-  camera_interna
+  camera_interna,
+  status_codigo,
+  status_descricao
 FROM merged_cameras
 WHERE
   codigo_camera IS NOT NULL
