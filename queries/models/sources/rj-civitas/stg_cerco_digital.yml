@@ -7,6 +7,17 @@ sources:
     schema: cerco_digital_staging
     tables:
       - name: cameras
+        columns:
+          - name: status_code
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values: ['0', '1', '3', '5']
+                  config:
+                    severity: warn
+              - not_null:
+                  config:
+                    severity: warn
       - name: cameras_tixxi_indoor
         columns:
         - name: unidade
