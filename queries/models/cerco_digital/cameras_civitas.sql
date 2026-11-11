@@ -13,7 +13,7 @@ SELECT
   UPPER(vms_ou_sentry) AS sistema,
   SAFE_CAST(latitude AS FLOAT64) AS latitude,
   SAFE_CAST(longitude AS FLOAT64) AS longitude,
-  IF(UPPER(status_da_camera) = 'ONLINE', 'UP', 'DOWN') AS status,
+  IF(UPPER(TRIM(status_da_camera)) = 'ONLINE', 'ONLINE', 'OFFLINE') AS status,
   UPPER(camera_furtada) = 'SIM' AS camera_furtada,
   DATE(SAFE.TIMESTAMP(data_da_identificacao_do_furto)) AS data_furto,
   COALESCE(SAFE.PARSE_DATE('%d/%m/%Y', data_de_implantacao_da_camera), DATE(SAFE.TIMESTAMP(data_de_implantacao_da_camera))) AS data_implantacao,
