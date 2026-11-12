@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: quarentena_lpr_dinamica
+    description: |
+      Identifica diariamente equipamentos LPR com indícios de erro de localização
+      ou de relógio por meio da identificação de excessivos pares com suspeita de clonagem
+      ou latência excessiva nas leituras.
+
+      **Frequência de atualização**: Diária
+      **Origens**: vw_all_readings_pre_filter, equipamento e radar
+    columns:
+      - name: data_dia
+        description: "Data local (America/Sao_Paulo) das leituras analisadas."
+        tests:
+          - not_null
+
+      - name: codigo_equipamento
+        description: "Código identificador do equipamento colocado em quarentena."
+        tests:
+          - not_null
+
+      - name: id_ponto_coleta
+        description: "Identificador único do ponto de coleta do equipamento"
+
+      - name: razao
+        description: "Motivos que levaram à inclusão do equipamento na quarentena."
+
+      - name: diferenca_latencia_minutos
+        description: "Diferença, em minutos, entre a latência mediana da câmera e a latência mediana da empresa."
+
+      - name: deteccoes_suspeitas_clonagem
+        description: "Quantidade de detecções associadas a pares suspeitos de clonagem no equipamento."
+
+      - name: leituras_dia
+        description: "Quantidade de leituras do equipamento no dia analisado."

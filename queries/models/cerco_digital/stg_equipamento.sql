@@ -177,7 +177,7 @@ all_equipments_cleaned AS (
         longitude,
         geography,
         status_ativo,
-        COUNT(DISTINCT CONCAT(sentido, bairro, local)) OVER(PARTITION BY codigo_ponto_coleta, origem_equipamento) AS repeticoes_codigo_ponto_coleta
+        COUNT(DISTINCT CONCAT(sentido, bairro, local)) OVER(PARTITION BY TRIM(REGEXP_REPLACE(codigo_ponto_coleta, r'\s+', '')), origem_equipamento) AS repeticoes_codigo_ponto_coleta
     FROM all_equipments
 ),
 latlong_distante AS (
