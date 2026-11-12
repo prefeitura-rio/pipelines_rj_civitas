@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: brutos_niteroi_lpr
+    database: >
+      {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
+    schema: brutos_niteroi_lpr
+    tables:
+      - name: readings_raw
+        identifier: readings_*
+      - name: lanes
