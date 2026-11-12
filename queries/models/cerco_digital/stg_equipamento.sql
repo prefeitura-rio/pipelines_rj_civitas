@@ -59,7 +59,8 @@ niteroi_lpr AS (
     FROM {{ source('brutos_niteroi_lpr', 'lanes') }} 
     QUALIFY ROW_NUMBER() OVER(PARTITION BY lane_code ORDER BY created_at DESC) = 1
 ),
-niteroi_lpr_com_ponto_coleta_ajustado (
+niteroi_lpr_com_ponto_coleta_ajustado AS (
+SELECT
     origem_equipamento,
     codigo_equipamento,
     CONCAT(codigo_ponto_coleta, sentido) AS codigo_ponto_coleta,
