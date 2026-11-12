@@ -101,6 +101,31 @@ lpr_cameras_readings AS (
         ))
     = 1
 ),
+niteroi_readings AS (
+  SELECT
+    CONCAT(camera_numero, placa, datahora) as id_evento,
+    datahora_captura,
+    placa,
+    tipoveiculo,
+    velocidade,
+    datahora,
+    camera_numero,
+    camera_latitude,
+    camera_longitude,
+    'NITEROI' AS empresa
+  FROM {{ source('brutos_niteroi_lpr', 'readings_raw') }} a
+  WHERE
+    -- remove erroneous future readings
+    TIMESTAMP_DIFF(datahora_captura, datahora, SECOND) > -300
+  QUALIFY
+    (
+      ROW_NUMBER()
+        OVER (
+          PARTITION BY datahora, placa, camera_numero
+          ORDER BY datahora_captura DESC
+        ))
+    = 1
+),
 gabriel_readings AS (
   SELECT
     id_evento,
@@ -127,6 +152,8 @@ all_readings AS (
   SELECT * FROM camera_numero_codcet
   UNION ALL
   SELECT * FROM lpr_cameras_readings
+  UNION ALL
+  SELECT * FROM niteroi_readings
   UNION ALL
   SELECT * FROM gabriel_readings
 )

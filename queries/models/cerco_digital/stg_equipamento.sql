@@ -37,6 +37,28 @@ civitas_lpr AS (
     LEFT JOIN {{ source('dados_geograficos', 'bairros_rj')}} c ON ST_WITHIN(ST_GEOGPOINT(a.longitude, a.latitude), c.geometria)
     QUALIFY ROW_NUMBER() OVER(PARTITION BY codigo_equipamento ORDER BY bairro) = 1
 ),
+niteroi_lpr AS (
+    SELECT
+      'NITEROI' AS origem_equipamento,
+      lane_code AS codigo_equipamento,
+      REGEXP_EXTRACT(UPPER(capture_place_description), r'^PONTO (.+) -') AS codigo_ponto_coleta,
+      'PONTE RIO-NITEROI' AS local,
+      CASE
+        WHEN lane_code IN (94, 95) THEN 'NITEROI - JANSEM DE MELO'
+        WHEN lane_code IN (96, 97) THEN 'NITEROI - CENTRO'
+        WHEN lane_code IN (101, 102) THEN 'NITEROI - ALAMEDA'
+        WHEN lane_code IN (103, 104) THEN 'BR-101'
+        WHEN lane_code IN (123, 124, 125, 126) THEN 'RIO DE JANEIRO'
+        ELSE NULL
+        END AS sentido,
+      'PONTE RIO-NITEROI' AS bairro,
+      latitude,
+      longitude,
+      ST_GEOGPOINT(SAFE_CAST(longitude AS FLOAT64), SAFE_CAST(latitude AS FLOAT64)) AS geography,
+      status AS status_ativo
+    FROM {{ source('brutos_niteroi_lpr', 'lanes') }} 
+    QUALIFY ROW_NUMBER() OVER(PARTITION BY lane_code ORDER BY created_at DESC) = 1
+),
 gabriel_lpr AS (
     SELECT
       'GABRIEL' AS origem_equipamento,
@@ -117,6 +139,10 @@ all_equipments AS (
 
     UNION ALL
 
+    SELECT * FROM niteroi_lpr
+    
+    UNION ALL
+
     SELECT * FROM civitas_lpr
 
     UNION ALL
@@ -158,7 +184,7 @@ SELECT
     COALESCE(a.codigo_equipamento, '') = '' AS codigo_equipamento_ausente,
     a.repeticoes_codigo_ponto_coleta > 1 AS ponto_duplicado,
     b.codigo_ponto_coleta IS NOT NULL AS ponto_com_latlongs_distantes,
-    COALESCE(a.origem_equipamento, '') NOT IN ('CETRIO', 'CIVITAS', 'GABRIEL') AS origem_equipamento_nao_reconhecida,
+    COALESCE(a.origem_equipamento, '') NOT IN ('CETRIO', 'CIVITAS', 'GABRIEL', 'NITEROI') AS origem_equipamento_nao_reconhecida,
     a.sentido IS NULL AS sentido_nulo,
     a.bairro IS NULL AS bairro_nulo,
     a.local IS NULL AS local_nulo,
