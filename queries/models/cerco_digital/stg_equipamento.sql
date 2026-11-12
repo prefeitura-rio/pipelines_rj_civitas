@@ -40,7 +40,7 @@ civitas_lpr AS (
 niteroi_lpr AS (
     SELECT
       'NITEROI' AS origem_equipamento,
-      lane_code AS codigo_equipamento,
+      CAST(lane_code AS STRING) AS codigo_equipamento,
       REGEXP_EXTRACT(UPPER(capture_place_description), r'^PONTO (.+) -') AS codigo_ponto_coleta,
       'PONTE RIO-NITEROI' AS local,
       CASE
