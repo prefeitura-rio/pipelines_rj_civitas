@@ -69,7 +69,7 @@ niteroi_lpr_com_ponto_coleta_ajustado (
     latitude,
     longitude,
     geography,
-    status
+    status_ativo
 FROM niteroi_lpr
 ),
 gabriel_lpr AS (
