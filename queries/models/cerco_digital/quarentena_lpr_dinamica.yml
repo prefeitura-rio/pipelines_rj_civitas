@@ -20,6 +20,9 @@ models:
         tests:
           - not_null
 
+      - name: id_ponto_coleta
+        description: "Identificador único do ponto de coleta do equipamento"
+
       - name: razao
         description: "Motivos que levaram à inclusão do equipamento na quarentena."
 

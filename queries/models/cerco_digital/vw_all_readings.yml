@@ -3,23 +3,22 @@ version: 2
 models:
   - name: vw_all_readings
     description: |
-      Consolida e normaliza as leituras de placas capturadas pelos radares da CETRIO.
+      Consolida as leituras LPR das origens CETRIO, CIVITAS, Niterói e Gabriel,
+      associando cada equipamento ao respectivo ponto de coleta e acrescentando
+      os dados de localização do equipamento. 
+      Acrescenta os filtros finais ao `vw_all_readings_pre_filter`.
 
-      Filtros aplicados:
-      - Remove leituras onde camera_numero, camera_latitude e camera_longitude são todos nulos/vazios
-      - Remove leituras onde camera_numero contém letras (e.g. 'MGR24100202', são radares que não deveríamos receber dados.)
-      - Aceita apenas placas vazias ('') ou com exatamente 7 caracteres
-      - Exclui erros conhecidos de detecção (e.g. 'P0L1C14')
+      Filtros aplicados: 
+      - Remove equipamentos incluídos na `quarentena_lpr_dinamica`, contendo radares
+      com prováveis erros de localização ou relógio no dia pesquisado. 
+      - Remove placas incluídas na `placas_blacklist`, contendo erros de leitura LPR
+      - Descarta leituras cujo horário registrado seja mais de cinco minutos 
+      posterior ao horário de captura.
 
-      Transformações:
-      - Substitui placas vazias por '-------'
-      - Aplica mapeamento de tipos de veículos (tipoveiculo_mapping)
-      - Converte coordenadas para valores negativos (hemisfério sul)
-      - Associa camera_numero ao codcet via tabela de equipamentos
+      - Importante: As tabelas que originam essa view são particionadas por 'datahora' (HORA) 
+      e clusterizadas por 'placa', portanto, utilize essas colunas para otimizar as consultas.
 
-      - Importante: As tabelas que originam essa view são particionadas por 'datahora' (HORA) e clusterizadas por 'placa', portanto, utilize essas colunas para otimizar as consultas.
-
-      Origem: rj-cetrio.ocr_radar.readings_*
+      Origem: rj-civitas.cerco_digital.vw_all_readings_pre_filter
       Publicado por: Nicolas Evilasio
       Publicado por (email): nicolas.evilasio@prefeitura.rio
 
@@ -47,6 +46,9 @@ models:
             description: "Verifica se datahora não é mais de 5 minutos no futuro em relação a datahora_captura."
 
     columns:
+      - name: id_evento
+        description: "Identificador do evento de leitura, fornecido pela origem ou formado a partir da câmera, placa e horário da leitura."
+
       - name: datahora_captura
         description: "Timestamp UTC em que a leitura da placa foi recebida, podendo diferir do horário real da leitura da placa (datahora)."
         tests:
@@ -98,7 +100,7 @@ models:
         description: "Tipo de veículo detectado pelo equipamento [tabela auxiliar em rj-civitas.cerco_digital.tipoveiculo_mapping]."
 
       - name: velocidade
-        description: "Velocidade do veículo em km/h."
+        description: "Velocidade registrada pelo equipamento, em km/h quando fornecida pela origem."
 
       - name: datahora
         description: "Timestamp UTC em que a leitura da placa foi realizada pelo equipamento."
@@ -132,6 +134,9 @@ models:
               meta:
                 description: "Verifica se camera_numero existe na tabela de equipamentos."
 
+      - name: id_ponto_coleta
+        description: "Identificador do ponto de coleta associado ao equipamento."
+      
       - name: camera_latitude
         description: "Latitude da câmera, em graus decimais."
 

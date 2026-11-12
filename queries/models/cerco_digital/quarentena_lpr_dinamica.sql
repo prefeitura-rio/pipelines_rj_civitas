@@ -2,7 +2,7 @@
     config(
         materialized='incremental',
         incremental_strategy='merge',
-        unique_key=['codigo_equipamento', 'data_dia'],
+        unique_key=['id_ponto_coleta', 'codigo_equipamento', 'data_dia'],
         partition_by={
             'field': 'data_dia',
             'data_type': 'date',
@@ -234,7 +234,7 @@ nucleos AS (
 ),
 
 cameras_nucleos AS (
-  SELECT DISTINCT a.data_dia, a.camera, a.pares_suspeitos
+  SELECT DISTINCT a.data_dia, a.camera, a.ponto, a.pares_suspeitos
   FROM cameras_unificadas a
   JOIN nucleos b
   ON a.ponto = b.nucleo AND a.data_dia = b.data_dia
@@ -243,19 +243,23 @@ cameras_nucleos AS (
 
 cameras_clones_excessivos AS (
   SELECT  
-  b.data_dia,
+  c.data_dia,
   a.codigo_equipamento,
   a.codigo_ponto_coleta,
+  b.id_ponto_coleta,
   a.local,
   a.sentido,
   a.bairro,
   a.latitude,
   a.longitude,
   a.origem_equipamento,
-  b.pares_suspeitos
+  c.pares_suspeitos
 FROM `rj-civitas.cerco_digital.equipamento` a
-JOIN cameras_nucleos b  
-ON a.codigo_equipamento = b.camera
+JOIN `rj-civitas.cerco_digital.ponto_coleta_lpr` b
+ON a.origem_equipamento = b.origem_equipamento
+  AND a.codigo_equipamento IN UNNEST(b.codigos_equipamento)
+JOIN cameras_nucleos c
+ON a.codigo_equipamento = c.camera AND b.id_ponto_coleta = c.ponto
 ),
 
 
@@ -268,6 +272,7 @@ latencia_base AS (
     datahora_captura,
     COALESCE(b.empresa, a.empresa) AS empresa,
     camera_numero,
+    id_ponto_coleta,
     DATE(datahora, 'America/Sao_Paulo') AS data_dia
   FROM leituras_validas a
   LEFT JOIN `rj-civitas.cerco_digital.radar` b ON a.camera_numero = b.codcet AND a.empresa = 'CETRIO' 
@@ -283,6 +288,7 @@ latencia_agrupado AS (
     COUNT(*) AS deteccoes,
     latencia_mediana_empresa,
     camera_numero,
+    id_ponto_coleta,
     empresa,
     data_dia
   FROM latencia_base
@@ -294,6 +300,7 @@ SELECT
   deteccoes,
   data_dia,
   camera_numero AS codigo_equipamento,
+  id_ponto_coleta,
   empresa,
   latencia_mediana_camera,
   latencia_mediana_empresa,
@@ -310,6 +317,7 @@ uniao_razoes AS (
 SELECT 
   data_dia,
   codigo_equipamento,
+  id_ponto_coleta,
   'Latência' AS razao,
   diferenca_latencia,
   0 AS deteccoes_suspeitas_clonagem
@@ -320,6 +328,7 @@ UNION ALL
 SELECT
   data_dia,
   codigo_equipamento,
+  id_ponto_coleta,
   'Pares suspeitos de clonagem' AS razao,
   0 AS diferenca_latencia,
   pares_suspeitos AS deteccoes_suspeitas_clonagem
@@ -330,21 +339,25 @@ final AS (
 SELECT 
   data_dia, 
   codigo_equipamento, 
+  id_ponto_coleta,
   ARRAY_AGG(razao) AS razao,
   MAX(diferenca_latencia) AS diferenca_latencia_minutos,
   MAX(deteccoes_suspeitas_clonagem) AS deteccoes_suspeitas_clonagem
 FROM uniao_razoes
-GROUP BY data_dia, codigo_equipamento
+GROUP BY data_dia, codigo_equipamento, id_ponto_coleta
 )
 
 SELECT 
   a.data_dia,
   a.codigo_equipamento,
+  a.id_ponto_coleta,
   a.razao,
   IF(a.diferenca_latencia_minutos = 0,NULL, a.diferenca_latencia_minutos) AS diferenca_latencia_minutos,
   IF(a.deteccoes_suspeitas_clonagem = 0, NULL, a.deteccoes_suspeitas_clonagem) AS deteccoes_suspeitas_clonagem,
   COUNT(b.placa) AS leituras_dia
 FROM final a
 LEFT JOIN leituras_validas b
-ON a.codigo_equipamento = b.camera_numero AND a.data_dia = DATE(b.datahora, 'America/Sao_Paulo')
+ON a.codigo_equipamento = b.camera_numero
+  AND a.id_ponto_coleta = b.id_ponto_coleta
+  AND a.data_dia = DATE(b.datahora, 'America/Sao_Paulo')
 GROUP BY ALL

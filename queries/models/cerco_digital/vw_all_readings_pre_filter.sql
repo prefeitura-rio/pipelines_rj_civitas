@@ -159,4 +159,4 @@ SELECT
 FROM
   all_readings a
 JOIN {{ ref('equipamento') }} b ON a.camera_numero = b.codigo_equipamento AND a.empresa = b.origem_equipamento
-JOIN {{ ref('ponto_coleta_lpr') }} c ON b.codigo_ponto_coleta = c.codigo_ponto_coleta
+JOIN {{ ref('ponto_coleta_lpr') }} c ON b.codigo_ponto_coleta = c.codigo_ponto_coleta AND a.empresa = c.origem_equipamento
