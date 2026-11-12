@@ -25,10 +25,7 @@ WITH radar_readings AS (
     AND NOT REGEXP_CONTAINS(camera_numero, r'[a-zA-Z]')
     -- camera_numero can't contain letters
     -- plate must have 7 digits or be an empty string
-    AND (
-      placa NOT IN (
-        'P0L1C14', 'POL1C14')  -- TODO: create table to blacklist plates (error in plate detection)
-      AND (placa = '' OR LENGTH(placa) = 7))
+      AND (placa = '' OR LENGTH(placa) = 7)
   QUALIFY
     (
       ROW_NUMBER()
@@ -68,9 +65,6 @@ camera_numero_codcet AS (
   FROM normalized_readings a
   LEFT JOIN {{ ref('equipamento_codcet_camera_numero') }} b
     ON a.camera_numero = b.camera_numero
-  LEFT JOIN {{ ref('quarentena_lpr') }} c
-    ON COALESCE(b.codcet, a.camera_numero) = c.codigo_equipamento
-  WHERE c.codigo_equipamento IS NULL
 ),
 lpr_cameras_readings AS (
   SELECT
@@ -84,8 +78,7 @@ lpr_cameras_readings AS (
     camera_latitude,
     camera_longitude,
     'CIVITAS' AS empresa
-  FROM {{ source('lpr', 'readings_raw') }} a
-  WHERE placa NOT IN ('P0L1C14', 'POL1C14')
+  FROM {{ source('lpr', 'readings_raw') }}
   QUALIFY
     (
       ROW_NUMBER()
@@ -107,10 +100,7 @@ niteroi_readings AS (
     camera_latitude,
     camera_longitude,
     'NITEROI' AS empresa
-  FROM {{ source('brutos_niteroi_lpr', 'readings_raw') }} a
-  WHERE
-    -- remove erroneous future readings
-    TIMESTAMP_DIFF(datahora_captura, datahora, SECOND) > -300
+  FROM {{ source('brutos_niteroi_lpr', 'readings_raw') }}
   QUALIFY
     (
       ROW_NUMBER()
