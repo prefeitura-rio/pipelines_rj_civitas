@@ -41,7 +41,7 @@ niteroi_lpr AS (
     SELECT
       'NITEROI' AS origem_equipamento,
       CAST(lane_code AS STRING) AS codigo_equipamento,
-      REGEXP_EXTRACT(UPPER(capture_place_description), r'^PONTO (.+) -') AS codigo_ponto_coleta,
+      capture_place_description AS codigo_ponto_coleta,
       'PONTE RIO-NITEROI' AS local,
       CASE
         WHEN lane_code IN (94, 95) THEN 'NITEROI - JANSEM DE MELO'
@@ -58,6 +58,19 @@ niteroi_lpr AS (
       status AS status_ativo
     FROM {{ source('brutos_niteroi_lpr', 'lanes') }} 
     QUALIFY ROW_NUMBER() OVER(PARTITION BY lane_code ORDER BY created_at DESC) = 1
+),
+niteroi_lpr_com_ponto_coleta_ajustado (
+    origem_equipamento,
+    codigo_equipamento,
+    CONCAT(codigo_ponto_coleta, sentido) AS codigo_ponto_coleta,
+    local,
+    sentido,
+    bairro,
+    latitude,
+    longitude,
+    geography,
+    status
+FROM niteroi_lpr
 ),
 gabriel_lpr AS (
     SELECT
@@ -139,7 +152,7 @@ all_equipments AS (
 
     UNION ALL
 
-    SELECT * FROM niteroi_lpr
+    SELECT * FROM niteroi_lpr_com_ponto_coleta_ajustado
     
     UNION ALL
 
