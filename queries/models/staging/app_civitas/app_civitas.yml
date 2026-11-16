@@ -82,6 +82,32 @@ sources:
             description: "Status do ticket no fluxo de atendimento."
           - name: created_at
             description: "Data e hora (UTC) de criação do ticket."
+      - name: teams
+        description: "Equipes responsáveis pelo atendimento dos tickets (`Team`)."
+      - name: operation
+        description: "Operações (`Operation`). Cada ticket pertence a uma operação, que identifica o demandante."
+      - name: ticket_dashboard_sla_configs
+        description: "Prazos de SLA, em dias, por tipo de serviço de ticket (`TicketDashboardSlaConfig`)."
+      - name: ticket_image_search_services
+        description: "Serviços de busca por imagem dos tickets (`TicketImageSearchService`)."
+      - name: ticket_image_analysis_services
+        description: "Serviços de análise de imagem dos tickets (`TicketImageAnalysisService`)."
+      - name: ticket_image_reservation_services
+        description: "Serviços de reserva de imagem dos tickets (`TicketImageReservationService`)."
+      - name: ticket_plate_search_services
+        description: "Serviços de busca por placa dos tickets (`TicketPlateSearchService`)."
+      - name: ticket_radar_search_services
+        description: "Serviços de busca por radar dos tickets (`TicketRadarSearchService`)."
+      - name: ticket_correlated_plate_services
+        description: "Serviços de busca de placas correlatas dos tickets (`TicketCorrelatedPlatesService`)."
+      - name: ticket_joint_plate_services
+        description: "Serviços de busca de placas conjuntas dos tickets (`TicketJointPlatesService`)."
+      - name: ticket_electronic_fence_services
+        description: "Serviços de cerco eletrônico dos tickets (`TicketElectronicFenceService`)."
+      - name: ticket_other_services
+        description: "Outros serviços dos tickets (`TicketOtherService`)."
+      - name: ticket_atlas_civitas_services
+        description: "Serviços Atlas Civitas dos tickets (`TicketAtlasCivitasService`). Contém dados pessoais (nome, e-mail, CPF e matrícula)."
       - name: userhistory
         description: |
           Log de requisições à civitas-api (método, caminho, corpo e status de resposta).

@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: stg_app_civitas__equipe
+    description: |
+      View no BigQuery: `brutos_app_civitas.equipe`.
+
+      Equipes do sistema CIVITAS, responsáveis pelo atendimento dos tickets. Uma linha por equipe.
+
+      Transformações:
+      - Deduplicação do CDC do Airbyte com a macro `dedup_airbyte_cdc`: mantém a versão mais
+        recente de cada `id` e remove as linhas deletadas.
+      - Renomeação das colunas para o padrão do data lake.
+
+      Origem: brutos_app_civitas_staging.teams
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_equipe
+        description: "Identificador da equipe (UUID)."
+        data_tests:
+          - unique
+          - not_null
+      - name: nome
+        description: "Nome da equipe."
+      - name: descricao
+        description: "Descrição da equipe."
+      - name: ativo_indicador
+        description: "Indica se a equipe está ativa."
+      - name: criacao_datahora
+        description: "Data e hora (UTC) de cadastro da equipe."
+      - name: carga_datahora
+        description: "Data e hora (UTC) em que o Airbyte extraiu esta versão da linha (`_airbyte_extracted_at`)."
