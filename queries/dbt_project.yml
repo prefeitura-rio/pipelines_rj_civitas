@@ -87,21 +87,50 @@ models:
       +schema: palver
       +meta:
         owner: "@jorge.mendes"
-    kpis_civitas:
-      +materialized: table
-      +schema: kpis_civitas
-      +meta:
-        owner: "@jorge.mendes"
     dados_geograficos:
       +materialized: table
       +schema: dados_geograficos
       +meta:
         owner: "@jorge.mendes"
+    staging:
+      +materialized: view
+      +meta:
+        owner: "@nicolas.evilasio"
+      app_civitas:
+        +schema: brutos_app_civitas
+        +tags: ['daily']
+      cerco_digital:
+        +schema: brutos_cerco_digital
+        +tags: ['daily']
+    intermediate:
+      +materialized: ephemeral
+      +tags: ['daily']
+      +meta:
+        owner: "@nicolas.evilasio"
+    marts:
+      +tags: ['daily']
+      +meta:
+        owner: "@nicolas.evilasio"
+      projeto_indicador:
+        +materialized: view
+        +schema: projeto_indicador
+      app_painel_indicador:
+        +materialized: view
+        +schema: app_painel_indicador
 
 
 vars:
   start_date: "2025-08-17 23:00:00"
   TAG_ENDPOINT_VIDEOMONITORAMENTO: "projects/rj-civitas/locations/us/taxonomies/8778380172501826904/policyTags/6285111703886765971"
+  # Painel de indicadores (app_painel_indicador). Regras documentadas em
+  # models/marts/regras_negocio.md (blocos regra_painel_*).
+  painel_equipes_operacionais: ["fox", "golf", "hotel", "india"]
+  painel_ticket_tipos_excluidos:
+    - "a6f4c868-0dfb-4d9d-8fbf-21c2454a5fee"  # Levantamento Prévio
+    - "0a38546a-ee1e-48ac-bcf9-481e489bcc73"  # Requisição Restrita
+  painel_desempenho_tolerancia: 0.1
+  painel_resposta_periodo_dias: 28
+  painel_ticket_civitas_inicio_data: "2026-08-01"
 
 flags:
   require_explicit_package_overrides_for_builtin_materializations: False

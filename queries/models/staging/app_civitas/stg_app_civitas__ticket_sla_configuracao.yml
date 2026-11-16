@@ -1,0 +1,49 @@
+version: 2
+
+models:
+  - name: stg_app_civitas__ticket_sla_configuracao
+    description: |
+      View no BigQuery: `brutos_app_civitas.ticket_sla_configuracao`.
+
+      Prazos de SLA, em dias, por tipo de serviço de ticket, configurados no dashboard de
+      tickets da civitas-api. A API usa a configuração mais antiga (`criacao_datahora`).
+      A reserva de imagem não tem prazo próprio e usa o prazo de outros serviços.
+
+      Transformações:
+      - Deduplicação do CDC do Airbyte com a macro `dedup_airbyte_cdc`: mantém a versão mais
+        recente de cada `id` e remove as linhas deletadas.
+      - Renomeação das colunas para o padrão do data lake.
+
+      Origem: brutos_app_civitas_staging.ticket_dashboard_sla_configs
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_configuracao
+        description: "Identificador da configuração (UUID)."
+        data_tests:
+          - unique
+          - not_null
+      - name: cerco_eletronico_sla_dias
+        description: "Prazo, em dias, do cerco eletrônico."
+      - name: busca_placa_sla_dias
+        description: "Prazo, em dias, da busca por placa."
+      - name: busca_radar_sla_dias
+        description: "Prazo, em dias, da busca por radar."
+      - name: placa_correlata_sla_dias
+        description: "Prazo, em dias, da busca de placas correlatas."
+      - name: placa_conjunta_sla_dias
+        description: "Prazo, em dias, da busca de placas conjuntas."
+      - name: busca_imagem_sla_dias
+        description: "Prazo, em dias, da busca por imagem."
+      - name: analise_imagem_sla_dias
+        description: "Prazo, em dias, da análise de imagem."
+      - name: atlas_civitas_sla_dias
+        description: "Prazo, em dias, do serviço Atlas Civitas."
+      - name: outro_sla_dias
+        description: "Prazo, em dias, de outros serviços e da reserva de imagem."
+      - name: criacao_datahora
+        description: "Data e hora (UTC) de criação da configuração."
+      - name: origem_atualizacao_datahora
+        description: "Data e hora (UTC) da última gravação da linha no sistema de origem."
+      - name: carga_datahora
+        description: "Data e hora (UTC) em que o Airbyte extraiu esta versão da linha (`_airbyte_extracted_at`)."

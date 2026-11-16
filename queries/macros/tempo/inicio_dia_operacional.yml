@@ -1,0 +1,18 @@
+version: 2
+
+macros:
+  - name: inicio_dia_operacional
+    description: |
+      Retorna o TIMESTAMP de início (07:00, America/Sao_Paulo) de um dia operacional da CIVITAS,
+      a partir da data de `data_operacional_atual`.
+
+      Com `dias_atras = 0`, retorna o início do dia operacional atual, que também é o fim do último
+      dia operacional completo. Com `dias_atras = N`, retorna o início do dia operacional de N dias
+      antes. Um período de N dias operacionais completos vai de `inicio_dia_operacional(N)` até
+      `inicio_dia_operacional(0)`.
+
+      Calculado no momento da consulta (`CURRENT_DATETIME`), por isso só deve ser usado em views.
+    arguments:
+      - name: dias_atras
+        type: integer
+        description: "Quantidade de dias operacionais antes do atual. Padrão: 0."

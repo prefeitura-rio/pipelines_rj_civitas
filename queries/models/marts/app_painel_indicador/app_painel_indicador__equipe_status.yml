@@ -1,0 +1,49 @@
+version: 2
+
+models:
+  - name: app_painel_indicador__equipe_status
+    description: |
+      Status dos tickets por equipe operacional nos últimos 8 dias operacionais completos.
+      Uma linha por equipe operacional.
+
+      {{ doc("regra_painel_dia_operacional") }}
+
+      Conta os tickets ativos em algum momento do período (criados antes do fim e não concluídos
+      antes do início). Os finalizados no período contam para a equipe que os finalizou e os
+      demais, para a equipe responsável.
+
+      Tabela no BigQuery: `app_painel_indicador.equipe_status`.
+      Contrato com a aplicação `civitas-painel-kpis`: renomear ou remover colunas quebra o painel.
+
+      Atualização: view sobre as tabelas replicadas pelo Airbyte (sincronização a cada 15 min).
+      O período é calculado no momento da consulta.
+
+      Origem: stg_app_civitas__ticket, int_equipe__operacional
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_equipe
+        description: "Identificador da equipe (UUID)."
+        data_tests:
+          - unique
+          - not_null
+      - name: equipe_nome
+        description: "Nome da equipe."
+      - name: exibicao_ordem
+        description: "Posição da equipe nas telas do painel, a partir de 0."
+      - name: periodo_inicio_datahora
+        description: "Início (UTC) do período: 07:00 (America/Sao_Paulo) do primeiro dia operacional."
+      - name: periodo_fim_datahora
+        description: "Fim (UTC, exclusivo) do período: 07:00 (America/Sao_Paulo) do dia operacional atual."
+      - name: ticket_entrada_quantidade
+        description: "Tickets ativos no período atribuídos à equipe."
+        data_tests:
+          - not_null
+      - name: ticket_finalizado_quantidade
+        description: "Desses, os finalizados no período."
+        data_tests:
+          - not_null
+      - name: ticket_pendente_quantidade
+        description: "Desses, os não finalizados até o fim do período."
+        data_tests:
+          - not_null

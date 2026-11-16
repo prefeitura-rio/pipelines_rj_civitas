@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: app_painel_indicador__equipe_desempenho
+    description: |
+      Tickets resolvidos por equipe operacional nos últimos 28 dias operacionais completos,
+      comparados à média entre as equipes. Uma linha por equipe operacional.
+
+      {{ doc("regra_painel_dia_operacional") }}
+
+      {{ doc("regra_painel_equipe_desempenho") }}
+
+      Tabela no BigQuery: `app_painel_indicador.equipe_desempenho`.
+      Contrato com a aplicação `civitas-painel-kpis`: renomear ou remover colunas quebra o painel.
+
+      Atualização: view sobre as tabelas replicadas pelo Airbyte (sincronização a cada 15 min).
+      O período é calculado no momento da consulta.
+
+      Origem: stg_app_civitas__ticket, int_equipe__operacional
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_equipe
+        description: "Identificador da equipe (UUID)."
+        data_tests:
+          - unique
+          - not_null
+      - name: equipe_nome
+        description: "Nome da equipe."
+      - name: exibicao_ordem
+        description: "Posição da equipe nas telas do painel, a partir de 0."
+      - name: periodo_inicio_datahora
+        description: "Início (UTC) do período: 07:00 (America/Sao_Paulo) do primeiro dia operacional."
+      - name: periodo_fim_datahora
+        description: "Fim (UTC, exclusivo) do período: 07:00 (America/Sao_Paulo) do dia operacional atual."
+      - name: ticket_resolvido_quantidade
+        description: "Tickets finalizados pela equipe no período."
+        data_tests:
+          - not_null
+      - name: ticket_resolvido_media_quantidade
+        description: "Média inteira (truncada) de tickets resolvidos entre as equipes operacionais."
+      - name: desvio_quantidade
+        description: "Diferença entre os tickets resolvidos pela equipe e a média."
+      - name: desempenho_tipo
+        description: "Classificação da equipe em relação à média: Acima, Dentro ou Abaixo."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Acima', 'Dentro', 'Abaixo']

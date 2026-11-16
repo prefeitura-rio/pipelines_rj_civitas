@@ -1,0 +1,48 @@
+version: 2
+
+models:
+  - name: stg_app_civitas__placa_monitorada_vinculo
+    description: |
+      View no BigQuery: `brutos_app_civitas.placa_monitorada_vinculo`.
+
+      Estado atual dos vínculos entre placas e autoridades solicitantes. Uma linha por vínculo.
+
+      Cada vínculo representa uma solicitação de monitoramento de uma placa feita por uma
+      autoridade, com prazo de validade.
+
+      Transformações:
+      - Deduplicação do CDC do Airbyte com a macro `dedup_airbyte_cdc`.
+      - Renomeação das colunas para o padrão do data lake.
+
+
+      Origem: brutos_app_civitas_staging.monitoredplateauthority
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_placa_monitorada_vinculo
+        description: "Identificador do vínculo (UUID)."
+        data_tests:
+          - unique
+          - not_null
+      - name: id_placa_monitorada
+        description: "Placa vinculada. Referencia `stg_app_civitas__placa_monitorada.id_placa_monitorada`."
+      - name: id_autoridade_solicitante
+        description: "Autoridade que solicitou o monitoramento (UUID no sistema CIVITAS)."
+      - name: numero_referencia
+        description: "Número de referência da solicitação (ex.: número do procedimento)."
+      - name: ativo_indicador
+        description: |
+          Indica se o vínculo está ativo. Um cron da API desativa os vínculos expirados, então um
+          vínculo pode continuar ativo com `validade_datahora` vencida até o cron rodar.
+      - name: todos_pontos_coleta_indicador
+        description: "Indica se o monitoramento vale para todos os pontos de coleta. Quando falso, os pontos ficam na tabela de origem `monitoredplateauthoritycollectionpoint`."
+      - name: solicitacao_datahora
+        description: "Data e hora (UTC) da solicitação do monitoramento."
+      - name: validade_datahora
+        description: "Data e hora (UTC) até quando o monitoramento foi solicitado."
+      - name: criacao_datahora
+        description: "Data e hora (UTC) de criação do vínculo no sistema."
+      - name: origem_atualizacao_datahora
+        description: "Data e hora (UTC) da última gravação da linha no sistema de origem."
+      - name: carga_datahora
+        description: "Data e hora (UTC) em que o Airbyte extraiu esta versão da linha (`_airbyte_extracted_at`)."
