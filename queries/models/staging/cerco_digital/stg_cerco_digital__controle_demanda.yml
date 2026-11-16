@@ -1,0 +1,62 @@
+version: 2
+
+models:
+  - name: stg_cerco_digital__controle_demanda
+    description: |
+      View no BigQuery: `brutos_cerco_digital.controle_demanda`.
+
+      Demandas registradas nas planilhas de controle operacional da CIVITAS (2024 a 2026).
+      Uma linha por linha das planilhas.
+
+      São dados legados: os casos novos são registrados como tickets no sistema CIVITAS
+      (`stg_app_civitas__ticket`).
+
+      Transformações:
+      - União das planilhas de 2024, 2025 e 2026, com o ano da planilha em `planilha_ano`.
+      - Textos sem espaços nas pontas; vazio vira nulo.
+      - `numero_referencia` em caixa alta e e-mail em caixa baixa.
+      - Datas convertidas de texto (`DD/MM/AAAA`) para DATE; valores inválidos viram nulo.
+      - `email_enviado` convertido de `Sim`/`Não` para booleano.
+      - Remoção de linhas sem número de referência e sem data de entrada (linhas vazias e a
+        linha-modelo da planilha, "LINHA MESTRE NÃO DELETAR").
+
+      Não há deduplicação: as planilhas têm `numero_referencia` repetidos
+      (ver `int_caso_apoiado__unificado`).
+
+      Contém dados pessoais do solicitante (nome e e-mail).
+
+      Origem: cerco_digital_staging.controle_demandas_operacional_2024/2025/2026
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: numero_referencia
+        description: "Número de referência da demanda. Nulo quando vazio na planilha."
+      - name: numero_oficio
+        description: "Número do ofício que originou a demanda."
+      - name: servicos
+        description: "Serviços solicitados, em texto livre separado por vírgula (ex.: `Busca de Placa, Placas Conjuntas`)."
+      - name: solicitante_nome
+        description: "Nome do solicitante (coluna `requisitante` na planilha). Dado pessoal."
+      - name: solicitante_email
+        description: "E-mail do solicitante (coluna `email_requisitante` na planilha), em caixa baixa. Dado pessoal."
+      - name: oficio_resposta
+        description: "Ofício de resposta, em texto livre (número e descrição)."
+      - name: email_enviado_indicador
+        description: "Indica se o e-mail de resposta foi enviado. Nulo quando não preenchido."
+      - name: entrada_data
+        description: "Data de entrada da demanda. Nulo quando ausente ou inválida na planilha."
+      - name: meta_entrega
+        description: |
+          Valor numérico da coluna `meta_entrega` da planilha. A semântica não está documentada
+          na origem: os valores vão de negativos a positivos e parecem indicar dias em relação à
+          meta de entrega.
+      - name: saida_data
+        description: "Data de saída (resposta) da demanda. Nulo quando ainda não respondida ou inválida na planilha."
+      - name: planilha_ano
+        description: "Ano da planilha de origem (2024, 2025 ou 2026)."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [2024, 2025, 2026]
+                quote: false

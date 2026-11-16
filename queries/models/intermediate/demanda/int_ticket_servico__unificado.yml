@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: int_ticket_servico__unificado
+    description: |
+      Serviços de todos os tipos solicitados nos tickets, em uma única relação, com o tipo, a
+      categoria e o prazo de SLA de cada serviço. Uma linha por serviço.
+
+      {{ doc("regra_ticket_servico") }}
+
+      Origem: stg_app_civitas__ticket_servico_*, stg_app_civitas__ticket_sla_configuracao,
+      stg_app_civitas__ticket
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_servico
+        description: "Identificador do serviço (UUID). Único dentro do tipo de serviço."
+      - name: id_ticket
+        description: "Ticket ao qual o serviço pertence."
+      - name: servico_tipo
+        description: "Tipo do serviço (ex.: Busca por Placa, Cerco Eletrônico)."
+      - name: servico_categoria
+        description: "Categoria do serviço: Imagem, Relatório, Cerco Eletrônico ou Outros."
+      - name: concluido_indicador
+        description: "Indica se o serviço foi concluído."
+      - name: criacao_datahora
+        description: "Data e hora (UTC) de criação do serviço."
+      - name: conclusao_datahora
+        description: "Data e hora (UTC) de conclusão do serviço."
+      - name: sla_dias
+        description: "Prazo de SLA, em dias, do tipo de serviço."

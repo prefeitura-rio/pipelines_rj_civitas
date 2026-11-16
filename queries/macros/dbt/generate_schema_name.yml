@@ -1,0 +1,15 @@
+version: 2
+
+macros:
+  - name: generate_schema_name
+    description: |
+      Sobrescreve a macro padrão do dbt. Usa o `+schema` configurado no modelo ou na pasta
+      como nome do dataset, sem o prefixo do schema do target. Sem `+schema`, usa o schema do
+      target.
+    arguments:
+      - name: custom_schema_name
+        type: string
+        description: "Valor de `+schema` do modelo, ou nulo."
+      - name: node
+        type: object
+        description: "Nó do modelo sendo compilado."

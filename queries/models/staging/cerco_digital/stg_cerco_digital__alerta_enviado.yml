@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: stg_cerco_digital__alerta_enviado
+    description: |
+      View no BigQuery: `brutos_cerco_digital.alerta_enviado`.
+
+      Total de alertas de passagem de veículo monitorado enviados aos solicitantes desde o
+      início das operações. Uma única linha.
+
+      Transformações:
+      - Renomeação da coluna para o padrão do data lake.
+
+      O total inclui uma constante fixa somada pela view de origem (ver o source
+      `cerco_digital_alerta.vw_total_alertas_enviados`).
+
+      Origem: cerco_digital.vw_total_alertas_enviados
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_equal:
+          arguments:
+            value: 1
+    columns:
+      - name: alerta_enviado_quantidade
+        description: "Quantidade de alertas enviados desde o início das operações."
+        data_tests:
+          - not_null

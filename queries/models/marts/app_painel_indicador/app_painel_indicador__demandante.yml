@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: app_painel_indicador__demandante
+    description: |
+      Quantidade de demandas por demandante, para o ranking de demandantes do painel. Uma linha
+      por nome de demandante, antes da consolidação de nomes equivalentes, feita pelo painel.
+
+      {{ doc("regra_painel_demandante") }}
+
+      Tabela no BigQuery: `app_painel_indicador.demandante`.
+      Contrato com a aplicação `civitas-painel-kpis`: renomear ou remover colunas quebra o painel.
+
+      Atualização: view sobre as tabelas replicadas pelo Airbyte (sincronização a cada 15 min).
+      O período é calculado no momento da consulta.
+
+      Origem: stg_cerco_digital__controle_demanda, stg_app_civitas__ticket, stg_app_civitas__operacao
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: demandante_nome
+        description: "Nome do demandante: o solicitante da planilha (caixa alta) ou o nome da operação do ticket. 'Sem operação' para tickets sem operação."
+        data_tests:
+          - unique
+          - not_null
+      - name: demanda_quantidade
+        description: "Quantidade de demandas do demandante."
+        data_tests:
+          - not_null
+      - name: ticket_civitas_inicio_data
+        description: "Data a partir da qual as demandas vêm dos tickets do sistema CIVITAS (variável `painel_ticket_civitas_inicio_data`). Igual em todas as linhas."

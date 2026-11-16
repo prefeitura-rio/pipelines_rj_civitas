@@ -1,0 +1,74 @@
+version: 2
+
+models:
+  - name: stg_app_civitas__placa_monitorada
+    description: |
+      View no BigQuery: `brutos_app_civitas.placa_monitorada`.
+
+      Estado atual das placas cadastradas para monitoramento no sistema CIVITAS. Uma linha por placa.
+
+      Uma placa cadastrada não está necessariamente sendo monitorada: o monitoramento é
+      definido pelos vínculos em `stg_app_civitas__placa_monitorada_vinculo`
+      (ver `int_placa_monitorada__ativa`).
+
+      Transformações:
+      - Deduplicação do CDC do Airbyte com a macro `dedup_airbyte_cdc`.
+      - Renomeação das colunas para o padrão do data lake.
+      - Placa em caixa alta, sem espaços nas pontas.
+      - Tipo de veículo e origem da informação formatados com a macro `codigo_para_texto`
+        (ex.: `caminhao` → `Caminhao`). Os códigos da API não têm acento.
+      - Anos convertidos de texto para número; valores não numéricos viram nulo.
+      - A coluna legada `active` não é exposta: a API não a atualiza e ela não indica
+        monitoramento.
+
+      Origem: brutos_app_civitas_staging.monitoredplate
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_placa_monitorada
+        description: "Identificador da placa cadastrada no sistema CIVITAS (UUID)."
+        data_tests:
+          - unique
+          - not_null
+      - name: placa
+        description: "Placa do veículo, em caixa alta."
+      - name: id_operacao
+        description: "Operação associada à placa. Coluna em desuso na API."
+      - name: veiculo_tipo
+        description: "Tipo do veículo (ex.: Carro, Moto). Nulo quando não informado."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Moto', 'Carro', 'Onibus', 'Bonde', 'Reboque', 'Caminhao', 'Trator', 'Caminhonete', 'Utilitario', 'Motorhome']
+              config:
+                severity: warn
+      - name: veiculo_marca
+        description: "Marca do veículo."
+      - name: veiculo_modelo
+        description: "Modelo do veículo."
+      - name: veiculo_modelo_ano
+        description: "Ano do modelo do veículo."
+      - name: veiculo_fabricacao_ano
+        description: "Ano de fabricação do veículo."
+      - name: veiculo_cor
+        description: "Cor do veículo."
+      - name: veiculo_informacao_origem
+        description: "Origem das informações do veículo: Cortex, Manual, Mixed (combinação de fontes) ou Renavam prf."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Cortex', 'Manual', 'Mixed', 'Renavam prf']
+              config:
+                severity: warn
+      - name: observacao
+        description: "Observações livres sobre a placa."
+      - name: contato
+        description: "Informações de contato. Coluna em desuso na API: o contato fica na autoridade solicitante."
+      - name: informacao_adicional
+        description: "Informações adicionais em JSON (texto). Coluna obsoleta na API."
+      - name: criacao_datahora
+        description: "Data e hora (UTC) de cadastro da placa."
+      - name: origem_atualizacao_datahora
+        description: "Data e hora (UTC) da última gravação da linha no sistema de origem. Muda a cada gravação, inclusive sem alteração de valores."
+      - name: carga_datahora
+        description: "Data e hora (UTC) em que o Airbyte extraiu esta versão da linha (`_airbyte_extracted_at`)."

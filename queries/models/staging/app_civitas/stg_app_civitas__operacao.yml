@@ -1,0 +1,34 @@
+version: 2
+
+models:
+  - name: stg_app_civitas__operacao
+    description: |
+      View no BigQuery: `brutos_app_civitas.operacao`.
+
+      Operações do sistema CIVITAS. Cada ticket pertence a uma operação, que identifica o
+      demandante (ex.: uma delegacia ou batalhão). Uma linha por operação.
+
+      Transformações:
+      - Deduplicação do CDC do Airbyte com a macro `dedup_airbyte_cdc`: mantém a versão mais
+        recente de cada `id` e remove as linhas deletadas.
+      - Renomeação das colunas para o padrão do data lake.
+
+      Origem: brutos_app_civitas_staging.operation
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_operacao
+        description: "Identificador da operação (UUID)."
+        data_tests:
+          - unique
+          - not_null
+      - name: nome
+        description: "Nome da operação, normalmente o nome do órgão demandante."
+      - name: descricao
+        description: "Descrição da operação."
+      - name: criacao_datahora
+        description: "Data e hora (UTC) de cadastro da operação."
+      - name: origem_atualizacao_datahora
+        description: "Data e hora (UTC) da última gravação da linha no sistema de origem."
+      - name: carga_datahora
+        description: "Data e hora (UTC) em que o Airbyte extraiu esta versão da linha (`_airbyte_extracted_at`)."

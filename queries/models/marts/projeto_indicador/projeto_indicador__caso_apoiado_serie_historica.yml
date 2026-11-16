@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: projeto_indicador__caso_apoiado_serie_historica
+    description: |
+      Casos apoiados pela CIVITAS por mês de entrada da demanda. Uma linha por mês.
+
+      Tabela no BigQuery: `projeto_indicador.caso_apoiado_serie_historica`.
+
+      {{ doc("regra_caso_apoiado") }}
+
+      Atualização: view sobre as tabelas replicadas pelo Airbyte (sincronização a cada 15 min).
+
+      Substitui `kpis_civitas.casos_apoiados_mensal`.
+
+      Origem: int_caso_apoiado__unificado
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: mes_data
+        description: "Mês de entrada dos casos: primeiro dia do mês, no fuso `America/Sao_Paulo`."
+        data_tests:
+          - unique
+          - not_null
+      - name: caso_apoiado_quantidade
+        description: "Quantidade de casos apoiados com entrada no mês."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
