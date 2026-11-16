@@ -1,0 +1,50 @@
+version: 2
+
+sources:
+  - name: cerco_digital_planilha
+    description: |
+      Planilhas de controle operacional de demandas da CIVITAS (2024 a 2026), expostas no
+      BigQuery como tabelas externas. São dados legados: os casos novos são registrados como
+      tickets no sistema CIVITAS (source `app_civitas`).
+
+      O dado tratado fica no dataset `brutos_cerco_digital`, gerado pelos modelos
+      `stg_cerco_digital__*`.
+
+      Os mesmos objetos também são declarados no source legado `stg_cerco_digital`
+      (models/sources), usado por modelos fora das camadas staging/intermediate/marts.
+    database: >
+      {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
+    schema: cerco_digital_staging
+    tables:
+      - name: controle_demandas_operacional_2024
+        description: "Planilha de controle de demandas de 2024."
+        columns:
+          - name: numero_referencia
+            description: "Número de referência da demanda (texto livre)."
+          - name: data_entrada
+            description: "Data de entrada da demanda, em texto no formato DD/MM/AAAA."
+      - name: controle_demandas_operacional_2025
+        description: "Planilha de controle de demandas de 2025. Mesmas colunas da planilha de 2024."
+      - name: controle_demandas_operacional_2026
+        description: "Planilha de controle de demandas de 2026. Mesmas colunas da planilha de 2024."
+
+  - name: cerco_digital_alerta
+    description: |
+      Alertas de passagem de veículo monitorado enviados pelo Cerco Digital.
+
+      Os mesmos objetos também são declarados no source legado `cerco_digital`
+      (models/sources), usado por modelos fora das camadas staging/intermediate/marts.
+    database: >
+      {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
+    schema: cerco_digital
+    tables:
+      - name: vw_total_alertas_enviados
+        description: |
+          Total de alertas enviados. Uma única linha.
+
+          A view conta os alertas com `status_alerta = 'ENVIADO'` na tabela `cerco_digital.alertas`
+          e soma uma constante fixa (131.150), mantida pelo dono da view. Por isso o total é lido
+          desta view, e não recalculado a partir de `alertas`.
+        columns:
+          - name: total_alertas_enviados
+            description: "Total de alertas enviados desde o início das operações."

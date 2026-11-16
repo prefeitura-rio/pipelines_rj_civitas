@@ -97,6 +97,29 @@ models:
       +schema: dados_geograficos
       +meta:
         owner: "@jorge.mendes"
+    staging:
+      +materialized: view
+      +meta:
+        owner: "@nicolas.evilasio"
+      app_civitas:
+        +schema: brutos_app_civitas
+        +tags: ['daily']
+      cerco_digital:
+        +schema: brutos_cerco_digital
+        +tags: ['daily']
+    intermediate:
+      +materialized: ephemeral
+      +meta:
+        owner: "@nicolas.evilasio"
+    marts:
+      +meta:
+        owner: "@nicolas.evilasio"
+      projeto_indicador:
+        +materialized: view
+        +schema: projeto_indicador
+      app_painel_indicador:
+        +materialized: view
+        +schema: app_painel_indicador
 
 
 vars:
