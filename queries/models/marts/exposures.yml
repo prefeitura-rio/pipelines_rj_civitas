@@ -22,12 +22,22 @@ exposures:
     maturity: high
     description: |
       Painel exibido nas telas de monitoramento da CIVITAS (modo kiosk), com placas
-      monitoradas, casos apoiados, alertas enviados e detecções do dia.
+      monitoradas, casos apoiados, alertas enviados e detecções do dia, e telas de
+      demandas: status e desempenho por equipe, tipos de demanda, respostas de chamados
+      (incluindo SLA), acompanhamento de demandas e ranking de demandantes.
       Backend FastAPI no Cloud Run (serviço civitas-kpis, projeto rj-civitas),
       repositório prefeitura-rio/civitas-painel-kpis.
     depends_on:
       - ref('app_painel_indicador__resumo')
+      - ref('app_painel_indicador__ticket_resposta')
+      - ref('app_painel_indicador__equipe_status')
+      - ref('app_painel_indicador__equipe_desempenho')
+      - ref('app_painel_indicador__ticket_acompanhamento')
+      - ref('app_painel_indicador__equipe_servico_categoria')
+      - ref('app_painel_indicador__equipe_operacional')
+      - ref('app_painel_indicador__demandante')
       - ref('vw_all_readings')
+      - source('cerco_digital_alerta', 'vw_total_alertas_enviados')
     owner:
       name: "Nicolas Evilasio"
       email: "nicolas.evilasio@prefeitura.rio"
