@@ -3,8 +3,8 @@ version: 2
 sources:
   - name: cerco_digital_planilha
     description: |
-      Planilhas de controle operacional de demandas da CIVITAS (2024 a 2026), expostas no
-      BigQuery como tabelas externas. São dados legados: os casos novos são registrados como
+      Planilhas de controle operacional de demandas da CIVITAS (2024 a 2026), carregadas no
+      BigQuery como tabelas nativas. São dados legados: os casos novos são registrados como
       tickets no sistema CIVITAS (source `app_civitas`).
 
       O dado tratado fica no dataset `brutos_cerco_digital`, gerado pelos modelos

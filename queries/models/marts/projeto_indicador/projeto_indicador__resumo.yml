@@ -1,0 +1,64 @@
+version: 2
+
+models:
+  - name: projeto_indicador__resumo
+    description: |
+      Situação atual dos principais indicadores da CIVITAS. Uma única linha.
+
+      Tabela no BigQuery: `projeto_indicador.resumo`.
+      Consumida pelo BI de indicadores da CIVITAS (Looker Studio), compartilhado com a IPLANRIO.
+
+      Atualização: view sobre as tabelas replicadas pelo Airbyte (sincronização a cada 15 min).
+      Não depende de execução agendada do dbt.
+
+      Substitui `kpis_civitas.kpis_consolidados_civitas`. Métrica descontinuada:
+      - `placas_monitoradas_total` (veículos monitorados desde 2024): estava congelada desde
+        2026-09-02, quando a API trocou `POST /cars/monitored` pelos endpoints de
+        `monitored-plate-*`, e lia 7,6 GB do `userhistory` a cada consulta. Se voltar a ser
+        necessária, deve ser reconstruída com a lógica do endpoint `/cars/monitored/history`
+        da civitas-api, materializando os eventos do `userhistory` de forma incremental.
+
+      Origem: int_placa_monitorada__ativa, int_caso_apoiado__unificado,
+      stg_cerco_digital__alerta_enviado
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_equal:
+          arguments:
+            value: 1
+    columns:
+      - name: placa_monitorada_quantidade
+        description: |
+          Quantidade de placas monitoradas no momento da consulta.
+
+          {{ doc("regra_placa_monitorada_ativa") }}
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: caso_apoiado_quantidade
+        description: |
+          Quantidade de casos apoiados pela CIVITAS desde 2024-06-01.
+
+          {{ doc("regra_caso_apoiado") }}
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: alerta_enviado_quantidade
+        description: |
+          Quantidade de alertas de passagem de veículo monitorado enviados aos solicitantes
+          desde o início das operações. Origem: `stg_cerco_digital__alerta_enviado`.
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: carga_datahora
+        description: |
+          Data e hora (UTC) da carga mais recente do Airbyte entre os dados do sistema CIVITAS
+          usados no resumo (ticket, placa monitorada e vínculo). A replicação é por CDC: a data
+          só avança quando algum desses dados tem uma alteração, então um valor antigo não
+          indica, sozinho, falha na sincronização.

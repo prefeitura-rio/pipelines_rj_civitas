@@ -1,0 +1,33 @@
+version: 2
+
+exposures:
+  - name: bi_indicador_civitas
+    label: "BI de indicadores da CIVITAS"
+    type: dashboard
+    maturity: high
+    url: https://datastudio.google.com/u/1/reporting/592be7a1-6e8e-47d3-a0dc-45ca5b2375f1/page/6Ag6F
+    description: |
+      Relatório no Looker Studio (Data Studio) com os principais indicadores da CIVITAS:
+      placas monitoradas, casos apoiados e alertas enviados.
+      Compartilhado com a IPLANRIO.
+    depends_on:
+      - ref('projeto_indicador__resumo')
+    owner:
+      name: "Nicolas Evilasio"
+      email: "nicolas.evilasio@prefeitura.rio"
+
+  - name: civitas_painel_kpis
+    label: "Painel de indicadores da CIVITAS"
+    type: application
+    maturity: high
+    description: |
+      Painel exibido nas telas de monitoramento da CIVITAS (modo kiosk), com placas
+      monitoradas, casos apoiados, alertas enviados e detecções do dia.
+      Backend FastAPI no Cloud Run (serviço civitas-kpis, projeto rj-civitas),
+      repositório prefeitura-rio/civitas-painel-kpis.
+    depends_on:
+      - ref('app_painel_indicador__resumo')
+      - ref('vw_all_readings')
+    owner:
+      name: "Nicolas Evilasio"
+      email: "nicolas.evilasio@prefeitura.rio"
