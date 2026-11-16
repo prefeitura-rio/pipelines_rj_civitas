@@ -18,8 +18,10 @@ models:
         necessária, deve ser reconstruída com a lógica do endpoint `/cars/monitored/history`
         da civitas-api, materializando os eventos do `userhistory` de forma incremental.
 
-      Origem: int_placa_monitorada__ativa, int_caso_apoiado__unificado,
-      stg_cerco_digital__alerta_enviado
+      As definições das métricas vêm de `int_indicador__resumo`, compartilhado com
+      `app_painel_indicador.resumo`.
+
+      Origem: int_indicador__resumo
       Publicado por: Nicolas Evilasio
       Publicado por (email): nicolas.evilasio@prefeitura.rio
     data_tests:

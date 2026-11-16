@@ -9,4 +9,4 @@ SELECT
     caso_apoiado_quantidade,
     alerta_enviado_quantidade,
     carga_datahora
-FROM {{ ref('projeto_indicador__resumo') }}
+FROM {{ ref('int_indicador__resumo') }}

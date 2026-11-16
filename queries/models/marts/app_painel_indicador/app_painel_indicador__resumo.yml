@@ -8,12 +8,13 @@ models:
 
       Tabela no BigQuery: `app_painel_indicador.resumo`.
       Contrato com a aplicação `civitas-painel-kpis`: renomear ou remover colunas quebra o painel.
-      As definições das métricas vêm de `projeto_indicador.resumo`.
+      As definições das métricas vêm de `int_indicador__resumo`, compartilhado com
+      `projeto_indicador.resumo`.
 
       Atualização: view sobre as tabelas replicadas pelo Airbyte (sincronização a cada 15 min).
       O backend do painel mantém cache de 5 minutos sobre esta consulta.
 
-      Origem: projeto_indicador__resumo
+      Origem: int_indicador__resumo
       Publicado por: Nicolas Evilasio
       Publicado por (email): nicolas.evilasio@prefeitura.rio
     data_tests:
