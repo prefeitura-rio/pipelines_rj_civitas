@@ -1,0 +1,116 @@
+version: 2
+
+sources:
+  - name: app_civitas
+    description: |
+      Tabelas do banco PostgreSQL do sistema CIVITAS (civitas-api), replicadas pelo Airbyte
+      via CDC a cada 15 minutos. Camada bruta de staging: o dado tratado (estado atual,
+      deduplicado) fica no dataset `brutos_app_civitas`, gerado pelos modelos `stg_app_civitas__*`.
+
+      **Atenção: as tabelas guardam o histórico de versões, não o estado atual.**
+      A conexão grava em modo append, então o mesmo `id` aparece várias vezes:
+      - uma linha por evento do CDC (insert, update e delete). A aplicação também gera
+        updates sem alteração de valores, que viram novas linhas;
+      - uma cópia completa da tabela a cada refresh da conexão
+        (identificada por `_airbyte_generation_id`).
+
+      Para obter o estado atual, use os modelos `stg_app_civitas__*` ou a macro
+      `dedup_airbyte_cdc`, que mantém a versão mais recente de cada `id` e só depois descarta
+      as deletadas. Nas linhas de deleção, as colunas de negócio vêm nulas.
+
+      As tabelas são particionadas por dia em `_airbyte_extracted_at` e clusterizadas por
+      `id` e `_airbyte_extracted_at`. A partição reflete a data de extração, não a data do
+      evento: um refresh regrava todo o histórico na partição do dia do refresh.
+
+      Colunas de controle comuns a todas as tabelas:
+      - `_airbyte_raw_id`: identificador da linha gravada pelo Airbyte;
+      - `_airbyte_extracted_at`: data e hora (UTC) da extração;
+      - `_airbyte_meta`: metadados da sincronização (erros e alterações de tipo);
+      - `_airbyte_generation_id`: geração da carga; incrementa a cada refresh;
+      - `_ab_cdc_lsn`: posição do evento no log do PostgreSQL (ordem dos eventos);
+      - `_ab_cdc_updated_at`: data e hora do evento no banco de origem;
+      - `_ab_cdc_deleted_at`: preenchida quando o evento é uma deleção.
+    database: >
+      {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
+    schema: brutos_app_civitas_staging
+    tables:
+      - name: monitoredplate
+        description: |
+          Placas cadastradas para monitoramento (`MonitoredPlate`). O monitoramento em si é
+          definido pelos vínculos em `monitoredplateauthority`.
+        columns:
+          - name: id
+            description: "Identificador da placa cadastrada (UUID)."
+          - name: plate
+            description: "Placa do veículo."
+          - name: active
+            description: |
+              Coluna legada: a API não a atualiza (o `PUT /cars/monitored/{plate}` ignora o campo)
+              e ela fica sempre `true`, o valor padrão na criação. Não indica se a placa está
+              monitorada; use `monitoredplateauthority.active`.
+          - name: created_at
+            description: "Data e hora (UTC) de cadastro."
+          - name: updated_at
+            description: "Data e hora (UTC) da última gravação. Muda a cada gravação, inclusive sem alteração de valores."
+      - name: monitoredplateauthority
+        description: |
+          Vínculos entre placas e autoridades solicitantes (`MonitoredPlateAuthority`). Uma placa
+          está monitorada quando tem um vínculo ativo.
+        columns:
+          - name: id
+            description: "Identificador do vínculo (UUID)."
+          - name: monitored_plate_id
+            description: "Placa vinculada (`monitoredplate.id`)."
+          - name: institution_authority_id
+            description: "Autoridade solicitante."
+          - name: reference_number
+            description: "Número de referência da solicitação."
+          - name: active
+            description: "Indica se o vínculo está ativo. Um cron da API desativa os vínculos com `valid_until` vencida."
+          - name: valid_until
+            description: "Data e hora (UTC) de fim da validade do monitoramento."
+          - name: requested_at
+            description: "Data e hora (UTC) da solicitação."
+      - name: reporthistory
+        description: "Histórico de relatórios gerados no sistema CIVITAS."
+      - name: tickets
+        description: "Tickets (demandas) atendidos pela CIVITAS (`Ticket`)."
+        columns:
+          - name: id
+            description: "Identificador do ticket (UUID)."
+          - name: status
+            description: "Status do ticket no fluxo de atendimento."
+          - name: created_at
+            description: "Data e hora (UTC) de criação do ticket."
+      - name: teams
+        description: "Equipes responsáveis pelo atendimento dos tickets (`Team`)."
+      - name: operation
+        description: "Operações (`Operation`). Cada ticket pertence a uma operação, que identifica o demandante."
+      - name: ticket_dashboard_sla_configs
+        description: "Prazos de SLA, em dias, por tipo de serviço de ticket (`TicketDashboardSlaConfig`)."
+      - name: ticket_image_search_services
+        description: "Serviços de busca por imagem dos tickets (`TicketImageSearchService`)."
+      - name: ticket_image_analysis_services
+        description: "Serviços de análise de imagem dos tickets (`TicketImageAnalysisService`)."
+      - name: ticket_image_reservation_services
+        description: "Serviços de reserva de imagem dos tickets (`TicketImageReservationService`)."
+      - name: ticket_plate_search_services
+        description: "Serviços de busca por placa dos tickets (`TicketPlateSearchService`)."
+      - name: ticket_radar_search_services
+        description: "Serviços de busca por radar dos tickets (`TicketRadarSearchService`)."
+      - name: ticket_correlated_plate_services
+        description: "Serviços de busca de placas correlatas dos tickets (`TicketCorrelatedPlatesService`)."
+      - name: ticket_joint_plate_services
+        description: "Serviços de busca de placas conjuntas dos tickets (`TicketJointPlatesService`)."
+      - name: ticket_electronic_fence_services
+        description: "Serviços de cerco eletrônico dos tickets (`TicketElectronicFenceService`)."
+      - name: ticket_other_services
+        description: "Outros serviços dos tickets (`TicketOtherService`)."
+      - name: ticket_atlas_civitas_services
+        description: "Serviços Atlas Civitas dos tickets (`TicketAtlasCivitasService`). Contém dados pessoais (nome, e-mail, CPF e matrícula)."
+      - name: userhistory
+        description: |
+          Log de requisições à civitas-api (método, caminho, corpo e status de resposta).
+          Tabela grande: a coluna `body` concentra quase todo o volume, e a
+          partição por `_airbyte_extracted_at` não filtra por data do evento. Evite ler esta
+          tabela em views consultadas com frequência.

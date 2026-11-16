@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: int_ticket__sla
+    description: |
+      Prazo de SLA de cada ticket. Uma linha por ticket com pelo menos um serviço.
+
+      {{ doc("regra_ticket_sla") }}
+
+      Materialização: efêmera (não é criada no BigQuery).
+
+      Origem: int_ticket_servico__unificado
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_ticket
+        description: "Identificador do ticket."
+        data_tests:
+          - unique
+          - not_null
+      - name: sla_dias
+        description: "Prazo de SLA do ticket, em dias: o maior prazo entre os tipos de serviço do ticket."
+        data_tests:
+          - not_null

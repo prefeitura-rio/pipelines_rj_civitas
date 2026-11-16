@@ -1,0 +1,25 @@
+version: 2
+
+macros:
+  - name: dedup_airbyte_cdc
+    description: |
+      Retorna o estado atual de uma tabela replicada pelo Airbyte via CDC em modo append.
+
+      O Airbyte grava uma nova linha para cada evento do CDC (insert, update e delete) e para
+      cada refresh da conexão, então a mesma chave aparece várias vezes na tabela bruta.
+      A macro mantém só a versão mais recente de cada chave (ordenando por `_ab_cdc_lsn` e
+      `_airbyte_extracted_at`) e, depois, descarta as chaves cuja versão mais recente é uma
+      deleção.
+
+      A ordem importa: filtrar `_ab_cdc_deleted_at` antes de deduplicar faria uma linha
+      deletada voltar a aparecer pelas versões anteriores.
+
+      Retorna todas as colunas da tabela de origem. Use dentro de um CTE, passando o
+      `source()` da tabela bruta (ver os modelos `stg_app_civitas__*`).
+    arguments:
+      - name: relation
+        type: relation
+        description: "`source()` ou `ref()` da tabela bruta do Airbyte."
+      - name: key
+        type: string
+        description: "Coluna que identifica a linha no sistema de origem. Padrão: `id`."

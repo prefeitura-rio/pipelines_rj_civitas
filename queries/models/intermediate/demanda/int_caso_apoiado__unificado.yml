@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: int_caso_apoiado__unificado
+    description: |
+      Casos apoiados pela CIVITAS desde o início das operações, unificando a planilha de
+      controle de demandas (legado) e os tickets do sistema CIVITAS. Uma linha por caso.
+
+      {{ doc("regra_caso_apoiado") }}
+
+      Materialização: efêmera (não é criada no BigQuery).
+
+      Origem: stg_cerco_digital__controle_demanda e stg_app_civitas__ticket
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_caso
+        description: "Identificador do caso: `numero_referencia` (controle de demandas) ou `id` do ticket."
+        data_tests:
+          - unique
+          - not_null
+      - name: entrada_data
+        description: "Data de entrada do caso, no fuso `America/Sao_Paulo`. Para identificadores repetidos, a menor data."
+        data_tests:
+          - not_null
+      - name: origem_tipo
+        description: "Origem do caso: `Controle de demandas` ou `Ticket`."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Controle de demandas', 'Ticket']

@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: int_equipe__operacional
+    description: |
+      Equipes operacionais exibidas nas telas por equipe do painel de indicadores, com a ordem
+      de exibição. Uma linha por equipe.
+
+      {{ doc("regra_painel_equipe_operacional") }}
+
+      Materialização: efêmera (não é criada no BigQuery).
+
+      Origem: stg_app_civitas__equipe
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_equipe
+        description: "Identificador da equipe (UUID)."
+        data_tests:
+          - unique
+          - not_null
+      - name: nome
+        description: "Nome da equipe."
+      - name: exibicao_ordem
+        description: "Posição da equipe nas telas do painel, a partir de 0."

@@ -1,0 +1,43 @@
+version: 2
+
+exposures:
+  - name: bi_indicador_civitas
+    label: "BI de indicadores da CIVITAS"
+    type: dashboard
+    maturity: high
+    url: https://datastudio.google.com/u/1/reporting/592be7a1-6e8e-47d3-a0dc-45ca5b2375f1/page/6Ag6F
+    description: |
+      Relatório no Looker Studio (Data Studio) com os principais indicadores da CIVITAS:
+      placas monitoradas, casos apoiados e alertas enviados.
+      Compartilhado com a IPLANRIO.
+    depends_on:
+      - ref('projeto_indicador__resumo')
+    owner:
+      name: "Nicolas Evilasio"
+      email: "nicolas.evilasio@prefeitura.rio"
+
+  - name: civitas_painel_kpis
+    label: "Painel de indicadores da CIVITAS"
+    type: application
+    maturity: high
+    description: |
+      Painel exibido nas telas de monitoramento da CIVITAS (modo kiosk), com placas
+      monitoradas, casos apoiados, alertas enviados e detecções do dia, e telas de
+      demandas: status e desempenho por equipe, tipos de demanda, respostas de chamados
+      (incluindo SLA), acompanhamento de demandas e ranking de demandantes.
+      Backend FastAPI no Cloud Run (serviço civitas-kpis, projeto rj-civitas),
+      repositório prefeitura-rio/civitas-painel-kpis.
+    depends_on:
+      - ref('app_painel_indicador__resumo')
+      - ref('app_painel_indicador__ticket_resposta')
+      - ref('app_painel_indicador__equipe_status')
+      - ref('app_painel_indicador__equipe_desempenho')
+      - ref('app_painel_indicador__ticket_acompanhamento')
+      - ref('app_painel_indicador__equipe_servico_categoria')
+      - ref('app_painel_indicador__equipe_operacional')
+      - ref('app_painel_indicador__demandante')
+      - ref('vw_all_readings')
+      - source('cerco_digital_alerta', 'vw_total_alertas_enviados')
+    owner:
+      name: "Nicolas Evilasio"
+      email: "nicolas.evilasio@prefeitura.rio"

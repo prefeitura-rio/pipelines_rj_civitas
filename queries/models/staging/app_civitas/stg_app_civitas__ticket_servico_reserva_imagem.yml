@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: stg_app_civitas__ticket_servico_reserva_imagem
+    description: |
+      View no BigQuery: `brutos_app_civitas.ticket_servico_reserva_imagem`.
+
+      Serviços de reserva (preservação) de imagem solicitados nos tickets. Uma linha por serviço.
+
+      Transformações:
+      - Deduplicação do CDC do Airbyte com a macro `dedup_airbyte_cdc`: mantém a versão mais
+        recente de cada `id` e remove as linhas deletadas.
+      - Renomeação das colunas para o padrão do data lake.
+
+      Origem: brutos_app_civitas_staging.ticket_image_reservation_services
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_servico
+        description: "Identificador do serviço (UUID). Único dentro do tipo de serviço."
+        data_tests:
+          - unique
+          - not_null
+      - name: id_ticket
+        description: "Ticket ao qual o serviço pertence (`brutos_app_civitas.ticket`)."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_app_civitas__ticket')
+                field: id_ticket
+              config:
+                severity: warn
+      - name: concluido_indicador
+        description: "Indica se o serviço foi concluído."
+      - name: periodo_inicio_datahora
+        description: "Início (UTC) do período de interesse da busca."
+      - name: periodo_fim_datahora
+        description: "Fim (UTC) do período de interesse da busca."
+      - name: orientacao
+        description: "Orientações livres para a execução do serviço."
+      - name: criacao_datahora
+        description: "Data e hora (UTC) de criação do serviço."
+      - name: conclusao_datahora
+        description: "Data e hora (UTC) de conclusão do serviço. Nula enquanto não concluído."
+      - name: carga_datahora
+        description: "Data e hora (UTC) em que o Airbyte extraiu esta versão da linha (`_airbyte_extracted_at`)."
