@@ -9,9 +9,6 @@ sources:
 
       O dado tratado fica no dataset `brutos_cerco_digital`, gerado pelos modelos
       `stg_cerco_digital__*`.
-
-      Os mesmos objetos também são declarados no source legado `stg_cerco_digital`
-      (models/sources), usado por modelos fora das camadas staging/intermediate/marts.
     database: >
       {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
     schema: cerco_digital_staging
@@ -31,9 +28,6 @@ sources:
   - name: cerco_digital_alerta
     description: |
       Alertas de passagem de veículo monitorado enviados pelo Cerco Digital.
-
-      Os mesmos objetos também são declarados no source legado `cerco_digital`
-      (models/sources), usado por modelos fora das camadas staging/intermediate/marts.
     database: >
       {% if target.name == 'staging' %}rj-civitas-dev{% else %}rj-civitas{% endif %}
     schema: cerco_digital
