@@ -104,9 +104,11 @@ models:
         +tags: ['daily']
     intermediate:
       +materialized: ephemeral
+      +tags: ['daily']
       +meta:
         owner: "@nicolas.evilasio"
     marts:
+      +tags: ['daily']
       +meta:
         owner: "@nicolas.evilasio"
       projeto_indicador:
