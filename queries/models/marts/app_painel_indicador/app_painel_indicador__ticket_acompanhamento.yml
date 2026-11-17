@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: app_painel_indicador__ticket_acompanhamento
+    description: |
+      Acompanhamento diário das demandas nos 7 últimos dias operacionais completos e no dia
+      operacional atual (parcial, até o momento da consulta). Uma linha por dia operacional.
+
+      {{ doc("regra_painel_dia_operacional") }}
+
+      Desconsidera os tipos de ticket da variável `painel_ticket_tipos_excluidos`
+      (Levantamento Prévio e Requisição Restrita).
+
+      Tabela no BigQuery: `app_painel_indicador.ticket_acompanhamento`.
+      Contrato com a aplicação `civitas-painel-kpis`: renomear ou remover colunas quebra o painel.
+
+      Atualização: view sobre as tabelas replicadas pelo Airbyte (sincronização a cada 15 min).
+      O período é calculado no momento da consulta.
+
+      Origem: stg_app_civitas__ticket
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_equal:
+          arguments:
+            value: 8
+    columns:
+      - name: operacional_data
+        description: "Data do dia operacional (começa às 07:00 desta data, America/Sao_Paulo)."
+        data_tests:
+          - unique
+          - not_null
+      - name: ticket_criado_quantidade
+        description: "Tickets criados no dia operacional."
+        data_tests:
+          - not_null
+      - name: ticket_aberto_quantidade
+        description: "Tickets em aberto ao fim do dia operacional, incluindo os de dias anteriores."
+        data_tests:
+          - not_null
+      - name: ticket_concluido_quantidade
+        description: "Tickets concluídos no dia operacional."
+        data_tests:
+          - not_null
+      - name: fluxo_liquido_quantidade
+        description: "Criados menos concluídos no dia operacional."
+      - name: ticket_aberto_variacao_quantidade
+        description: "Variação dos tickets em aberto em relação ao dia anterior. Nula no primeiro dia."
+      - name: ticket_aberto_variacao_percentual
+        description: "Variação percentual dos tickets em aberto em relação ao dia anterior, com 2 casas. Nula no primeiro dia ou com zero no dia anterior."
+      - name: ticket_aberto_media_quantidade
+        description: "Média, arredondada, dos tickets em aberto ao fim dos dias operacionais completos. Igual em todas as linhas."

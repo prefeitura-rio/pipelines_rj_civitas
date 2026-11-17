@@ -1,0 +1,16 @@
+version: 2
+
+macros:
+  - name: codigo_para_texto
+    description: |
+      Converte um código categórico (ex.: valores de enum de uma API) em texto legível:
+      troca `_` por espaço, remove espaços nas pontas e deixa só a primeira letra maiúscula.
+
+      Exemplos: `DEMANDA_RESPONDIDA` → `Demanda respondida`; `caminhao` → `Caminhao`.
+
+      Não recupera acentos nem palavras que não existem no código de origem
+      (`MEDIA` → `Media`). Nulo continua nulo.
+    arguments:
+      - name: coluna
+        type: string
+        description: "Nome da coluna (ou expressão SQL) com o código a converter."

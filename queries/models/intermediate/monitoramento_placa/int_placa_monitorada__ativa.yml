@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: int_placa_monitorada__ativa
+    description: |
+      Placas monitoradas ativamente no momento da consulta. Uma linha por placa.
+
+      {{ doc("regra_placa_monitorada_ativa") }}
+
+      Materialização: efêmera (não é criada no BigQuery).
+
+      Origem: stg_app_civitas__placa_monitorada e stg_app_civitas__placa_monitorada_vinculo
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_placa_monitorada
+        description: "Identificador da placa cadastrada no sistema CIVITAS (UUID)."
+        data_tests:
+          - unique
+          - not_null
+      - name: placa
+        description: "Placa do veículo, em caixa alta."
+      - name: vinculo_ativo_quantidade
+        description: "Quantidade de vínculos ativos da placa (uma placa pode ser solicitada por mais de uma autoridade)."
+      - name: validade_proxima_datahora
+        description: "Data e hora (UTC) do vencimento mais próximo entre os vínculos ativos da placa."

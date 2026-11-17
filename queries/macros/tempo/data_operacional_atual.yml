@@ -1,0 +1,9 @@
+version: 2
+
+macros:
+  - name: data_operacional_atual
+    description: |
+      Retorna a data (DATE) do dia operacional atual da CIVITAS. O dia operacional vai das 07:00
+      às 07:00 (America/Sao_Paulo): antes das 07:00, a data operacional ainda é a de ontem.
+
+      Calculado no momento da consulta (`CURRENT_DATETIME`), por isso só deve ser usado em views.

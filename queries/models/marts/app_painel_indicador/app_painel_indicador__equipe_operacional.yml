@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: app_painel_indicador__equipe_operacional
+    description: |
+      Equipes operacionais exibidas nas telas por equipe do painel, na ordem de exibição.
+      Uma linha por equipe.
+
+      {{ doc("regra_painel_equipe_operacional") }}
+
+      Tabela no BigQuery: `app_painel_indicador.equipe_operacional`.
+      Contrato com a aplicação `civitas-painel-kpis`: renomear ou remover colunas quebra o painel.
+
+      Atualização: view sobre as tabelas replicadas pelo Airbyte (sincronização a cada 15 min).
+
+      Origem: int_equipe__operacional
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_equipe
+        description: "Identificador da equipe (UUID)."
+        data_tests:
+          - unique
+          - not_null
+      - name: equipe_nome
+        description: "Nome da equipe."
+      - name: exibicao_ordem
+        description: "Posição da equipe nas telas do painel, a partir de 0."

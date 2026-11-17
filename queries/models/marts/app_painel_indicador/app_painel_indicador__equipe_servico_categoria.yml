@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: app_painel_indicador__equipe_servico_categoria
+    description: |
+      Tickets por equipe operacional e categoria de serviço nos últimos 8 dias operacionais
+      completos. Uma linha por equipe operacional e categoria, com zero quando não há tickets.
+
+      {{ doc("regra_painel_dia_operacional") }}
+
+      Conta os tickets ativos em algum momento do período. Os em aberto ao fim do período contam
+      para a equipe responsável e os finalizados no período, para a equipe que os finalizou. Um
+      ticket com serviços de várias categorias conta em cada uma delas.
+
+      {{ doc("regra_ticket_servico") }}
+
+      Tabela no BigQuery: `app_painel_indicador.equipe_servico_categoria`.
+      Contrato com a aplicação `civitas-painel-kpis`: renomear ou remover colunas quebra o painel.
+
+      Atualização: view sobre as tabelas replicadas pelo Airbyte (sincronização a cada 15 min).
+      O período é calculado no momento da consulta.
+
+      Origem: stg_app_civitas__ticket, int_ticket_servico__unificado, int_equipe__operacional
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    data_tests:
+      - dbt_expectations.expect_compound_columns_to_be_unique:
+          arguments:
+            column_list: ['id_equipe', 'servico_categoria']
+    columns:
+      - name: id_equipe
+        description: "Identificador da equipe (UUID)."
+        data_tests:
+          - not_null
+      - name: equipe_nome
+        description: "Nome da equipe."
+      - name: exibicao_ordem
+        description: "Posição da equipe nas telas do painel, a partir de 0."
+      - name: periodo_inicio_datahora
+        description: "Início (UTC) do período: 07:00 (America/Sao_Paulo) do primeiro dia operacional."
+      - name: periodo_fim_datahora
+        description: "Fim (UTC, exclusivo) do período: 07:00 (America/Sao_Paulo) do dia operacional atual."
+      - name: servico_categoria
+        description: "Categoria do serviço: Imagem, Relatório, Cerco Eletrônico ou Outros."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Imagem', 'Relatório', 'Cerco Eletrônico', 'Outros']
+      - name: ticket_quantidade
+        description: "Tickets da equipe com serviços da categoria. Zero quando não há."
+        data_tests:
+          - not_null

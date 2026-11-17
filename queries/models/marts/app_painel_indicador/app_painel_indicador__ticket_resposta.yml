@@ -1,0 +1,54 @@
+version: 2
+
+models:
+  - name: app_painel_indicador__ticket_resposta
+    description: |
+      Indicadores da tela de respostas de chamados do painel: volume, resolução e SLA dos tickets
+      criados nos últimos 28 dias (período atual, até hoje) e nos 28 dias anteriores.
+      Uma linha por período.
+
+      {{ doc("regra_painel_ticket_resposta") }}
+
+      Tabela no BigQuery: `app_painel_indicador.ticket_resposta`.
+      Contrato com a aplicação `civitas-painel-kpis`: renomear ou remover colunas quebra o painel.
+
+      Atualização: view sobre as tabelas replicadas pelo Airbyte (sincronização a cada 15 min).
+      O período é calculado no momento da consulta.
+
+      Origem: stg_app_civitas__ticket, int_ticket__sla, int_ticket_servico__unificado
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_equal:
+          arguments:
+            value: 2
+    columns:
+      - name: periodo_tipo
+        description: "Período: Atual (últimos 28 dias, até hoje) ou Anterior (os 28 dias antes do atual)."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Atual', 'Anterior']
+      - name: periodo_inicio_data
+        description: "Primeiro dia do período."
+      - name: periodo_fim_data
+        description: "Último dia do período (inclusivo)."
+      - name: ticket_quantidade
+        description: "Tickets criados no período, pelo dia de criação em America/Sao_Paulo."
+        data_tests:
+          - not_null
+      - name: ticket_aberto_quantidade
+        description: "Desses tickets, os ainda em aberto."
+        data_tests:
+          - not_null
+      - name: ticket_concluido_quantidade
+        description: "Desses tickets, os já concluídos."
+        data_tests:
+          - not_null
+      - name: resolucao_taxa
+        description: "Percentual (0 a 100) de tickets concluídos entre os criados no período, pelo dia de criação em UTC. Nulo sem tickets. Valor sem arredondamento."
+      - name: resolucao_media_dias
+        description: "Tempo médio, em dias, entre criação e conclusão dos tickets concluídos criados no período (dia em UTC). Nulo sem tickets concluídos. Valor sem arredondamento."
+      - name: sla_cumprido_percentual
+        description: "Percentual (0 a 100) de serviços concluídos dentro do prazo de SLA do ticket, entre os serviços concluídos de tickets criados no período (dia em UTC). Nulo sem serviços concluídos. Valor sem arredondamento."

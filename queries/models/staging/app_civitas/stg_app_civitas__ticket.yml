@@ -1,0 +1,97 @@
+version: 2
+
+models:
+  - name: stg_app_civitas__ticket
+    description: |
+      View no BigQuery: `brutos_app_civitas.ticket`.
+
+      Estado atual dos tickets (demandas) do sistema CIVITAS. Uma linha por ticket.
+
+      Transformações:
+      - Deduplicação do CDC do Airbyte com a macro `dedup_airbyte_cdc`: mantém a versão mais
+        recente de cada `id` e remove os tickets deletados.
+      - Renomeação das colunas para o padrão do data lake.
+      - Status e prioridade formatados com a macro `codigo_para_texto`
+        (ex.: `DEMANDA_RESPONDIDA` → `Demanda respondida`). Os códigos da API não têm acento,
+        então o texto também não tem.
+
+      Contém dados pessoais do solicitante (nome, e-mail e telefone).
+
+      Origem: brutos_app_civitas_staging.tickets
+      Publicado por: Nicolas Evilasio
+      Publicado por (email): nicolas.evilasio@prefeitura.rio
+    columns:
+      - name: id_ticket
+        description: "Identificador do ticket no sistema CIVITAS (UUID)."
+        data_tests:
+          - unique
+          - not_null
+      - name: numero_interno
+        description: "Número sequencial do ticket exibido no sistema CIVITAS."
+      - name: id_ticket_pai
+        description: "Ticket de origem, quando este ticket foi desdobrado de outro. Nulo nos demais."
+      - name: id_operacao
+        description: "Operação da CIVITAS à qual o ticket pertence (tabela de origem `operation`)."
+      - name: id_ticket_tipo
+        description: "Tipo do ticket (tabela de origem `ticket_types`)."
+      - name: id_ticket_natureza
+        description: "Natureza do ticket (tabela de origem `ticket_natures`)."
+      - name: id_equipe
+        description: "Equipe responsável pelo ticket no momento (tabela de origem `teams`)."
+      - name: id_equipe_finalizadora
+        description: "Equipe que finalizou o ticket. Nulo enquanto não finalizado."
+      - name: status
+        description: "Situação do ticket no fluxo de atendimento."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Pendente', 'Aguardando revisao adjunto', 'Aguardando revisao administrativo', 'Finalizado', 'Demanda respondida', 'Bloqueado', 'Restrito']
+              config:
+                severity: warn
+      - name: prioridade
+        description: "Prioridade do ticket. Nulo quando não informada."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Urgente', 'Alta', 'Media', 'Rotina']
+              config:
+                severity: warn
+      - name: numero_procedimento
+        description: "Número do procedimento (ex.: inquérito) informado pelo solicitante."
+      - name: numero_oficio
+        description: "Número do ofício que originou a demanda."
+      - name: numero_processo_sei
+        description: "Número do processo no SEI."
+      - name: link_processo_sei
+        description: "Link para o processo no SEI."
+      - name: base_data
+        description: "Data-base do ticket, informada no cadastro."
+      - name: apelido_imprensa_indicador
+        description: "Indica se o caso tem apelido usado pela imprensa."
+      - name: apelido_imprensa
+        description: "Apelido do caso na imprensa."
+      - name: link_imprensa
+        description: "Link de matéria da imprensa sobre o caso."
+      - name: correspondencia_endereco_indicador
+        description: "Indica se foi informado endereço para correspondência."
+      - name: correspondencia_logradouro
+        description: "Logradouro do endereço de correspondência."
+      - name: correspondencia_numero
+        description: "Número do endereço de correspondência."
+      - name: correspondencia_bairro
+        description: "Bairro do endereço de correspondência."
+      - name: solicitante_nome
+        description: "Nome do solicitante. Dado pessoal."
+      - name: solicitante_email
+        description: "E-mail do solicitante. Dado pessoal."
+      - name: solicitante_telefone
+        description: "Telefone do solicitante. Dado pessoal."
+      - name: criacao_datahora
+        description: "Data e hora (UTC) de criação do ticket."
+      - name: conclusao_datahora
+        description: "Data e hora (UTC) de conclusão do ticket. Nulo enquanto não concluído."
+      - name: encerramento_operacional_datahora
+        description: "Data e hora (UTC) do encerramento operacional do ticket. Nulo enquanto não encerrado."
+      - name: carga_datahora
+        description: "Data e hora (UTC) em que o Airbyte extraiu esta versão da linha (`_airbyte_extracted_at`)."
