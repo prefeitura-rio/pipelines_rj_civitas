@@ -42,10 +42,46 @@ WITH leituras_validas AS (
     {% if is_incremental() %}
     datahora >= TIMESTAMP_ADD(TIMESTAMP('{{ max_date }}', 'America/Sao_Paulo'), INTERVAL 1 DAY)
     {% else %}
-    datahora >= TIMESTAMP('2026-11-01 03:00:00')
+    datahora >= TIMESTAMP('2026-08-01 03:00:00')
     {% endif %}
     AND datahora < TIMESTAMP(CURRENT_DATE(), 'America/Sao_Paulo')
     AND REGEXP_CONTAINS(placa, r'^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$')
+),
+
+erro_ocr_civitas_base AS (
+SELECT
+  camera_numero,
+  tipo_veiculo_prf is null as sem_dado,
+  DATE(datahora, 'America/Sao_Paulo') as data_dia
+FROM `rj-civitas.lpr.readings_*`
+WHERE
+    {% if is_incremental() %}
+    datahora >= TIMESTAMP_ADD(TIMESTAMP('{{ max_date }}', 'America/Sao_Paulo'), INTERVAL 1 DAY)
+    {% else %}
+    datahora >= TIMESTAMP('2026-08-01 03:00:00') --Início da integração com dados PRF
+    {% endif %}
+),
+
+erro_ocr_civitas_agrupado AS (
+SELECT
+  data_dia,
+  camera_numero,
+  SUM(IF(sem_dado, 1, 0)) AS sem_dado,
+  SUM(IF(sem_dado, 0, 1)) AS com_dado
+  FROM erro_ocr_civitas_base
+  GROUP BY ALL
+),
+
+erro_ocr_civitas_final AS (
+SELECT 
+  a.data_dia, 
+  a.camera_numero AS codigo_equipamento,
+  c.id_ponto_coleta, 
+  a.sem_dado / (a.com_dado + a.sem_dado) AS prct_dados_prf_ausentes
+FROM erro_ocr_civitas_agrupado a
+JOIN `rj-civitas`.`cerco_digital`.`equipamento` b ON a.camera_numero = b.codigo_equipamento AND b.origem_equipamento = 'CIVITAS'
+JOIN `rj-civitas`.`cerco_digital`.`ponto_coleta_lpr` c ON b.codigo_ponto_coleta = c.codigo_ponto_coleta AND c.origem_equipamento = 'CIVITAS'
+WHERE sem_dado / (com_dado + sem_dado) > 0.5
 ),
 
 leituras_pares AS (
@@ -275,7 +311,8 @@ latencia_base AS (
     id_ponto_coleta,
     DATE(datahora, 'America/Sao_Paulo') AS data_dia
   FROM leituras_validas a
-  LEFT JOIN `rj-civitas.cerco_digital.radar` b ON a.camera_numero = b.codcet AND a.empresa = 'CETRIO' 
+  LEFT JOIN `rj-civitas.cerco_digital.radar` b 
+  ON a.camera_numero = b.codcet AND a.empresa = 'CETRIO' 
 ),
 
 latencia_agrupado AS (
@@ -318,7 +355,20 @@ SELECT
   data_dia,
   codigo_equipamento,
   id_ponto_coleta,
+  'Cobertura PRF baixa' AS razao,
+  prct_dados_prf_ausentes,
+  0 AS diferenca_latencia,
+  0 AS deteccoes_suspeitas_clonagem
+FROM erro_ocr_civitas_final
+
+UNION ALL
+
+SELECT 
+  data_dia,
+  codigo_equipamento,
+  id_ponto_coleta,
   'Latência' AS razao,
+  0 AS prct_dados_prf_ausentes,
   diferenca_latencia,
   0 AS deteccoes_suspeitas_clonagem
 FROM cameras_latencia_excessiva
@@ -330,6 +380,7 @@ SELECT
   codigo_equipamento,
   id_ponto_coleta,
   'Pares suspeitos de clonagem' AS razao,
+  0 AS prct_dados_prf_ausentes,
   0 AS diferenca_latencia,
   pares_suspeitos AS deteccoes_suspeitas_clonagem
 FROM cameras_clones_excessivos
@@ -341,6 +392,7 @@ SELECT
   codigo_equipamento, 
   id_ponto_coleta,
   ARRAY_AGG(razao) AS razao,
+  MAX(prct_dados_prf_ausentes) AS prct_dados_prf_ausentes,
   MAX(diferenca_latencia) AS diferenca_latencia_minutos,
   MAX(deteccoes_suspeitas_clonagem) AS deteccoes_suspeitas_clonagem
 FROM uniao_razoes
@@ -352,7 +404,8 @@ SELECT
   a.codigo_equipamento,
   a.id_ponto_coleta,
   a.razao,
-  IF(a.diferenca_latencia_minutos = 0,NULL, a.diferenca_latencia_minutos) AS diferenca_latencia_minutos,
+  IF(a.prct_dados_prf_ausentes = 0, NULL, a.prct_dados_prf_ausentes) AS prct_dados_prf_ausentes,
+  IF(a.diferenca_latencia_minutos = 0, NULL, a.diferenca_latencia_minutos) AS diferenca_latencia_minutos,
   IF(a.deteccoes_suspeitas_clonagem = 0, NULL, a.deteccoes_suspeitas_clonagem) AS deteccoes_suspeitas_clonagem,
   COUNT(b.placa) AS leituras_dia
 FROM final a

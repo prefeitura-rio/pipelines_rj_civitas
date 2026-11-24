@@ -26,6 +26,9 @@ models:
       - name: razao
         description: "Motivos que levaram à inclusão do equipamento na quarentena."
 
+      - name: prct_dados_prf_ausentes
+        description: "Percentual de placas lidas que vieram sem dados da PRF (provável erro de leitura)"
+
       - name: diferenca_latencia_minutos
         description: "Diferença, em minutos, entre a latência mediana da câmera e a latência mediana da empresa."
 
