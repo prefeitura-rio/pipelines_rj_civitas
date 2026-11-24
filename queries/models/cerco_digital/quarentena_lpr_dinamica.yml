@@ -30,7 +30,7 @@ models:
         description: "Percentual de placas lidas que vieram sem dados da PRF (provável erro de leitura)"
 
       - name: diferenca_latencia_minutos
-        description: "Diferença, em minutos, entre a latência mediana da câmera e a latência mediana da empresa."
+        description: "Diferença, em minutos, entre a latência mediana da câmera e o percentil 75 de latência da empresa."
 
       - name: deteccoes_suspeitas_clonagem
         description: "Quantidade de detecções associadas a pares suspeitos de clonagem no equipamento."

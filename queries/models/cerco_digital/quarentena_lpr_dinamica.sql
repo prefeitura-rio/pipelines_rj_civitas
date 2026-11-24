@@ -301,9 +301,9 @@ ON a.codigo_equipamento = c.camera AND b.id_ponto_coleta = c.ponto
 
 latencia_base AS (
   SELECT
-    PERCENTILE_CONT(TIMESTAMP_DIFF(datahora_captura, datahora, MINUTE), 0.5)
+    PERCENTILE_CONT(TIMESTAMP_DIFF(datahora_captura, datahora, MINUTE), 0.75)
       OVER (PARTITION BY COALESCE(b.empresa, a.empresa), DATE(datahora, 'America/Sao_Paulo'))
-        latencia_mediana_empresa,
+        latencia_p75_empresa,
     datahora,
     datahora_captura,
     COALESCE(b.empresa, a.empresa) AS empresa,
@@ -323,7 +323,7 @@ latencia_agrupado AS (
       OFFSET(50)]
       latencia_mediana_camera,
     COUNT(*) AS deteccoes,
-    latencia_mediana_empresa,
+    latencia_p75_empresa,
     camera_numero,
     id_ponto_coleta,
     empresa,
@@ -340,13 +340,14 @@ SELECT
   id_ponto_coleta,
   empresa,
   latencia_mediana_camera,
-  latencia_mediana_empresa,
-  latencia_mediana_camera - latencia_mediana_empresa AS diferenca_latencia,
+  latencia_p75_empresa,
+  latencia_mediana_camera - latencia_p75_empresa AS diferenca_latencia,
   SUM(deteccoes) OVER (PARTITION BY data_dia, empresa) AS deteccoes_empresa_dia,
   SUM(deteccoes) OVER (PARTITION BY data_dia) AS deteccoes_dia
 FROM latencia_agrupado
 WHERE
-  latencia_mediana_camera - latencia_mediana_empresa > 10
+  ( latencia_mediana_camera - latencia_p75_empresa > 10
+      AND latencia_mediana_camera > latencia_p75_empresa * 120 / 100) 
   OR latencia_mediana_camera < -5
 ),
 
