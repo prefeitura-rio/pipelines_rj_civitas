@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: placas_blacklist
+    description: |
+      Lista de placas lidas em câmeras LPR, mas que na verdade são leituras
+      de outros elementos textuais (anúncios, identificadores, etc).
+
+      A identificação é feita por meio da verificação de suspeitas de clone
+      excessivas (500+ em 30 dias) ou manualmente ao identificar visualmente 
+      erros desse tipo.
+
+      **Frequência de atualização**: Mensal
+      **Origens**: vw_all_readings_pre_filter
+    columns:
+      - name: placa
+        description: "Placa identificada como erro de leitura."
+        tests:
+          - not_null
+          - unique
+
+      - name: tipo_insercao
+        description: "Indica o tipo de inclusão da placa na blacklist (automática | manual)."
+
+      - name: data_insercao
+        description: "Data em que a placa foi inserida na blacklist."
