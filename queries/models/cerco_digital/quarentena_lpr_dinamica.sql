@@ -60,6 +60,7 @@ WHERE
     {% else %}
     datahora >= TIMESTAMP('2026-08-01 03:00:00') --Início da integração com dados PRF
     {% endif %}
+    AND datahora < TIMESTAMP(CURRENT_DATE(), 'America/Sao_Paulo')
 ),
 
 erro_ocr_civitas_agrupado AS (
